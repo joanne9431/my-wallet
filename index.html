@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v2</title>
+    <title>極簡本地記帳 Pro v3</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,6 +16,7 @@
             --primary: #4a90e2;
             --danger: #ff4d4f;
             --success: #2ecc71;
+            --warning: #f1c40f;
             --text: #333333;
             --grey: #e1e4e8;
         }
@@ -37,8 +38,7 @@
         h2 { margin-top: 0; font-size: 1.1rem; color: #666; font-weight: 600; }
         .total-amount { font-size: 2.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
         
-        /* 輸入框樣式 */
-        input[type="number"] {
+        input[type="text"], input[type="number"] {
             width: 100%;
             padding: 14px;
             margin: 8px 0;
@@ -50,7 +50,6 @@
         }
         input:focus { outline: none; border-color: var(--primary); }
         
-        /* 核心按鈕樣式 */
         button {
             width: 100%;
             padding: 14px;
@@ -65,11 +64,10 @@
         }
         button:active { opacity: 0.8; }
         
-        /* 儲存和備份按鈕樣式 */
         .btn-save { background-color: var(--primary); color: white; }
         .btn-backup { background-color: var(--success); color: white; margin-top: 15px; }
         
-        /* 新增分類選取器樣式 */
+        /* 分類選取器與小按鈕 */
         .category-picker {
             display: flex;
             flex-wrap: wrap;
@@ -77,48 +75,79 @@
             margin: 15px 0;
         }
         .category-btn {
-            flex: 1 1 calc(33.33% - 10px); /* 默認一行三個 */
+            flex: 1 1 calc(33.33% - 10px);
             background-color: var(--card-bg);
             color: var(--text);
             border: 2px solid var(--grey);
             border-radius: 12px;
-            padding: 15px 10px;
+            padding: 12px 5px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-            margin: 0; /* 覆蓋全域按鈕邊距 */
+            gap: 6px;
+            margin: 0;
+            position: relative;
         }
-        .category-btn .icon { font-size: 2rem; }
-        .category-btn .label { font-size: 0.95rem; font-weight: bold; }
-        
-        /* 選中狀態 */
+        .category-btn .icon-label { font-size: 1.2rem; }
+        .category-btn .label { font-size: 0.9rem; font-weight: bold; }
         .category-btn.active {
             background-color: var(--primary);
             border-color: var(--primary);
             color: white;
-            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
         }
         
-        /* 大螢幕（如平板）顯示更多 */
-        @media (min-width: 400px) {
-            .category-btn { flex: 1 1 calc(25% - 10px); } /* 一行四個 */
+        /* 分類右上角的刪除小叉叉 */
+        .delete-cat-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
         }
-        @media (min-width: 600px) {
-            .category-btn { flex: 1 1 calc(16.66% - 10px); } /* 一行六個 */
+
+        /* 快速新增分類區域 */
+        .add-cat-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .add-cat-group input { margin: 0; flex: 2; }
+        .add-cat-group button { margin: 0; flex: 1; padding: 12px; background: #5c6b73; color: white;}
+
+        /* 編輯狀態提示 */
+        .edit-mode-indicator {
+            display: none;
+            background-color: var(--warning);
+            color: #333;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
         }
         
-        /* 歷史紀錄列表樣式 (保持不變) */
+        /* 歷史紀錄 */
         .list-container { max-height: 300px; overflow-y: auto; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         .tag { background: #eef2f7; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; align-self: flex-start; color: #555;}
         .date { color: #aaa; font-size: 0.75rem; margin-top: 4px; }
-        .item-right { display: flex; align-items: center; gap: 12px; }
-        .amount { font-weight: 700; font-size: 1.1rem; }
-        .btn-delete { background: none; color: var(--danger); padding: 5px; margin: 0; width: auto; font-size: 0.9rem;}
+        .item-right { display: flex; align-items: center; gap: 8px; }
+        .amount { font-weight: 700; font-size: 1.1rem; margin-right: 5px; }
+        
+        .btn-action { background: none; padding: 5px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block;}
+        
+        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 10px); } }
     </style>
 </head>
 <body>
@@ -129,43 +158,24 @@
     </div>
 
     <div class="card">
-        <h2>新增消費</h2>
+        <h2 id="form-title">新增消費</h2>
+        <div id="edit-indicator" class="edit-mode-indicator">✏️ 正在修改歷史紀錄... (儲存後覆蓋)</div>
+        
         <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
         
-        <div class="category-picker" id="category-picker">
-            <button type="button" class="category-btn active" onclick="selectCategory('🍔 餐飲', this)">
-                <span class="icon">🍔</span>
-                <span class="label">餐飲</span>
-            </button>
-            <button type="button" class="category-btn" onclick="selectCategory('🚗 交通', this)">
-                <span class="icon">🚗</span>
-                <span class="label">交通</span>
-            </button>
-            <button type="button" class="category-btn" onclick="selectCategory('🎬 娛樂', this)">
-                <span class="icon">🎬</span>
-                <span class="label">娛樂</span>
-            </button>
-            <button type="button" class="category-btn" onclick="selectCategory('🛍️ 購物', this)">
-                <span class="icon">🛍️</span>
-                <span class="label">購物</span>
-            </button>
-            <button type="button" class="category-btn" onclick="selectCategory('🏠 居家', this)">
-                <span class="icon">🏠</span>
-                <span class="label">居家</span>
-            </button>
-            <button type="button" class="category-btn" onclick="selectCategory('📦 其他', this)">
-                <span class="icon">📦</span>
-                <span class="label">其他</span>
-            </button>
+        <div class="category-picker" id="category-picker"></div>
+        
+        <div class="add-cat-group">
+            <input type="text" id="new-cat-input" placeholder="例: 💡 補習 (含圖示)">
+            <button type="button" onclick="addNewCategory()">+ 分類</button>
         </div>
         
-        <button class="btn-save" onclick="addRecord()">儲存紀錄</button>
+        <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">儲存紀錄</button>
     </div>
 
     <div class="card">
         <h2>歷史紀錄</h2>
-        <div class="list-container" id="history-list">
-            </div>
+        <div class="list-container" id="history-list"></div>
     </div>
 
     <div style="padding: 0 10px;">
@@ -173,90 +183,207 @@
     </div>
 
     <script>
-        const FILE_NAME = "accounting_data_v1.json";
+        // 本地儲存的檔案名稱
+        const DATA_FILE = "accounting_records_v3.json";
+        const CAT_FILE = "accounting_categories_v3.json";
+        
         let records = [];
-        let selectedCategory = "🍔 餐飲"; // 預設選中的分類
+        // 預設的初始分類列表（如果本地沒存過，就用這組）
+        let categories = ["🍔 餐飲", "🚗 交通", "🎬 娛樂", "🛍️ 購物", "🏠 居家", "📦 其他"];
+        
+        let selectedCategory = ""; 
+        let editingRecordId = null; // 用來標記目前是否正在「修改資料」
 
-        // 初始化並從 iOS OPFS 檔案系統讀取資料
+        // 初始化
         async function init() {
-            try {
-                const root = await navigator.storage.getDirectory();
-                const fileHandle = await root.getFileHandle(FILE_NAME, { create: true });
-                const file = await fileHandle.getFile();
-                const text = await file.text();
-                
-                records = text ? JSON.parse(text) : [];
-            } catch (e) {
-                console.error("OPFS 讀取失敗:", e);
-                records = JSON.parse(localStorage.getItem('accounting_records')) || [];
-            }
-            render();
+            await loadCategories();
+            await loadRecords();
+            renderCategories();
+            renderRecords();
         }
 
-        // 將資料寫入 iOS 檔案系統
-        async function saveToLocal() {
+        // ================= 資料儲存/讀取核心 (OPFS 安全隔離) =================
+        async function loadRecords() {
             try {
                 const root = await navigator.storage.getDirectory();
-                const fileHandle = await root.getFileHandle(FILE_NAME, { create: true });
+                const fileHandle = await root.getFileHandle(DATA_FILE, { create: true });
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                records = text ? JSON.parse(text) : [];
+            } catch (e) {
+                records = JSON.parse(localStorage.getItem('acc_rec_v3')) || [];
+            }
+        }
+
+        async function saveRecords() {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const fileHandle = await root.getFileHandle(DATA_FILE, { create: true });
                 const writable = await fileHandle.createWritable();
                 await writable.write(JSON.stringify(records));
                 await writable.close();
             } catch (e) {
-                console.error("OPFS 寫入失敗:", e);
-                localStorage.setItem('accounting_records', JSON.stringify(records));
+                localStorage.setItem('acc_rec_v3', JSON.stringify(records));
             }
         }
 
-        // 新函式：處理分類選擇點擊
-        function selectCategory(category, buttonElement) {
-            selectedCategory = category; // 更新選中分類的值
-
-            // 移除所有按鈕的 active 類
-            const allButtons = document.querySelectorAll('.category-btn');
-            allButtons.forEach(btn => btn.classList.remove('active'));
-
-            // 將 active 類新增到點擊的按鈕
-            buttonElement.classList.add('active');
+        async function loadCategories() {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const fileHandle = await root.getFileHandle(CAT_FILE, { create: true });
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                if (text) categories = JSON.parse(text);
+            } catch (e) {
+                const local = localStorage.getItem('acc_cat_v3');
+                if (local) categories = JSON.parse(local);
+            }
+            if(categories.length > 0) selectedCategory = categories[0];
         }
 
-        // 新增記帳紀錄
-        async function addRecord() {
+        async function saveCategories() {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const fileHandle = await root.getFileHandle(CAT_FILE, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(categories));
+                await writable.close();
+            } catch (e) {
+                localStorage.setItem('acc_cat_v3', JSON.stringify(categories));
+            }
+        }
+
+        // ================= 分類自訂管理邏輯 =================
+        function renderCategories() {
+            const picker = document.getElementById('category-picker');
+            picker.innerHTML = '';
+            
+            categories.forEach(cat => {
+                const isActive = (cat === selectedCategory) ? 'active' : '';
+                // 將 "🍔 餐飲" 拆開成圖示和文字，如果沒輸入圖示就整串顯示
+                const parts = cat.split(' ');
+                const icon = parts.length > 1 ? parts[0] : '📝';
+                const label = parts.length > 1 ? parts.slice(1).join(' ') : cat;
+
+                picker.innerHTML += `
+                    <button type="button" class="category-btn ${isActive}" onclick="selectCategory('${cat}', this)">
+                        <span class="icon-label">${icon}</span>
+                        <span class="label">${label}</span>
+                        <span class="delete-cat-badge" onclick="deleteCategory('${cat}', event)">X</span>
+                    </button>
+                `;
+            });
+        }
+
+        function selectCategory(cat, btn) {
+            selectedCategory = cat;
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        async function addNewCategory() {
+            const input = document.getElementById('new-cat-input');
+            const val = input.value.trim();
+            if(!val) return alert('請輸入分類名稱！');
+            if(categories.includes(val)) return alert('此分類已存在！');
+            
+            categories.push(val);
+            selectedCategory = val; // 自動選中新分類
+            input.value = '';
+            await saveCategories();
+            renderCategories();
+        }
+
+        async function deleteCategory(cat, event) {
+            event.stopPropagation(); // 阻止觸發選擇分類的點擊事件
+            if(confirm(`確定要刪除「${cat}」這個分類選項嗎？\n(不會影響已輸入的歷史帳目)`)) {
+                categories = categories.filter(c => c !== cat);
+                if(selectedCategory === cat && categories.length > 0) {
+                    selectedCategory = categories[0];
+                }
+                await saveCategories();
+                renderCategories();
+            }
+        }
+
+        // ================= 記帳資料輸入與「修改」核心邏輯 =================
+        async function handleSubmit() {
             const amountInput = document.getElementById('amount');
-            
             const amount = parseFloat(amountInput.value);
-            const category = selectedCategory; // 使用全域選中分類值
+            
+            if (isNaN(amount) || amount <= 0) return alert('請輸入正確的金額！');
 
-            if (isNaN(amount) || amount <= 0) {
-                alert('請輸入正確的金額！');
-                return;
+            if (editingRecordId !== null) {
+                // 【編輯模式】 修改現有資料
+                const recordIndex = records.findIndex(r => r.id === editingRecordId);
+                if(recordIndex !== -1) {
+                    records[recordIndex].amount = amount;
+                    records[recordIndex].category = selectedCategory;
+                    // 保持原本日期不變
+                }
+                // 結束編輯模式，重設狀態
+                editingRecordId = null;
+                document.getElementById('form-title').innerText = "新增消費";
+                document.getElementById('btn-save-main').innerText = "儲存紀錄";
+                document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
+                document.getElementById('edit-indicator').style.display = "none";
+            } else {
+                // 【正常模式】 新增一筆
+                const newRecord = {
+                    id: Date.now(),
+                    amount: amount,
+                    category: selectedCategory,
+                    date: new Date().toLocaleDateString()
+                };
+                records.unshift(newRecord);
             }
 
-            const newRecord = {
-                id: Date.now(),
-                amount: amount,
-                category: category,
-                date: new Date().toLocaleDateString()
-            };
-
-            records.unshift(newRecord);
-            await saveToLocal();
-            
+            await saveRecords();
             amountInput.value = '';
-            // 保持當前選中的分類，便於連續記錄相同分類
-            render();
+            renderRecords();
         }
 
-        // 刪除單筆紀錄
+        // 觸發編輯功能：把舊資料帶回表單
+        function startEdit(id) {
+            const record = records.find(r => r.id === id);
+            if(!record) return;
+
+            editingRecordId = id; // 設定目前正在編輯的 ID
+            
+            // 1. 把數值填回輸入框
+            document.getElementById('amount').value = record.amount;
+            
+            // 2. 把選取分類切換過去（如果該分類已被刪除，則自動暫時加回選單）
+            if(!categories.includes(record.category)) {
+                categories.push(record.category);
+                saveCategories();
+                renderCategories();
+            }
+            selectedCategory = record.category;
+            
+            // 3. 更新 UI 介面，讓使用者知道現在是「修改狀態」
+            document.getElementById('form-title').innerText = "修改歷史紀錄";
+            document.getElementById('btn-save-main').innerText = "更新（覆蓋）紀錄";
+            document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
+            document.getElementById('edit-indicator').style.display = "block";
+            
+            // 重新渲染分類按鈕來更新 active 狀態
+            renderCategories();
+            
+            // 畫面自動滾動回頂部輸入框
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
         async function deleteRecord(id) {
             if (confirm("確定要刪除這筆紀錄嗎？")) {
                 records = records.filter(r => r.id !== id);
-                await saveToLocal();
-                render();
+                await saveRecords();
+                renderRecords();
             }
         }
 
-        // 渲染畫面
-        function render() {
+        // ================= 渲染歷史紀錄 =================
+        function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
             
@@ -279,7 +406,8 @@
                         </div>
                         <div class="item-right">
                             <span class="amount">$${r.amount.toLocaleString()}</span>
-                            <button class="btn-delete" onclick="deleteRecord(${r.id})">🗑️</button>
+                            <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
+                            <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -288,23 +416,17 @@
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // 匯出資料為 CSV 檔
+        // 匯出 CSV 備份
         function exportToCSV() {
-            if (records.length === 0) {
-                alert("目前沒有任何資料可以匯出喔！");
-                return;
-            }
+            if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             let csvContent = "\uFEFF日期,消費分類,金額\n"; 
             records.forEach(r => {
-                // 如果分類含有逗號，用引號包起來，防止 CSV 格式出錯
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 csvContent += `${r.date},${category},${r.amount}\n`;
             });
-
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            
             link.setAttribute("href", url);
             link.setAttribute("download", `本地記帳本備份_${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
@@ -312,7 +434,6 @@
             document.body.removeChild(link);
         }
 
-        // 啟動
         init();
     </script>
 </body>

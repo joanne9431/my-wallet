@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.3</title>
+    <title>極簡本地記帳 Pro v6.4</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -41,8 +41,8 @@
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
-            padding: 12px; /* 縮小邊距讓畫面更好看 */
-            padding-top: 0; /* 💡 核心修改：移除頂部留白，完全貼頂 */
+            padding: 12px; 
+            padding-top: 0; 
         }
         
         .card {
@@ -53,7 +53,6 @@
             margin-bottom: 12px;
         }
         
-        /* 頂部貼頂專用卡片樣式 */
         .top-sticky-card {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
@@ -67,7 +66,6 @@
         
         h2 { margin-top: 0; font-size: 1rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        /* 💡 核心修改：看板雙欄佈局（左邊總金額，右邊項目細分總額） */
         .dashboard-layout {
             display: flex;
             justify-content: space-between;
@@ -113,7 +111,6 @@
             color: #222;
         }
         
-        /* 輸入框通用樣式 */
         input[type="number"], input[type="text"] {
             width: 100%;
             padding: 14px;
@@ -126,7 +123,6 @@
         }
         input:focus { outline: none; border-color: var(--primary); } 
         
-        /* 按鈕樣式 */
         button {
             width: 100%;
             padding: 14px;
@@ -144,7 +140,6 @@
         .btn-save { background-color: var(--primary); color: white; }
         .btn-backup { background-color: var(--success); color: white; margin-top: 10px; }
         
-        /* 分類按鈕配置 */
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
@@ -217,8 +212,7 @@
                 <h2>本月總花費</h2>
                 <div class="total-amount">$<span id="total">0</span></div>
             </div>
-            <div class="category-totals-box" id="category-totals-container">
-                </div>
+            <div class="category-totals-box" id="category-totals-container"></div>
         </div>
     </div>
 
@@ -409,7 +403,6 @@
             
             let total = 0;
             
-            // 💡 初始化每一個項目的加總計數器
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
@@ -417,7 +410,6 @@
                 listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">目前尚無消費紀錄</div>`;
                 totalContainer.innerText = '0';
                 
-                // 即使沒資料也渲染出 $0 看板
                 categories.forEach(cat => {
                     catTotalsContainer.innerHTML += `
                         <div class="cat-total-item">
@@ -431,11 +423,9 @@
             records.forEach(r => {
                 total += r.amount;
                 
-                // 累加對應項目的消費額
                 if (catSums[r.category] !== undefined) {
                     catSums[r.category] += r.amount;
                 } else {
-                    // 預防萬一有舊分類存在
                     catSums[r.category] = r.amount;
                 }
 
@@ -460,10 +450,8 @@
                 `;
             });
 
-            // 更新總金額
             totalContainer.innerText = total.toLocaleString();
 
-            // 💡 核心修改：動態把各項目的小計 Total 渲染到上方看板右側
             Object.keys(catSums).forEach(cat => {
                 catTotalsContainer.innerHTML += `
                     <div class="cat-total-item">
@@ -474,7 +462,7 @@
             });
         }
 
-        // 輔助功能：將各式各樣的本地日期轉為標準的 YYYY-MM-DD 以適應手機端軟體
+        // 將各式各樣的本地日期轉為標準的 YYYY-MM-DD
         function convertToISODate(dateStr) {
             try {
                 const d = new Date(dateStr);
@@ -488,7 +476,7 @@
             }
         }
 
-        // 匯出 CSV 邏輯
+        // 💡 核心修改：優化 CSV 欄位錯開邏輯，文字標籤放第二欄，解決手機日期誤判
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
@@ -519,7 +507,7 @@
                     nextMonth = nParts[1];
                 }
 
-                // 1. 處理並寫入一般單筆消費明細
+                // 1. 處理並寫入一般交易
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `$${r.amount}`;
@@ -529,36 +517,36 @@
                     displayDate = currentIsoDate;
                     lastIsoDate = currentIsoDate;
                 } else {
-                    displayDate = ""; 
+                    displayDate = ""; // 同天留白
                 }
                 
                 csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
 
-                // 2. 累加統計加總
+                // 2. 累加統計
                 dayTotal += r.amount;
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 3. 檢查並寫入【每日小計】（無加號）
+                // 3. 檢查並寫入【每日小計】 -> 💡 標籤改放第二欄，第一欄補上當天日期，防止軟體混淆
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
-                    csvContent += `[${currentIsoDate} 當日總計],,$${dayTotal},\n`;
+                    csvContent += `${currentIsoDate},當日總計,$${dayTotal},\n`;
                     dayTotal = 0; 
                 }
 
-                // 4. 檢查並寫入【每月總計】（無加號）
+                // 4. 檢查並寫入【每月總計】 -> 💡 第一欄留標準月份開頭，標籤放第二欄
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
-                    csvContent += `[${currentYear}年${currentMonth}月 月總計],,$${monthTotal},\n`;
+                    csvContent += `${currentYear}-${currentMonth}-01,${currentYear}年${currentMonth}月總計,$${monthTotal},\n`;
                     monthTotal = 0; 
                 }
 
-                // 5. 檢查並寫入【每年大計】（無加號）
+                // 5. 檢查並寫入【每年大計】 -> 💡 第一欄留標準年份開頭，標籤放第二欄
                 if (!nextRecord || nextYear !== currentYear) {
-                    csvContent += `[${currentYear}年 年總計],,$${yearTotal},\n`;
+                    csvContent += `${currentYear}-01-01,${currentYear}年總計,$${yearTotal},\n`;
                     yearTotal = 0; 
                 }
             }
             
-            // 執行檔案下載
+            // 下載
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

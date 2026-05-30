@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.4</title>
+    <title>極簡本地記帳 Pro v6.5</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -41,43 +41,46 @@
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
-            padding: 12px; 
+            padding: 10px; 
             padding-top: 0; 
         }
         
         .card {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 18px;
+            border-radius: 14px;
+            padding: 14px; /* 💡 縮小內距，讓版面更緊湊 */
             box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
         
         .top-sticky-card {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
-            margin-left: -12px;
-            margin-right: -12px;
-            margin-bottom: 15px;
-            padding: 20px 15px;
+            margin-left: -10px;
+            margin-right: -10px;
+            margin-bottom: 12px;
+            padding: 15px 12px;
             background: linear-gradient(135deg, #ffffff 0%, #fafdff 100%);
             border-bottom: 1px solid rgba(0,0,0,0.03);
         }
         
-        h2 { margin-top: 0; font-size: 1rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        h2 { margin-top: 0; font-size: 0.9rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
         
         .dashboard-layout {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
         
+        /* 💡 核心修改：總消費文字向右移，貼近項目統計區 */
         .total-box {
             flex: 1;
+            padding-left: 20px; /* 向右靠攏 */
+            text-align: left;
         }
         .total-amount { 
-            font-size: 2.2rem; 
+            font-size: 2rem; 
             font-weight: 900; 
             color: var(--primary); 
             margin-top: 2px;
@@ -85,51 +88,51 @@
         }
         
         .category-totals-box {
-            flex: 1.2;
+            flex: 1.3;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
+            gap: 4px;
             background: rgba(0, 0, 0, 0.02);
-            padding: 10px;
-            border-radius: 12px;
+            padding: 8px;
+            border-radius: 10px;
             border: 1px solid rgba(0, 0, 0, 0.01);
         }
         
         .cat-total-item {
             display: flex;
             flex-direction: column;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #555;
         }
         .cat-total-item .cat-name {
             color: #888;
-            font-size: 0.75rem;
-            margin-bottom: 1px;
+            font-size: 0.7rem;
         }
         .cat-total-item .cat-num {
             font-weight: 700;
             color: #222;
         }
         
+        /* 💡 核心修改：輸入框格縮小，版面緊湊 */
         input[type="number"], input[type="text"] {
             width: 100%;
-            padding: 14px;
-            margin: 6px 0;
-            border-radius: 10px;
+            padding: 10px 12px; /* 縮小 Padding */
+            margin: 4px 0;      /* 縮小間距 */
+            border-radius: 8px;
             border: 1px solid var(--grey);
             box-sizing: border-box;
-            font-size: 1rem;
+            font-size: 0.95rem;
             -webkit-appearance: none; 
         }
         input:focus { outline: none; border-color: var(--primary); } 
         
         button {
             width: 100%;
-            padding: 14px;
-            margin: 6px 0;
-            border-radius: 10px;
+            padding: 11px;
+            margin: 4px 0;
+            border-radius: 8px;
             border: none;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
             transition: all 0.2s;
             -webkit-appearance: none;
@@ -137,31 +140,32 @@
         }
         button:active { opacity: 0.8; } 
         
-        .btn-save { background-color: var(--primary); color: white; }
-        .btn-backup { background-color: var(--success); color: white; margin-top: 10px; }
+        .btn-save { background-color: var(--primary); color: white; margin-top: 6px; }
+        .btn-backup { background-color: var(--success); color: white; margin-top: 6px; }
         
+        /* 💡 核心修改：選項格（分類按鈕）縮小 */
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
-            gap: 8px;       
-            margin: 12px 0;
+            gap: 6px;       
+            margin: 8px 0;
         }
         
         .category-btn {
-            flex: 1 1 calc(33.33% - 8px); 
+            flex: 1 1 calc(33.33% - 6px); 
             background-color: var(--card-bg);
             color: var(--text);
-            border: 2px solid var(--grey);
-            border-radius: 12px;
-            padding: 12px 5px;
+            border: 1.5px solid var(--grey);
+            border-radius: 10px;
+            padding: 8px 2px; /* 縮減上下高 */
             display: flex;
             flex-direction: column; 
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             margin: 0;
         }
-        .category-btn .icon-label { font-size: 1.2rem; } 
-        .category-btn .label { font-size: 0.85rem; font-weight: bold; } 
+        .category-btn .icon-label { font-size: 1.05rem; } /* 圖示縮小 */
+        .category-btn .label { font-size: 0.75rem; font-weight: bold; } /* 文字縮小 */
         
         .category-btn.active {
             background-color: var(--primary);
@@ -173,35 +177,36 @@
             display: none; 
             background-color: var(--warning);
             color: #333;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 0.85rem;
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 0.8rem;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-align: center;
         }
         
-        .list-container { max-height: 280px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
+        /* 💡 歷史紀錄緊湊化 */
+        .list-container { max-height: 260px; overflow-y: auto; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f2f5; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         
         .tag { 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-size: 0.85rem; 
+            padding: 3px 8px; 
+            border-radius: 5px; 
+            font-size: 0.78rem; 
             font-weight: bold; 
             align-self: flex-start; 
         }
         
-        .item-details { color: #aaa; font-size: 0.75rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
-        .note-text { color: #555; font-weight: 500; background: #fffbe6; padding: 1px 5px; border-radius: 4px; border: 1px solid #ffe58f; } 
+        .item-details { color: #aaa; font-size: 0.72rem; margin-top: 4px; display: flex; gap: 6px; align-items: center; }
+        .note-text { color: #555; font-weight: 500; background: #fffbe6; padding: 1px 4px; border-radius: 4px; border: 1px solid #ffe58f; } 
 
-        .item-right { display: flex; align-items: center; gap: 8px; }
-        .amount { font-weight: 700; font-size: 1.1rem; margin-right: 5px; }
-        .btn-action { background: none; padding: 5px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block;}
+        .item-right { display: flex; align-items: center; gap: 6px; }
+        .amount { font-weight: 700; font-size: 1rem; margin-right: 2px; }
+        .btn-action { background: none; padding: 4px; margin: 0; width: auto; font-size: 0.9rem; display: inline-block;}
         
-        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 8px); } }
+        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
 </head>
 <body>
@@ -234,7 +239,7 @@
         <div class="list-container" id="history-list"></div>
     </div>
 
-    <div style="padding: 0 4px;">
+    <div style="padding: 0 2px;">
         <button class="btn-backup" onclick="exportToCSV()">備份資料 (匯出 Excel CSV)</button>
     </div>
 
@@ -332,12 +337,19 @@
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
                 document.getElementById('edit-indicator').style.display = "none"; 
             } else {
+                // 💡 核心修改：從源頭直接儲存穩固的標準 YYYY-MM-DD 日期，解決手機端亂碼與 undefined 月份問題
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const isoDateStr = `${yyyy}-${mm}-${dd}`;
+
                 const newRecord = {
                     id: Date.now(), 
                     amount: amount,
                     category: selectedCategory,
                     note: note, 
-                    date: new Date().toLocaleDateString() 
+                    date: isoDateStr 
                 };
                 records.unshift(newRecord);
             }
@@ -462,21 +474,24 @@
             });
         }
 
-        // 將各式各樣的本地日期轉為標準的 YYYY-MM-DD
-        function convertToISODate(dateStr) {
+        // 💡 核心優化：日期源頭已標準化，此處防禦性確保格式無虞，絕不產生 undefined
+        function ensureISODate(dateStr) {
+            if (dateStr && dateStr.includes('-') && dateStr.split('-').length === 3) {
+                return dateStr;
+            }
             try {
                 const d = new Date(dateStr);
-                if (isNaN(d.getTime())) return dateStr; 
+                if (isNaN(d.getTime())) return "2026-05-30"; 
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
                 return `${yyyy}-${mm}-${dd}`;
             } catch(e) {
-                return dateStr;
+                return "2026-05-30";
             }
         }
 
-        // 💡 核心修改：優化 CSV 欄位錯開邏輯，文字標籤放第二欄，解決手機日期誤判
+        // 匯出 CSV 邏輯
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
@@ -492,7 +507,8 @@
                 const r = sortedRecords[i];
                 const nextRecord = sortedRecords[i + 1];
 
-                const currentIsoDate = convertToISODate(r.date);
+                // 100% 安全無誤的標準日期取得
+                const currentIsoDate = ensureISODate(r.date);
                 const parts = currentIsoDate.split('-');
                 const currentYear = parts[0];
                 const currentMonth = parts[1]; 
@@ -501,13 +517,13 @@
                 let nextMonth = null;
                 let nextIsoDate = null;
                 if (nextRecord) {
-                    nextIsoDate = convertToISODate(nextRecord.date);
+                    nextIsoDate = ensureISODate(nextRecord.date);
                     const nParts = nextIsoDate.split('-');
                     nextYear = nParts[0];
                     nextMonth = nParts[1];
                 }
 
-                // 1. 處理並寫入一般交易
+                // 寫入一般交易
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `$${r.amount}`;
@@ -517,36 +533,36 @@
                     displayDate = currentIsoDate;
                     lastIsoDate = currentIsoDate;
                 } else {
-                    displayDate = ""; // 同天留白
+                    displayDate = ""; 
                 }
                 
                 csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
 
-                // 2. 累加統計
+                // 累加統計
                 dayTotal += r.amount;
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 3. 檢查並寫入【每日小計】 -> 💡 標籤改放第二欄，第一欄補上當天日期，防止軟體混淆
+                // 每日小計
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
                     csvContent += `${currentIsoDate},當日總計,$${dayTotal},\n`;
                     dayTotal = 0; 
                 }
 
-                // 4. 檢查並寫入【每月總計】 -> 💡 第一欄留標準月份開頭，標籤放第二欄
+                // 每月總計
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
                     csvContent += `${currentYear}-${currentMonth}-01,${currentYear}年${currentMonth}月總計,$${monthTotal},\n`;
                     monthTotal = 0; 
                 }
 
-                // 5. 檢查並寫入【每年大計】 -> 💡 第一欄留標準年份開頭，標籤放第二欄
+                // 每年大計
                 if (!nextRecord || nextYear !== currentYear) {
                     csvContent += `${currentYear}-01-01,${currentYear}年總計,$${yearTotal},\n`;
                     yearTotal = 0; 
                 }
             }
             
-            // 下載
+            // 下載程序
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

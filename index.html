@@ -3,52 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v3</title>
+    <title>極簡本地記帳 Pro v4</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="本地記帳">
 
     <style>
-        /* 定義全域變數（顏色主題） */
+        /* 全域變數（顏色主題） */
         :root {
-            --bg-color: #f5f7fa;   /* 網頁背景顏色（淺灰色） */
-            --card-bg: #ffffff;    /* 卡片背景顏色（純白） */
-            --primary: #4a90e2;    /* 主題藍色（用於儲存按鈕、選中狀態） */
-            --danger: #ff4d4f;     /* 警告紅色（用於刪除按鈕） */
-            --success: #2ecc71;    /* 成功綠色（用於備份按鈕） */
-            --warning: #f1c40f;    /* 提示黃色（用於編輯模式狀態） */
-            --text: #333333;       /* 主要文字顏色（深灰） */
-            --grey: #e1e4e8;       /* 邊框與分隔線顏色（淺灰） */
+            --bg-color: #f5f7fa;   
+            --card-bg: #ffffff;    
+            --primary: #4a90e2;    
+            --danger: #ff4d4f;     
+            --success: #2ecc71;    
+            --warning: #f1c40f;    
+            --text: #333333;       
+            --grey: #e1e4e8;       
         }
         
-        /* 基礎網頁外觀設定 */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
             padding: 20px;
-            padding-top: 50px; /* 留出 iOS 頂部狀態列與動態島/瀏海的空間 */
+            padding-top: 50px; 
         }
         
-        /* 白底卡片樣式 */
         .card {
             background: var(--card-bg);
             border-radius: 16px;
             padding: 20px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); /* 淡淡的陰影效果 */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
             margin-bottom: 20px;
         }
         
-        /* 卡片標題樣式 */
         h2 { margin-top: 0; font-size: 1.1rem; color: #666; font-weight: 600; }
-        
-        /* 總金額的大數字樣式 */
         .total-amount { font-size: 2.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
         
-        /* 數字輸入框樣式 */
-        input[type="number"] {
+        /* 輸入框通用樣式（金額與備註欄位） */
+        input[type="number"], input[type="text"] {
             width: 100%;
             padding: 14px;
             margin: 8px 0;
@@ -56,11 +51,11 @@
             border: 1px solid var(--grey);
             box-sizing: border-box;
             font-size: 1rem;
-            -webkit-appearance: none; /* 移除 iOS 瀏覽器預設的內陰影 */
+            -webkit-appearance: none; 
         }
-        input:focus { outline: none; border-color: var(--primary); } /* 點擊輸入框時邊框變藍色 */
+        input:focus { outline: none; border-color: var(--primary); } 
         
-        /* 全域按鈕基礎樣式 */
+        /* 按鈕樣式 */
         button {
             width: 100%;
             padding: 14px;
@@ -73,47 +68,43 @@
             -webkit-appearance: none;
             cursor: pointer;
         }
-        button:active { opacity: 0.8; } /* 手機按下去時會有按壓回饋效果 */
+        button:active { opacity: 0.8; } 
         
-        /* 各種功能按鈕的顏色 */
         .btn-save { background-color: var(--primary); color: white; }
         .btn-backup { background-color: var(--success); color: white; margin-top: 15px; }
         
-        /* 分類按鈕區塊（外層包裝） */
+        /* 分類按鈕版面 */
         .category-picker {
             display: flex;
-            flex-wrap: wrap; /* 寬度不夠時自動換行 */
-            gap: 10px;       /* 按鈕之間的間距 */
+            flex-wrap: wrap; 
+            gap: 10px;       
             margin: 15px 0;
         }
         
-        /* 單個分類按鈕樣式 */
         .category-btn {
-            flex: 1 1 calc(33.33% - 10px); /* 預設在手機上一行顯示 3 個按鈕 */
+            flex: 1 1 calc(33.33% - 10px); 
             background-color: var(--card-bg);
             color: var(--text);
             border: 2px solid var(--grey);
             border-radius: 12px;
             padding: 12px 5px;
             display: flex;
-            flex-direction: column; /* 讓圖示在上，文字在下 */
+            flex-direction: column; 
             align-items: center;
             gap: 6px;
             margin: 0;
         }
-        .category-btn .icon-label { font-size: 1.2rem; } /* 圖示大小 */
-        .category-btn .label { font-size: 0.9rem; font-weight: bold; } /* 文字大小 */
+        .category-btn .icon-label { font-size: 1.2rem; } 
+        .category-btn .label { font-size: 0.9rem; font-weight: bold; } 
         
-        /* 當分類按鈕被選中時的樣式 */
         .category-btn.active {
             background-color: var(--primary);
             border-color: var(--primary);
             color: white;
         }
         
-        /* 編輯模式啟動時的黃色提示燈 */
         .edit-mode-indicator {
-            display: none; /* 預設隱藏，只有在編輯時才會顯示 */
+            display: none; 
             background-color: var(--warning);
             color: #333;
             padding: 8px;
@@ -124,22 +115,20 @@
             text-align: center;
         }
         
-        /* 歷史紀錄列表滾動條設定 */
         .list-container { max-height: 300px; overflow-y: auto; }
-        
-        /* 單條歷史紀錄樣式 */
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         .tag { background: #eef2f7; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; align-self: flex-start; color: #555;}
-        .date { color: #aaa; font-size: 0.75rem; margin-top: 4px; }
+        
+        /* 歷史紀錄中的日期與備註小字樣式 */
+        .item-details { color: #aaa; font-size: 0.75rem; margin-top: 4px; display: flex; gap: 8px; align-items: center; }
+        .note-text { color: #777; font-weight: 500; background: #fffbe6; padding: 1px 4px; border-radius: 4px; } /* 備註加點淡淡的黃底，更易讀 */
+
         .item-right { display: flex; align-items: center; gap: 8px; }
         .amount { font-weight: 700; font-size: 1.1rem; margin-right: 5px; }
-        
-        /* 歷史紀錄右側的小操作按鈕（✏️和🗑️） */
         .btn-action { background: none; padding: 5px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block;}
         
-        /* 當螢幕寬度大於 400px 時（如較大的 iPhone），一行自動顯示 4 個分類按鈕 */
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 10px); } }
     </style>
 </head>
@@ -157,6 +146,8 @@
         
         <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
         
+        <input type="text" id="note" placeholder="輸入備註（如：餐廳名字、購買品項）">
+        
         <div class="category-picker" id="category-picker"></div>
         
         <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">儲存紀錄</button>
@@ -172,45 +163,38 @@
     </div>
 
     <script>
-        // 設定手機本地硬碟的儲存檔案名稱
-        const DATA_FILE = "accounting_records_v3.json"; 
+        const DATA_FILE = "accounting_records_v4.json"; // 升級版本號，保持檔案乾淨
         
-        // ==========================================
-        // 💡 提示 1：你要如何自行新增或改變選項名稱？
-        // 請直接在下方陣列中修改文字。格式為：["Emoji 圖示名稱", "Emoji 圖示名稱"]
-        // 範例：let categories = ["🍔 早餐", "🛒 淘寶買爆", "🐶 柴犬罐罐", "💰 薪水收入"];
-        // ==========================================
+        // 💡 提示：你可以直接在下方陣列中修改你的預設分類選項
         let categories = ["🍔 餐飲", "🚗 交通", "🎬 娛樂", "🛍️ 購物", "🏠 居家", "📦 其他"];
         
-        let records = [];           // 用來存放所有記帳紀錄的陣列
-        let selectedCategory = "";  // 用來記錄目前使用者點選了哪一個分類
-        let editingRecordId = null; // 用來標記目前是否正在「修改舊資料」，null 代表正常新增模式
+        let records = [];           
+        let selectedCategory = "";  
+        let editingRecordId = null; 
 
-        // 網頁開啟時最先執行的初始化函式
+        // 初始化
         async function init() {
-            // 預設選中陣列裡的第一個分類
             if(categories.length > 0) selectedCategory = categories[0];
-            
-            await loadRecords();     // 從手機讀取歷史檔案
-            renderCategories();   // 在畫面上畫出分類按鈕
-            renderRecords();      // 在畫面上畫出歷史紀錄
+            await loadRecords();     
+            renderCategories();   
+            renderRecords();      
         }
 
-        // 核心功能：從 iOS OPFS 安全檔案系統中讀取檔案
+        // 從 iOS OPFS 安全檔案系統中讀取檔案
         async function loadRecords() {
             try {
-                const root = await navigator.storage.getDirectory(); // 獲取 PWA 獨立沙盒目錄
+                const root = await navigator.storage.getDirectory(); 
                 const fileHandle = await root.getFileHandle(DATA_FILE, { create: true });
                 const file = await fileHandle.getFile();
                 const text = await file.text();
                 records = text ? JSON.parse(text) : [];
             } catch (e) {
-                console.error("OPFS 讀取失敗，啟用 LocalStorage 備用方案:", e);
-                records = JSON.parse(localStorage.getItem('acc_rec_v3')) || [];
+                console.error("OPFS 讀取失敗:", e);
+                records = JSON.parse(localStorage.getItem('acc_rec_v4')) || [];
             }
         }
 
-        // 核心功能：將最新資料寫入 iOS 檔案系統（不怕清理 Safari 快取）
+        // 將最新資料寫入 iOS 檔案系統
         async function saveRecords() {
             try {
                 const root = await navigator.storage.getDirectory();
@@ -219,26 +203,22 @@
                 await writable.write(JSON.stringify(records));
                 await writable.close();
             } catch (e) {
-                console.error("OPFS 寫入失敗，啟用 LocalStorage 備用方案:", e);
-                localStorage.setItem('acc_rec_v3', JSON.stringify(records));
+                console.error("OPFS 寫入失敗:", e);
+                localStorage.setItem('acc_rec_v4', JSON.stringify(records));
             }
         }
 
-        // 動態生成分類按鈕的 HTML 並渲染到網頁上
+        // 渲染分類按鈕
         function renderCategories() {
             const picker = document.getElementById('category-picker');
-            picker.innerHTML = ''; // 先清空舊按鈕
+            picker.innerHTML = ''; 
             
             categories.forEach(cat => {
-                // 判斷這個按鈕是不是目前被選中的，如果是就加上 'active' 樣式
                 const isActive = (cat === selectedCategory) ? 'active' : '';
-                
-                // 自動將文字拆開（例如把 "🍔 餐飲" 拆成 "🍔" 和 "餐飲"）
                 const parts = cat.split(' ');
                 const icon = parts.length > 1 ? parts[0] : '📝';
                 const label = parts.length > 1 ? parts.slice(1).join(' ') : cat;
 
-                // 產生按鈕 HTML
                 picker.innerHTML += `
                     <button type="button" class="category-btn ${isActive}" onclick="selectCategory('${cat}', this)">
                         <span class="icon-label">${icon}</span>
@@ -248,111 +228,115 @@
             });
         }
 
-        // 當使用者點擊任何一個分類按鈕時觸發
         function selectCategory(cat, btn) {
-            selectedCategory = cat; // 變更目前選中的分類
-            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); // 取消其他按鈕的選取顏色
-            btn.classList.add('active'); // 幫當前點擊的按鈕加上選取顏色
+            selectedCategory = cat; 
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); 
+            btn.classList.add('active'); 
         }
 
-        // 核心功能：處理「儲存」按鈕的點擊事件（自動判斷是全新新增還是修改覆蓋）
+        // 處理「儲存」與「覆蓋修改」
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
-            const amount = parseFloat(amountInput.value);
+            const noteInput = document.getElementById('note'); // 抓取備註欄位
             
+            const amount = parseFloat(amountInput.value);
+            const note = noteInput.value.trim(); // 去除文字前後的空白
+
             if (isNaN(amount) || amount <= 0) return alert('請輸入正確的金額！');
 
-            // 💡 提示 2：如何修改已輸入的資料？（處理覆蓋部分的程式碼）
             if (editingRecordId !== null) {
-                // 【編輯修改模式】：代表使用者剛剛點了 ✏️ 按鈕
-                // 1. 找出這筆舊資料在陣列中的位置 (Index)
+                // 【編輯修改模式】
                 const recordIndex = records.findIndex(r => r.id === editingRecordId);
                 if(recordIndex !== -1) {
-                    // 2. 用新輸入的金額與分類直接「覆蓋」舊欄位（日期保持不變）
                     records[recordIndex].amount = amount;
                     records[recordIndex].category = selectedCategory;
+                    records[recordIndex].note = note; // 💡 更新備註
                 }
                 
-                // 3. 修改完畢，重設所有狀態，將變數還原為正常模式
+                // 還原回正常新增狀態
                 editingRecordId = null;
                 document.getElementById('form-title').innerText = "新增消費";
                 document.getElementById('btn-save-main').innerText = "儲存紀錄";
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
-                document.getElementById('edit-indicator').style.display = "none"; // 隱藏黃色提示燈
+                document.getElementById('edit-indicator').style.display = "none"; 
             } else {
-                // 【正常新增模式】：直接建立一筆全新物件放進陣列最前端
+                // 【正常新增模式】
                 const newRecord = {
-                    id: Date.now(), // 用當前時間戳當作唯一身分證 ID
+                    id: Date.now(), 
                     amount: amount,
                     category: selectedCategory,
-                    date: new Date().toLocaleDateString() // 自動抓取今天日期
+                    note: note, // 💡 儲存備註文字
+                    date: new Date().toLocaleDateString() 
                 };
                 records.unshift(newRecord);
             }
 
-            await saveRecords();     // 把更新後的陣列寫入手機存檔
-            amountInput.value = '';  // 清空輸入框數字
-            renderRecords();         // 刷新下方歷史紀錄清單
+            await saveRecords();     
+            amountInput.value = '';  
+            noteInput.value = '';  // 儲存後自動清空備註欄位
+            renderRecords();         
         }
 
-        // 💡 提示 2：如何修改已輸入的資料？（點擊 ✏️ 時負責「倒填」資料的函式）
+        // 點擊 ✏️ 負責「倒填」資料的函式
         function startEdit(id) {
-            // 1. 透過 ID 找到歷史紀錄中對應的那筆資料
             const record = records.find(r => r.id === id);
             if(!record) return;
 
-            editingRecordId = id; // 將全域變數鎖定為這筆資料的 ID，宣告進入「編輯模式」
+            editingRecordId = id; 
             
-            // 2. 把數值倒填回上方的輸入框中
+            // 將舊資料（含備註）填回上方欄位
             document.getElementById('amount').value = record.amount;
+            document.getElementById('note').value = record.note || ''; // 如果以前沒備註，就帶入空字串
             
-            // 3. 把選取的分類按鈕切換到這筆資料當時的分類
             selectedCategory = record.category;
             
-            // 4. 修改介面外觀：更改卡片標題、更改按鈕文字為黃色、顯示修改提示燈
+            // 變更 UI 為修改狀態
             document.getElementById('form-title').innerText = "修改歷史紀錄";
             document.getElementById('btn-save-main').innerText = "更新（覆蓋）紀錄";
             document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
             document.getElementById('edit-indicator').style.display = "block";
             
-            renderCategories(); // 刷新分類按鈕，讓對應的按鈕變藍色
-            
-            // 5. 讓手機網頁溫和地自動滾動回最頂部，方便直接修改
+            renderCategories(); 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 刪除單筆歷史紀錄
+        // 刪除紀錄
         async function deleteRecord(id) {
             if (confirm("確定要刪除這筆紀錄嗎？")) {
-                // 過濾掉該 ID 的資料，只留下其餘帳目
                 records = records.filter(r => r.id !== id);
-                await saveRecords(); // 儲存變更
-                renderRecords();     // 刷新畫面
+                await saveRecords(); 
+                renderRecords();     
             }
         }
 
-        // 將所有的歷史帳目與總花費金額繪製到網頁畫面上
+        // 渲染歷史紀錄清單
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
             
-            listContainer.innerHTML = ''; // 清空舊畫面
+            listContainer.innerHTML = ''; 
             let total = 0;
 
             if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">目前尚無消費紀錄</div>`;
+                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">目尚無消費紀錄</div>`;
                 totalContainer.innerText = '0';
                 return;
             }
 
-            // 跑迴圈累加金額並動態組裝 HTML 列表
             records.forEach(r => {
                 total += r.amount;
+                
+                // 💡 判斷有沒有備註，如果有，就拼裝出 HTML 小字樣式
+                const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+
                 listContainer.innerHTML += `
                     <div class="list-item">
                         <div class="item-info">
                             <span class="tag">${r.category}</span>
-                            <span class="date">${r.date}</span>
+                            <div class="item-details">
+                                <span>${r.date}</span>
+                                ${noteHTML}
+                            </div>
                         </div>
                         <div class="item-right">
                             <span class="amount">$${r.amount.toLocaleString()}</span>
@@ -363,17 +347,17 @@
                 `;
             });
 
-            // 更新總金額看板
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // 匯出資料為 CSV 檔到 iPhone 本地「檔案」App 備份
+        // 匯出 CSV 備份（備份檔也會包含備註欄位）
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
-            let csvContent = "\uFEFF日期,消費分類,金額\n"; 
+            let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; // 💡 CSV 開頭加入「備註」欄位
             records.forEach(r => {
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
-                csvContent += `${r.date},${category},${r.amount}\n`;
+                const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
+                csvContent += `${r.date},${category},${r.amount},${note}\n`;
             });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -385,7 +369,6 @@
             document.body.removeChild(link);
         }
 
-        // 啟動初始化程序
         init();
     </script>
 </body>

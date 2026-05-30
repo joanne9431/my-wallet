@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳</title>
+    <title>極簡本地記帳 Pro</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,6 +14,8 @@
             --bg-color: #f5f7fa;
             --card-bg: #ffffff;
             --primary: #4a90e2;
+            --danger: #ff4d4f;
+            --success: #2ecc71;
             --text: #333333;
         }
         body {
@@ -22,41 +24,82 @@
             color: var(--text);
             margin: 0;
             padding: 20px;
-            padding-top: 40px; /* 留出 iOS 狀態列空間 */
+            padding-top: 50px; /* 留出 iOS 頂部狀態列與瀏海空間 */
         }
         .card {
             background: var(--card-bg);
             border-radius: 16px;
             padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
             margin-bottom: 20px;
         }
-        h2 { margin-top: 0; font-size: 1.2rem; color: #666; }
-        .total-amount { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        h2 { margin-top: 0; font-size: 1.1rem; color: #666; font-weight: 600; }
+        .total-amount { font-size: 2.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
+        
         input, select, button {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             margin: 8px 0;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+            border-radius: 10px;
+            border: 1px solid #e1e4e8;
             box-sizing: border-box;
             font-size: 1rem;
+            -webkit-appearance: none; /* 移除 iOS 預設內陰影 */
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
         }
         button {
             background-color: var(--primary);
             color: white;
             border: none;
             font-weight: bold;
-            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:active {
+            opacity: 0.8;
+        }
+        .btn-backup {
+            background-color: var(--success);
+            margin-top: 15px;
+        }
+        
+        /* 歷史紀錄列表樣式 */
+        .list-container {
+            max-height: 300px;
+            overflow-y: auto;
         }
         .list-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
         }
         .list-item:last-child { border-bottom: none; }
-        .tag { background: #eee; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+        .item-info { display: flex; flex-direction: column; }
+        .tag { 
+            background: #eef2f7; 
+            padding: 3px 8px; 
+            border-radius: 6px; 
+            font-size: 0.85rem; 
+            font-weight: 500;
+            align-self: flex-start;
+        }
+        .date { color: #aaa; font-size: 0.75rem; margin-top: 4px; }
+        .item-right { display: flex; align-items: center; gap: 12px; }
+        .amount { font-weight: 700; font-size: 1.1rem; }
+        .btn-delete {
+            background: none;
+            color: var(--danger);
+            border: none;
+            padding: 5px;
+            margin: 0;
+            width: auto;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -70,30 +113,62 @@
         <h2>新增消費</h2>
         <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
         <select id="category">
-            <option value="餐飲">🍔 餐飲</option>
-            <option value="交通">🚗 交通</option>
-            <option value="娛樂">🎬 娛樂</option>
-            <option value="購物">🛍️ 購物</option>
-            <option value="其他">📦 其他</option>
+            <option value="🍔 餐飲">🍔 餐飲</option>
+            <option value="🚗 交通">🚗 交通</option>
+            <option value="🎬 娛樂">🎬 娛樂</option>
+            <option value="🛍️ 購物">🛍️ 購物</option>
+            <option value="📦 其他">📦 其他</option>
         </select>
-        <button onclick="addRecord()">儲存</button>
+        <button onclick="addRecord()">儲存紀錄</button>
     </div>
 
     <div class="card">
         <h2>歷史紀錄</h2>
-        <div id="history-list">
+        <div class="list-container" id="history-list">
             </div>
     </div>
 
-    <script>
-        // 核心邏輯：從手機本地 LocalStorage 讀取資料
-        let records = JSON.parse(localStorage.getItem('accounting_records')) || [];
+    <div style="padding: 0 10px;">
+        <button class="btn-backup" onclick="exportToCSV()">備份資料 (匯出 Excel CSV)</button>
+    </div>
 
-        function init() {
+    <script>
+        const FILE_NAME = "accounting_data_v1.json";
+        let records = [];
+
+        // 核心功能：初始化並從 iOS OPFS 檔案系統讀取資料
+        async function init() {
+            try {
+                const root = await navigator.storage.getDirectory(); // 獲取 PWA 專屬沙盒目錄
+                const fileHandle = await root.getFileHandle(FILE_NAME, { create: true });
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                
+                records = text ? JSON.parse(text) : [];
+            } catch (e) {
+                console.error("OPFS 讀取失敗，啟用 LocalStorage 備用方案:", e);
+                // 萬一極舊版 iOS 不支援 OPFS，自動降級到 LocalStorage
+                records = JSON.parse(localStorage.getItem('accounting_records')) || [];
+            }
             render();
         }
 
-        function addRecord() {
+        // 核心功能：將資料寫入 iOS 檔案系統（不驚動 Safari 快取）
+        async function saveToLocal() {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const fileHandle = await root.getFileHandle(FILE_NAME, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(records));
+                await writable.close();
+            } catch (e) {
+                console.error("OPFS 寫入失敗，啟用 LocalStorage 備用方案:", e);
+                localStorage.setItem('accounting_records', JSON.stringify(records));
+            }
+        }
+
+        // 新增記帳紀錄
+        async function addRecord() {
             const amountInput = document.getElementById('amount');
             const categoryInput = document.getElementById('category');
             
@@ -101,24 +176,34 @@
             const category = categoryInput.value;
 
             if (isNaN(amount) || amount <= 0) {
-                alert('請輸入正確的金額');
+                alert('請輸入正確的金額！');
                 return;
             }
 
             const newRecord = {
-                id: Date.now(),
+                id: Date.now(), // 用時間戳當作唯一 ID
                 amount: amount,
                 category: category,
                 date: new Date().toLocaleDateString()
             };
 
-            records.unshift(newRecord); // 新紀錄排在最前面
-            localStorage.setItem('accounting_records', JSON.stringify(records)); // 儲存至本地
+            records.unshift(newRecord); // 新增的排在最上面
+            await saveToLocal(); // 安全儲存
             
             amountInput.value = ''; // 清空輸入框
             render();
         }
 
+        // 刪除單筆紀錄
+        async function deleteRecord(id) {
+            if (confirm("確定要刪除這筆紀錄嗎？")) {
+                records = records.filter(r => r.id !== id);
+                await saveToLocal(); // 安全儲存
+                render();
+            }
+        }
+
+        // 渲染畫面
         function render() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -126,15 +211,24 @@
             listContainer.innerHTML = '';
             let total = 0;
 
+            if (records.length === 0) {
+                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">目前尚無消費紀錄</div>`;
+                totalContainer.innerText = '0';
+                return;
+            }
+
             records.forEach(r => {
                 total += r.amount;
                 listContainer.innerHTML += `
                     <div class="list-item">
-                        <div>
+                        <div class="item-info">
                             <span class="tag">${r.category}</span>
-                            <span style="color: #999; margin-left: 5px;">${r.date}</span>
+                            <span class="date">${r.date}</span>
                         </div>
-                        <div style="font-weight: bold;">$${r.amount}</div>
+                        <div class="item-right">
+                            <span class="amount">$${r.amount.toLocaleString()}</span>
+                            <button class="btn-delete" onclick="deleteRecord(${r.id})">🗑️</button>
+                        </div>
                     </div>
                 `;
             });
@@ -142,7 +236,31 @@
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // 啟動初始化
+        // 雙重保險：匯出資料為 CSV 檔到 iPhone「檔案」App
+        function exportToCSV() {
+            if (records.length === 0) {
+                alert("目前沒有任何資料可以匯出喔！");
+                return;
+            }
+            
+            // \uFEFF 是為了讓 Excel 開啟時不會產生亂碼 (UTF-8 BOM)
+            let csvContent = "\uFEFF日期,消費分類,金額\n"; 
+            records.forEach(r => {
+                csvContent += `${r.date},${r.category},${r.amount}\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            
+            link.setAttribute("href", url);
+            link.setAttribute("download", `本地記帳本備份_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // 網頁載入時自動啟動
         init();
     </script>
 </body>

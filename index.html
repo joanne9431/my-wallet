@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v4</title>
+    <title>極簡本地記帳 Pro v5</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -20,6 +20,20 @@
             --warning: #f1c40f;    
             --text: #333333;       
             --grey: #e1e4e8;       
+            
+            /* 💡 新增：各種消費種類的 Highlight 顏色背景 (溫和粉嫩系) */
+            --hl-food: #ffeaf0;    /* 餐飲：粉紅色 */
+            --hl-food-txt: #d6336c;
+            --hl-trans: #e7f5ff;   /* 交通：粉藍色 */
+            --hl-trans-txt: #1c7ed6;
+            --hl-play: #f3f0ff;    /* 娛樂：粉紫色 */
+            --hl-play-txt: #7048e8;
+            --hl-shop: #fff4e6;    /* 購物：粉橘色 */
+            --hl-shop-txt: #f76707;
+            --hl-home: #e6fcf5;    /* 居家：粉綠色 */
+            --hl-home-txt: #0ca678;
+            --hl-other: #f1f3f5;   /* 其他：淺灰色 */
+            --hl-other-txt: #495057;
         }
         
         body {
@@ -42,7 +56,6 @@
         h2 { margin-top: 0; font-size: 1.1rem; color: #666; font-weight: 600; }
         .total-amount { font-size: 2.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
         
-        /* 輸入框通用樣式（金額與備註欄位） */
         input[type="number"], input[type="text"] {
             width: 100%;
             padding: 14px;
@@ -55,7 +68,6 @@
         }
         input:focus { outline: none; border-color: var(--primary); } 
         
-        /* 按鈕樣式 */
         button {
             width: 100%;
             padding: 14px;
@@ -73,7 +85,7 @@
         .btn-save { background-color: var(--primary); color: white; }
         .btn-backup { background-color: var(--success); color: white; margin-top: 15px; }
         
-        /* 分類按鈕版面 */
+        /* 分類按鈕配置 */
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
@@ -119,11 +131,18 @@
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
-        .tag { background: #eef2f7; padding: 3px 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; align-self: flex-start; color: #555;}
         
-        /* 歷史紀錄中的日期與備註小字樣式 */
-        .item-details { color: #aaa; font-size: 0.75rem; margin-top: 4px; display: flex; gap: 8px; align-items: center; }
-        .note-text { color: #777; font-weight: 500; background: #fffbe6; padding: 1px 4px; border-radius: 4px; } /* 備註加點淡淡的黃底，更易讀 */
+        /* 💡 修改：歷史紀錄標籤移除預設灰色，改由 JS 動態上色 */
+        .tag { 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 0.85rem; 
+            font-weight: bold; 
+            align-self: flex-start; 
+        }
+        
+        .item-details { color: #aaa; font-size: 0.75rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
+        .note-text { color: #555; font-weight: 500; background: #fffbe6; padding: 1px 5px; border-radius: 4px; border: 1px solid #ffe58f; } 
 
         .item-right { display: flex; align-items: center; gap: 8px; }
         .amount { font-weight: 700; font-size: 1.1rem; margin-right: 5px; }
@@ -145,7 +164,6 @@
         <div id="edit-indicator" class="edit-mode-indicator">✏️ 正在修改歷史紀錄... (儲存後覆蓋)</div>
         
         <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
-        
         <input type="text" id="note" placeholder="輸入備註（如：餐廳名字、購買品項）">
         
         <div class="category-picker" id="category-picker"></div>
@@ -163,9 +181,9 @@
     </div>
 
     <script>
-        const DATA_FILE = "accounting_records_v4.json"; // 升級版本號，保持檔案乾淨
+        const DATA_FILE = "accounting_records_v5.json"; // 升級版本號
         
-        // 💡 提示：你可以直接在下方陣列中修改你的預設分類選項
+        // 💡 提示：你可以隨意更改這裡的名稱與 Emoji
         let categories = ["🍔 餐飲", "🚗 交通", "🎬 娛樂", "🛍️ 購物", "🏠 居家", "📦 其他"];
         
         let records = [];           
@@ -180,7 +198,7 @@
             renderRecords();      
         }
 
-        // 從 iOS OPFS 安全檔案系統中讀取檔案
+        // 從 iOS OPFS 檔案系統中讀取檔案
         async function loadRecords() {
             try {
                 const root = await navigator.storage.getDirectory(); 
@@ -190,7 +208,7 @@
                 records = text ? JSON.parse(text) : [];
             } catch (e) {
                 console.error("OPFS 讀取失敗:", e);
-                records = JSON.parse(localStorage.getItem('acc_rec_v4')) || [];
+                records = JSON.parse(localStorage.getItem('acc_rec_v5')) || [];
             }
         }
 
@@ -204,7 +222,7 @@
                 await writable.close();
             } catch (e) {
                 console.error("OPFS 寫入失敗:", e);
-                localStorage.setItem('acc_rec_v4', JSON.stringify(records));
+                localStorage.setItem('acc_rec_v5', JSON.stringify(records));
             }
         }
 
@@ -237,35 +255,31 @@
         // 處理「儲存」與「覆蓋修改」
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
-            const noteInput = document.getElementById('note'); // 抓取備註欄位
+            const noteInput = document.getElementById('note'); 
             
             const amount = parseFloat(amountInput.value);
-            const note = noteInput.value.trim(); // 去除文字前後的空白
+            const note = noteInput.value.trim(); 
 
             if (isNaN(amount) || amount <= 0) return alert('請輸入正確的金額！');
 
             if (editingRecordId !== null) {
-                // 【編輯修改模式】
                 const recordIndex = records.findIndex(r => r.id === editingRecordId);
                 if(recordIndex !== -1) {
                     records[recordIndex].amount = amount;
                     records[recordIndex].category = selectedCategory;
-                    records[recordIndex].note = note; // 💡 更新備註
+                    records[recordIndex].note = note; 
                 }
-                
-                // 還原回正常新增狀態
                 editingRecordId = null;
                 document.getElementById('form-title').innerText = "新增消費";
                 document.getElementById('btn-save-main').innerText = "儲存紀錄";
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
                 document.getElementById('edit-indicator').style.display = "none"; 
             } else {
-                // 【正常新增模式】
                 const newRecord = {
                     id: Date.now(), 
                     amount: amount,
                     category: selectedCategory,
-                    note: note, // 💡 儲存備註文字
+                    note: note, 
                     date: new Date().toLocaleDateString() 
                 };
                 records.unshift(newRecord);
@@ -273,24 +287,19 @@
 
             await saveRecords();     
             amountInput.value = '';  
-            noteInput.value = '';  // 儲存後自動清空備註欄位
+            noteInput.value = '';  
             renderRecords();         
         }
 
-        // 點擊 ✏️ 負責「倒填」資料的函式
         function startEdit(id) {
             const record = records.find(r => r.id === id);
             if(!record) return;
 
             editingRecordId = id; 
-            
-            // 將舊資料（含備註）填回上方欄位
             document.getElementById('amount').value = record.amount;
-            document.getElementById('note').value = record.note || ''; // 如果以前沒備註，就帶入空字串
-            
+            document.getElementById('note').value = record.note || ''; 
             selectedCategory = record.category;
             
-            // 變更 UI 為修改狀態
             document.getElementById('form-title').innerText = "修改歷史紀錄";
             document.getElementById('btn-save-main').innerText = "更新（覆蓋）紀錄";
             document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
@@ -300,12 +309,32 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // 刪除紀錄
         async function deleteRecord(id) {
             if (confirm("確定要刪除這筆紀錄嗎？")) {
                 records = records.filter(r => r.id !== id);
                 await saveRecords(); 
                 renderRecords();     
+            }
+        }
+
+        // 💡 新增：根據分類名稱自動判定並回傳對應的 CSS 樣式
+        function getHighlightStyle(category) {
+            // 轉成字串並檢查是否包含特定關鍵字
+            const catStr = String(category);
+            
+            if (catStr.includes("餐飲")) {
+                return "background-color: var(--hl-food); color: var(--hl-food-txt);";
+            } else if (catStr.includes("交通")) {
+                return "background-color: var(--hl-trans); color: var(--hl-trans-txt);";
+            } else if (catStr.includes("娛樂")) {
+                return "background-color: var(--hl-play); color: var(--hl-play-txt);";
+            } else if (catStr.includes("購物")) {
+                return "background-color: var(--hl-shop); color: var(--hl-shop-txt);";
+            } else if (catStr.includes("居家")) {
+                return "background-color: var(--hl-home); color: var(--hl-home-txt);";
+            } else {
+                // 如果是其他自訂或是找不到配對的關鍵字，就用中性灰色
+                return "background-color: var(--hl-other); color: var(--hl-other-txt);";
             }
         }
 
@@ -318,21 +347,22 @@
             let total = 0;
 
             if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">目尚無消費紀錄</div>`;
+                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">目前尚無消費紀錄</div>`;
                 totalContainer.innerText = '0';
                 return;
             }
 
             records.forEach(r => {
                 total += r.amount;
-                
-                // 💡 判斷有沒有備註，如果有，就拼裝出 HTML 小字樣式
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+                
+                // 💡 調用上色函式，動態取得這筆紀錄應該要有的 Highlight 顏色
+                const colorStyle = getHighlightStyle(r.category);
 
                 listContainer.innerHTML += `
                     <div class="list-item">
                         <div class="item-info">
-                            <span class="tag">${r.category}</span>
+                            <span class="tag" style="${colorStyle}">${r.category}</span>
                             <div class="item-details">
                                 <span>${r.date}</span>
                                 ${noteHTML}
@@ -350,10 +380,10 @@
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // 匯出 CSV 備份（備份檔也會包含備註欄位）
+        // 匯出 CSV 備份
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
-            let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; // 💡 CSV 開頭加入「備註」欄位
+            let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; 
             records.forEach(r => {
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');

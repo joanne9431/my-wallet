@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v5.1</title>
+    <title>極簡本地記帳 Pro v6.0</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -196,7 +196,7 @@
             renderRecords();      
         }
 
-        // 讀取本地硬碟檔案
+        // 讀取檔案
         async function loadRecords() {
             try {
                 const root = await navigator.storage.getDirectory(); 
@@ -210,7 +210,7 @@
             }
         }
 
-        // 寫入本地硬碟檔案
+        // 寫入檔案
         async function saveRecords() {
             try {
                 const root = await navigator.storage.getDirectory();
@@ -250,7 +250,7 @@
             btn.classList.add('active'); 
         }
 
-        // 處理儲存/覆蓋修改
+        // 儲存與覆蓋
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
             const noteInput = document.getElementById('note'); 
@@ -315,7 +315,7 @@
             }
         }
 
-        // 依據關鍵字自動取得 Highlight 顏色樣式
+        // 依關鍵字判定 Highlight 顏色樣式
         function getHighlightStyle(category) {
             const catStr = String(category);
             if (catStr.includes("餐飲")) {
@@ -333,7 +333,7 @@
             }
         }
 
-        // 渲染歷史紀錄清單
+        // 渲染網頁歷史紀錄清單
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -373,28 +373,87 @@
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // 核心修改點：匯出 CSV 並在金額欄位加上 $ 符號
+        // ===================================================
+        // 💡 核心修改點：匯出 CSV 並自動計算與安插 日/月/年 總消費小計
+        // ===================================================
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
-            // 定義 CSV 欄位名稱
+            // 為了方便依時間順序（從舊到新）統計日、月、年小計，我們先把資料倒序排列
+            let sortedRecords = [...records].reverse();
+            
             let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; 
             
-            records.forEach(r => {
+            let lastDate = "";
+            let dayTotal = 0;
+            let monthTotal = 0;
+            let yearTotal = 0;
+
+            for (let i = 0; i < sortedRecords.length; i++) {
+                const r = sortedRecords[i];
+                const nextRecord = sortedRecords[i + 1];
+
+                // 拆解當前的日期元件 (用於判斷月分與年份切換)
+                const currentDateObj = new Date(r.date);
+                const currentYear = currentDateObj.getFullYear();
+                const currentMonth = currentDateObj.getMonth(); // 0-11
+
+                // 拆解下一筆的日期元件
+                let nextYear = null;
+                let nextMonth = null;
+                if (nextRecord) {
+                    const nextDateObj = new Date(nextRecord.date);
+                    nextYear = nextDateObj.getFullYear();
+                    nextMonth = nextDateObj.getMonth();
+                }
+
+                // 1. 處理並寫入當前這筆一般交易
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
-                
-                // 💡 這裡將金額轉換為字串並在前方補上 "$" 符號
                 const formattedAmount = `$${r.amount}`;
                 
-                csvContent += `${r.date},${category},${formattedAmount},${note}\n`;
-            });
+                // 智慧日期留白：同一天只顯示一次日期
+                let displayDate = "";
+                if (r.date !== lastDate) {
+                    displayDate = r.date;
+                    lastDate = r.date;
+                }
+                
+                csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
+
+                // 2. 累加日、月、年統計金額
+                dayTotal += r.amount;
+                monthTotal += r.amount;
+                yearTotal += r.amount;
+
+                // 3. 判斷是否需要插入【每日小計】
+                // 條件：如果沒有下一筆資料了，或者是下一筆的「完整日期字串」與當前這筆不同
+                if (!nextRecord || nextRecord.date !== r.date) {
+                    csvContent += `[${r.date} 當日總計],,+$${dayTotal},\n`;
+                    dayTotal = 0; // 歸零，重新計算下一天
+                }
+
+                // 4. 判斷是否需要插入【每月總計】
+                // 條件：如果沒有下一筆資料了，或者是下一筆的「年份」或「月份」與當前不同
+                if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
+                    csvContent += `[${currentYear}年${currentMonth + 1}月 月總計],,+$${monthTotal},\n`;
+                    monthTotal = 0; // 歸零，重新計算下個月
+                }
+
+                // 5. 判斷是否需要插入【每年大計】
+                // 條件：如果沒有下一筆資料了，或者是下一筆的「年份」與當前不同
+                if (!nextRecord || nextYear !== currentYear) {
+                    csvContent += `[${currentYear}年 年總計],,+$${yearTotal},\n`;
+                    yearTotal = 0; // 歸零，重新計算下一年
+                }
+            }
             
+            // 下載 CSV 檔案程序
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", `本地記帳本備份_${new Date().toISOString().slice(0,10)}.csv`);
+            link.setAttribute("download", `本地記帳本明細與統計_${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

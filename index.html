@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v5</title>
+    <title>極簡本地記帳 Pro v5.1</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
             --text: #333333;       
             --grey: #e1e4e8;       
             
-            /* 💡 新增：各種消費種類的 Highlight 顏色背景 (溫和粉嫩系) */
+            /* 各種消費種類的 Highlight 顏色背景 (溫和粉嫩系) */
             --hl-food: #ffeaf0;    /* 餐飲：粉紅色 */
             --hl-food-txt: #d6336c;
             --hl-trans: #e7f5ff;   /* 交通：粉藍色 */
@@ -132,7 +132,6 @@
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         
-        /* 💡 修改：歷史紀錄標籤移除預設灰色，改由 JS 動態上色 */
         .tag { 
             padding: 4px 10px; 
             border-radius: 6px; 
@@ -181,9 +180,8 @@
     </div>
 
     <script>
-        const DATA_FILE = "accounting_records_v5.json"; // 升級版本號
+        const DATA_FILE = "accounting_records_v5.json"; 
         
-        // 💡 提示：你可以隨意更改這裡的名稱與 Emoji
         let categories = ["🍔 餐飲", "🚗 交通", "🎬 娛樂", "🛍️ 購物", "🏠 居家", "📦 其他"];
         
         let records = [];           
@@ -198,7 +196,7 @@
             renderRecords();      
         }
 
-        // 從 iOS OPFS 檔案系統中讀取檔案
+        // 讀取本地硬碟檔案
         async function loadRecords() {
             try {
                 const root = await navigator.storage.getDirectory(); 
@@ -212,7 +210,7 @@
             }
         }
 
-        // 將最新資料寫入 iOS 檔案系統
+        // 寫入本地硬碟檔案
         async function saveRecords() {
             try {
                 const root = await navigator.storage.getDirectory();
@@ -252,7 +250,7 @@
             btn.classList.add('active'); 
         }
 
-        // 處理「儲存」與「覆蓋修改」
+        // 處理儲存/覆蓋修改
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
             const noteInput = document.getElementById('note'); 
@@ -317,11 +315,9 @@
             }
         }
 
-        // 💡 新增：根據分類名稱自動判定並回傳對應的 CSS 樣式
+        // 依據關鍵字自動取得 Highlight 顏色樣式
         function getHighlightStyle(category) {
-            // 轉成字串並檢查是否包含特定關鍵字
             const catStr = String(category);
-            
             if (catStr.includes("餐飲")) {
                 return "background-color: var(--hl-food); color: var(--hl-food-txt);";
             } else if (catStr.includes("交通")) {
@@ -333,7 +329,6 @@
             } else if (catStr.includes("居家")) {
                 return "background-color: var(--hl-home); color: var(--hl-home-txt);";
             } else {
-                // 如果是其他自訂或是找不到配對的關鍵字，就用中性灰色
                 return "background-color: var(--hl-other); color: var(--hl-other-txt);";
             }
         }
@@ -355,8 +350,6 @@
             records.forEach(r => {
                 total += r.amount;
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
-                
-                // 💡 調用上色函式，動態取得這筆紀錄應該要有的 Highlight 顏色
                 const colorStyle = getHighlightStyle(r.category);
 
                 listContainer.innerHTML += `
@@ -380,15 +373,23 @@
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // 匯出 CSV 備份
+        // 核心修改點：匯出 CSV 並在金額欄位加上 $ 符號
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
+            
+            // 定義 CSV 欄位名稱
             let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; 
+            
             records.forEach(r => {
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
-                csvContent += `${r.date},${category},${r.amount},${note}\n`;
+                
+                // 💡 這裡將金額轉換為字串並在前方補上 "$" 符號
+                const formattedAmount = `$${r.amount}`;
+                
+                csvContent += `${r.date},${category},${formattedAmount},${note}\n`;
             });
+            
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

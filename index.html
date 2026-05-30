@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.5</title>
+    <title>極簡本地記帳 Pro v6.7</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -48,7 +48,7 @@
         .card {
             background: var(--card-bg);
             border-radius: 14px;
-            padding: 14px; /* 💡 縮小內距，讓版面更緊湊 */
+            padding: 14px; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
             margin-bottom: 10px;
         }
@@ -73,10 +73,9 @@
             gap: 10px;
         }
         
-        /* 💡 核心修改：總消費文字向右移，貼近項目統計區 */
         .total-box {
             flex: 1;
-            padding-left: 20px; /* 向右靠攏 */
+            padding-left: 20px; 
             text-align: left;
         }
         .total-amount { 
@@ -113,11 +112,10 @@
             color: #222;
         }
         
-        /* 💡 核心修改：輸入框格縮小，版面緊湊 */
         input[type="number"], input[type="text"] {
             width: 100%;
-            padding: 10px 12px; /* 縮小 Padding */
-            margin: 4px 0;      /* 縮小間距 */
+            padding: 10px 12px; 
+            margin: 4px 0;      
             border-radius: 8px;
             border: 1px solid var(--grey);
             box-sizing: border-box;
@@ -143,7 +141,6 @@
         .btn-save { background-color: var(--primary); color: white; margin-top: 6px; }
         .btn-backup { background-color: var(--success); color: white; margin-top: 6px; }
         
-        /* 💡 核心修改：選項格（分類按鈕）縮小 */
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
@@ -157,15 +154,15 @@
             color: var(--text);
             border: 1.5px solid var(--grey);
             border-radius: 10px;
-            padding: 8px 2px; /* 縮減上下高 */
+            padding: 8px 2px; 
             display: flex;
             flex-direction: column; 
             align-items: center;
             gap: 2px;
             margin: 0;
         }
-        .category-btn .icon-label { font-size: 1.05rem; } /* 圖示縮小 */
-        .category-btn .label { font-size: 0.75rem; font-weight: bold; } /* 文字縮小 */
+        .category-btn .icon-label { font-size: 1.05rem; } 
+        .category-btn .label { font-size: 0.75rem; font-weight: bold; } 
         
         .category-btn.active {
             background-color: var(--primary);
@@ -185,7 +182,6 @@
             text-align: center;
         }
         
-        /* 💡 歷史紀錄緊湊化 */
         .list-container { max-height: 260px; overflow-y: auto; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f2f5; }
         .list-item:last-child { border-bottom: none; }
@@ -337,7 +333,6 @@
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
                 document.getElementById('edit-indicator').style.display = "none"; 
             } else {
-                // 💡 核心修改：從源頭直接儲存穩固的標準 YYYY-MM-DD 日期，解決手機端亂碼與 undefined 月份問題
                 const now = new Date();
                 const yyyy = now.getFullYear();
                 const mm = String(now.getMonth() + 1).padStart(2, '0');
@@ -414,7 +409,6 @@
             catTotalsContainer.innerHTML = '';
             
             let total = 0;
-            
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
@@ -474,7 +468,7 @@
             });
         }
 
-        // 💡 核心優化：日期源頭已標準化，此處防禦性確保格式無虞，絕不產生 undefined
+        // 安全確保 ISO 日期格式
         function ensureISODate(dateStr) {
             if (dateStr && dateStr.includes('-') && dateStr.split('-').length === 3) {
                 return dateStr;
@@ -491,7 +485,7 @@
             }
         }
 
-        // 匯出 CSV 邏輯
+        // 💡 核心修改：將「當日總計」前方的 A 欄也完全留白，不顯示日期
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
@@ -507,11 +501,12 @@
                 const r = sortedRecords[i];
                 const nextRecord = sortedRecords[i + 1];
 
-                // 100% 安全無誤的標準日期取得
                 const currentIsoDate = ensureISODate(r.date);
                 const parts = currentIsoDate.split('-');
                 const currentYear = parts[0];
                 const currentMonth = parts[1]; 
+                
+                const cleanMonth = parseInt(currentMonth, 10);
 
                 let nextYear = null;
                 let nextMonth = null;
@@ -523,7 +518,7 @@
                     nextMonth = nParts[1];
                 }
 
-                // 寫入一般交易
+                // 寫入一般交易明細
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `$${r.amount}`;
@@ -543,21 +538,21 @@
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 每日小計
+                // 💡 當日總計 -> 第一欄改為「留白」，標籤與金額整齊排列
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
-                    csvContent += `${currentIsoDate},當日總計,$${dayTotal},\n`;
+                    csvContent += `,當日總計,$${dayTotal},\n`;
                     dayTotal = 0; 
                 }
 
-                // 每月總計
+                // 每月總計 -> 第一欄「留白」
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
-                    csvContent += `${currentYear}-${currentMonth}-01,${currentYear}年${currentMonth}月總計,$${monthTotal},\n`;
+                    csvContent += `,${cleanMonth}月總計,$${monthTotal},\n`;
                     monthTotal = 0; 
                 }
 
-                // 每年大計
+                // 每年大計 -> 第一欄「留白」
                 if (!nextRecord || nextYear !== currentYear) {
-                    csvContent += `${currentYear}-01-01,${currentYear}年總計,$${yearTotal},\n`;
+                    csvContent += `,${currentYear}年總計,$${yearTotal},\n`;
                     yearTotal = 0; 
                 }
             }

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>極簡本地記帳</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="本地記帳">
+
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --primary: #4a90e2;
+            --text: #333333;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            padding-top: 40px; /* 留出 iOS 狀態列空間 */
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        h2 { margin-top: 0; font-size: 1.2rem; color: #666; }
+        .total-amount { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .list-item:last-child { border-bottom: none; }
+        .tag { background: #eee; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>本月總花費</h2>
+        <div class="total-amount">$<span id="total">0</span></div>
+    </div>
+
+    <div class="card">
+        <h2>新增消費</h2>
+        <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
+        <select id="category">
+            <option value="餐飲">🍔 餐飲</option>
+            <option value="交通">🚗 交通</option>
+            <option value="娛樂">🎬 娛樂</option>
+            <option value="購物">🛍️ 購物</option>
+            <option value="其他">📦 其他</option>
+        </select>
+        <button onclick="addRecord()">儲存</button>
+    </div>
+
+    <div class="card">
+        <h2>歷史紀錄</h2>
+        <div id="history-list">
+            </div>
+    </div>
+
+    <script>
+        // 核心邏輯：從手機本地 LocalStorage 讀取資料
+        let records = JSON.parse(localStorage.getItem('accounting_records')) || [];
+
+        function init() {
+            render();
+        }
+
+        function addRecord() {
+            const amountInput = document.getElementById('amount');
+            const categoryInput = document.getElementById('category');
+            
+            const amount = parseFloat(amountInput.value);
+            const category = categoryInput.value;
+
+            if (isNaN(amount) || amount <= 0) {
+                alert('請輸入正確的金額');
+                return;
+            }
+
+            const newRecord = {
+                id: Date.now(),
+                amount: amount,
+                category: category,
+                date: new Date().toLocaleDateString()
+            };
+
+            records.unshift(newRecord); // 新紀錄排在最前面
+            localStorage.setItem('accounting_records', JSON.stringify(records)); // 儲存至本地
+            
+            amountInput.value = ''; // 清空輸入框
+            render();
+        }
+
+        function render() {
+            const listContainer = document.getElementById('history-list');
+            const totalContainer = document.getElementById('total');
+            
+            listContainer.innerHTML = '';
+            let total = 0;
+
+            records.forEach(r => {
+                total += r.amount;
+                listContainer.innerHTML += `
+                    <div class="list-item">
+                        <div>
+                            <span class="tag">${r.category}</span>
+                            <span style="color: #999; margin-left: 5px;">${r.date}</span>
+                        </div>
+                        <div style="font-weight: bold;">$${r.amount}</div>
+                    </div>
+                `;
+            });
+
+            totalContainer.innerText = total.toLocaleString();
+        }
+
+        // 啟動初始化
+        init();
+    </script>
+</body>
+</html>

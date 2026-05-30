@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.1</title>
+    <title>極簡本地記帳 Pro v6.2</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
             --text: #333333;       
             --grey: #e1e4e8;       
             
-            /* 各種消費種類的 Highlight 顏色背景 */
+            /* 各種消費種類的 Highlight 顏色背景 (溫和粉嫩系) */
             --hl-food: #ffeaf0;    /* 餐飲：粉紅色 */
             --hl-food-txt: #d6336c;
             --hl-trans: #e7f5ff;   /* 交通：粉藍色 */
@@ -56,6 +56,7 @@
         h2 { margin-top: 0; font-size: 1.1rem; color: #666; font-weight: 600; }
         .total-amount { font-size: 2.2rem; font-weight: bold; color: var(--primary); margin-top: 5px; }
         
+        /* 輸入框通用樣式 */
         input[type="number"], input[type="text"] {
             width: 100%;
             padding: 14px;
@@ -68,6 +69,7 @@
         }
         input:focus { outline: none; border-color: var(--primary); } 
         
+        /* 按鈕樣式 */
         button {
             width: 100%;
             padding: 14px;
@@ -132,6 +134,7 @@
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         
+        /* 歷史紀錄分類標籤 */
         .tag { 
             padding: 4px 10px; 
             border-radius: 6px; 
@@ -140,6 +143,7 @@
             align-self: flex-start; 
         }
         
+        /* 歷史紀錄細節與備註小字 */
         .item-details { color: #aaa; font-size: 0.75rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
         .note-text { color: #555; font-weight: 500; background: #fffbe6; padding: 1px 5px; border-radius: 4px; border: 1px solid #ffe58f; } 
 
@@ -163,6 +167,7 @@
         <div id="edit-indicator" class="edit-mode-indicator">✏️ 正在修改歷史紀錄... (儲存後覆蓋)</div>
         
         <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
+        
         <input type="text" id="note" placeholder="輸入備註（如：餐廳名字、購買品項）">
         
         <div class="category-picker" id="category-picker"></div>
@@ -196,7 +201,7 @@
             renderRecords();      
         }
 
-        // 讀取檔案
+        // 讀取本地硬碟檔案
         async function loadRecords() {
             try {
                 const root = await navigator.storage.getDirectory(); 
@@ -210,7 +215,7 @@
             }
         }
 
-        // 寫入檔案
+        // 寫入本地硬碟檔案
         async function saveRecords() {
             try {
                 const root = await navigator.storage.getDirectory();
@@ -250,7 +255,7 @@
             btn.classList.add('active'); 
         }
 
-        // 儲存與覆蓋
+        // 處理儲存與覆蓋修改
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
             const noteInput = document.getElementById('note'); 
@@ -315,7 +320,7 @@
             }
         }
 
-        // 依關鍵字判定 Highlight 顏色樣式
+        // 依關鍵字自動取得 Highlight 顏色樣式
         function getHighlightStyle(category) {
             const catStr = String(category);
             if (catStr.includes("餐飲")) {
@@ -373,11 +378,11 @@
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // 💡 輔助函式：將各種可能的手機本地日期格式（例如 2026/5/30）精準轉化為標準的 YYYY-MM-DD
+        // 輔助功能：將各式各樣的本地日期轉為標準的 YYYY-MM-DD 以適應手機端軟體
         function convertToISODate(dateStr) {
             try {
                 const d = new Date(dateStr);
-                if (isNaN(d.getTime())) return dateStr; // 如果失敗則傳回原字串
+                if (isNaN(d.getTime())) return dateStr; 
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
@@ -387,7 +392,7 @@
             }
         }
 
-        // 核心修改點：匯出符合手機軟體規格的標準 CSV
+        // 匯出 CSV 邏輯 (包含：ISO日期、智慧留白、日/月/年統計總額、已移除加號)
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
@@ -403,11 +408,10 @@
                 const r = sortedRecords[i];
                 const nextRecord = sortedRecords[i + 1];
 
-                // 統一轉為標準 ISO 日期 (格式為 "2026-05-30")
                 const currentIsoDate = convertToISODate(r.date);
                 const parts = currentIsoDate.split('-');
                 const currentYear = parts[0];
-                const currentMonth = parts[1]; // "01"-"12"
+                const currentMonth = parts[1]; 
 
                 let nextYear = null;
                 let nextMonth = null;
@@ -419,47 +423,46 @@
                     nextMonth = nParts[1];
                 }
 
-                // 1. 處理當前這筆交易資料
+                // 1. 處理並寫入一般單筆消費明細
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `$${r.amount}`;
                 
-                // 💡 智慧留白：如果跟上一筆的標準日期相同，就留空字串
                 let displayDate = "";
                 if (currentIsoDate !== lastIsoDate) {
                     displayDate = currentIsoDate;
                     lastIsoDate = currentIsoDate;
                 } else {
-                    displayDate = "";
+                    displayDate = ""; // 同一天，日期欄留白
                 }
                 
                 csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
 
-                // 2. 累加統計
+                // 2. 累加統計加總
                 dayTotal += r.amount;
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 3. 檢查並寫入【每日小計】
+                // 3. 檢查並寫入【每日小計】（無加號）
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
-                    csvContent += `[${currentIsoDate} 當日總計],,+$${dayTotal},\n`;
+                    csvContent += `[${currentIsoDate} 當日總計],,$${dayTotal},\n`;
                     dayTotal = 0; 
                 }
 
-                // 4. 檢查並寫入【每月總計】
+                // 4. 檢查並寫入【每月總計】（無加號）
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
-                    csvContent += `[${currentYear}年${currentMonth}月 月總計],,+$${monthTotal},\n`;
+                    csvContent += `[${currentYear}年${currentMonth}月 月總計],,$${monthTotal},\n`;
                     monthTotal = 0; 
                 }
 
-                // 5. 檢查並寫入【每年大計】
+                // 5. 檢查並寫入【每年大計】（無加號）
                 if (!nextRecord || nextYear !== currentYear) {
-                    csvContent += `[${currentYear}年 年總計],,+$${yearTotal},\n`;
+                    csvContent += `[${currentYear}年 年總計],,$${yearTotal},\n`;
                     yearTotal = 0; 
                 }
             }
             
-            // 下載
+            // 執行檔案下載
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.0</title>
+    <title>極簡本地記帳 Pro v6.1</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,7 +21,7 @@
             --text: #333333;       
             --grey: #e1e4e8;       
             
-            /* 各種消費種類的 Highlight 顏色背景 (溫和粉嫩系) */
+            /* 各種消費種類的 Highlight 顏色背景 */
             --hl-food: #ffeaf0;    /* 餐飲：粉紅色 */
             --hl-food-txt: #d6336c;
             --hl-trans: #e7f5ff;   /* 交通：粉藍色 */
@@ -373,18 +373,28 @@
             totalContainer.innerText = total.toLocaleString();
         }
 
-        // ===================================================
-        // 💡 核心修改點：匯出 CSV 並自動計算與安插 日/月/年 總消費小計
-        // ===================================================
+        // 💡 輔助函式：將各種可能的手機本地日期格式（例如 2026/5/30）精準轉化為標準的 YYYY-MM-DD
+        function convertToISODate(dateStr) {
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return dateStr; // 如果失敗則傳回原字串
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            } catch(e) {
+                return dateStr;
+            }
+        }
+
+        // 核心修改點：匯出符合手機軟體規格的標準 CSV
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
-            // 為了方便依時間順序（從舊到新）統計日、月、年小計，我們先把資料倒序排列
             let sortedRecords = [...records].reverse();
-            
             let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; 
             
-            let lastDate = "";
+            let lastIsoDate = "";
             let dayTotal = 0;
             let monthTotal = 0;
             let yearTotal = 0;
@@ -393,62 +403,63 @@
                 const r = sortedRecords[i];
                 const nextRecord = sortedRecords[i + 1];
 
-                // 拆解當前的日期元件 (用於判斷月分與年份切換)
-                const currentDateObj = new Date(r.date);
-                const currentYear = currentDateObj.getFullYear();
-                const currentMonth = currentDateObj.getMonth(); // 0-11
+                // 統一轉為標準 ISO 日期 (格式為 "2026-05-30")
+                const currentIsoDate = convertToISODate(r.date);
+                const parts = currentIsoDate.split('-');
+                const currentYear = parts[0];
+                const currentMonth = parts[1]; // "01"-"12"
 
-                // 拆解下一筆的日期元件
                 let nextYear = null;
                 let nextMonth = null;
+                let nextIsoDate = null;
                 if (nextRecord) {
-                    const nextDateObj = new Date(nextRecord.date);
-                    nextYear = nextDateObj.getFullYear();
-                    nextMonth = nextDateObj.getMonth();
+                    nextIsoDate = convertToISODate(nextRecord.date);
+                    const nParts = nextIsoDate.split('-');
+                    nextYear = nParts[0];
+                    nextMonth = nParts[1];
                 }
 
-                // 1. 處理並寫入當前這筆一般交易
+                // 1. 處理當前這筆交易資料
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `$${r.amount}`;
                 
-                // 智慧日期留白：同一天只顯示一次日期
+                // 💡 智慧留白：如果跟上一筆的標準日期相同，就留空字串
                 let displayDate = "";
-                if (r.date !== lastDate) {
-                    displayDate = r.date;
-                    lastDate = r.date;
+                if (currentIsoDate !== lastIsoDate) {
+                    displayDate = currentIsoDate;
+                    lastIsoDate = currentIsoDate;
+                } else {
+                    displayDate = "";
                 }
                 
                 csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
 
-                // 2. 累加日、月、年統計金額
+                // 2. 累加統計
                 dayTotal += r.amount;
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 3. 判斷是否需要插入【每日小計】
-                // 條件：如果沒有下一筆資料了，或者是下一筆的「完整日期字串」與當前這筆不同
-                if (!nextRecord || nextRecord.date !== r.date) {
-                    csvContent += `[${r.date} 當日總計],,+$${dayTotal},\n`;
-                    dayTotal = 0; // 歸零，重新計算下一天
+                // 3. 檢查並寫入【每日小計】
+                if (!nextRecord || nextIsoDate !== currentIsoDate) {
+                    csvContent += `[${currentIsoDate} 當日總計],,+$${dayTotal},\n`;
+                    dayTotal = 0; 
                 }
 
-                // 4. 判斷是否需要插入【每月總計】
-                // 條件：如果沒有下一筆資料了，或者是下一筆的「年份」或「月份」與當前不同
+                // 4. 檢查並寫入【每月總計】
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
-                    csvContent += `[${currentYear}年${currentMonth + 1}月 月總計],,+$${monthTotal},\n`;
-                    monthTotal = 0; // 歸零，重新計算下個月
+                    csvContent += `[${currentYear}年${currentMonth}月 月總計],,+$${monthTotal},\n`;
+                    monthTotal = 0; 
                 }
 
-                // 5. 判斷是否需要插入【每年大計】
-                // 條件：如果沒有下一筆資料了，或者是下一筆的「年份」與當前不同
+                // 5. 檢查並寫入【每年大計】
                 if (!nextRecord || nextYear !== currentYear) {
                     csvContent += `[${currentYear}年 年總計],,+$${yearTotal},\n`;
-                    yearTotal = 0; // 歸零，重新計算下一年
+                    yearTotal = 0; 
                 }
             }
             
-            // 下載 CSV 檔案程序
+            // 下載
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

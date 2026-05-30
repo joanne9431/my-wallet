@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.7</title>
+    <title>極簡本地記帳 Pro v6.8</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -112,7 +112,7 @@
             color: #222;
         }
         
-        input[type="number"], input[type="text"] {
+        input[type="number"], input[type="text"], input[type="date"] {
             width: 100%;
             padding: 10px 12px; 
             margin: 4px 0;      
@@ -123,6 +123,23 @@
             -webkit-appearance: none; 
         }
         input:focus { outline: none; border-color: var(--primary); } 
+        
+        /* 💡 編輯日期專用樣式 */
+        .edit-date-wrapper {
+            display: none; /* 平常隱藏，修改時才展開 */
+            background: #fff8e6;
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px dashed var(--warning);
+            margin: 4px 0;
+        }
+        .edit-date-wrapper label {
+            font-size: 0.75rem;
+            color: #b78103;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+        }
         
         button {
             width: 100%;
@@ -225,6 +242,11 @@
         <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
         <input type="text" id="note" placeholder="輸入備註（如：餐廳名字、購買品項）">
         
+        <div class="edit-date-wrapper" id="date-field-block">
+            <label for="edit-date">修改消費日期：</label>
+            <input type="date" id="edit-date">
+        </div>
+        
         <div class="category-picker" id="category-picker"></div>
         
         <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">儲存紀錄</button>
@@ -314,6 +336,7 @@
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
             const noteInput = document.getElementById('note'); 
+            const dateInput = document.getElementById('edit-date');
             
             const amount = parseFloat(amountInput.value);
             const note = noteInput.value.trim(); 
@@ -326,12 +349,22 @@
                     records[recordIndex].amount = amount;
                     records[recordIndex].category = selectedCategory;
                     records[recordIndex].note = note; 
+                    
+                    // 💡 核心修改：如果使用者改了日期，更新它（防呆防空值）
+                    if (dateInput.value) {
+                        records[recordIndex].date = dateInput.value;
+                    }
                 }
+                
+                // 💡 修改完成，將陣列依照日期最新（降冪）重新排序
+                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                
                 editingRecordId = null;
                 document.getElementById('form-title').innerText = "新增消費";
                 document.getElementById('btn-save-main').innerText = "儲存紀錄";
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
                 document.getElementById('edit-indicator').style.display = "none"; 
+                document.getElementById('date-field-block').style.display = "none"; // 隱藏日期欄
             } else {
                 const now = new Date();
                 const yyyy = now.getFullYear();
@@ -347,6 +380,8 @@
                     date: isoDateStr 
                 };
                 records.unshift(newRecord);
+                // 確保全新加入的順序正確
+                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
             }
 
             await saveRecords();     
@@ -355,6 +390,7 @@
             renderRecords();         
         }
 
+        // 💡 核心修改：點擊編輯時，載入並顯示可跨日期調整的欄位
         function startEdit(id) {
             const record = records.find(r => r.id === id);
             if(!record) return;
@@ -362,12 +398,14 @@
             editingRecordId = id; 
             document.getElementById('amount').value = record.amount;
             document.getElementById('note').value = record.note || ''; 
+            document.getElementById('edit-date').value = ensureISODate(record.date); // 填入原本日期
             selectedCategory = record.category;
             
             document.getElementById('form-title').innerText = "修改歷史紀錄";
             document.getElementById('btn-save-main').innerText = "更新（覆蓋）紀錄";
             document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
             document.getElementById('edit-indicator').style.display = "block";
+            document.getElementById('date-field-block').style.display = "block"; // 展開日期調整欄
             
             renderCategories(); 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -485,11 +523,12 @@
             }
         }
 
-        // 💡 核心修改：將「當日總計」前方的 A 欄也完全留白，不顯示日期
+        // 匯出 CSV 邏輯
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
-            let sortedRecords = [...records].reverse();
+            // 💡 確保匯出時是由舊到新（正序）處理統計
+            let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; 
             
             let lastIsoDate = "";
@@ -538,7 +577,7 @@
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 💡 當日總計 -> 第一欄改為「留白」，標籤與金額整齊排列
+                // 當日總計 -> 第一欄「留白」
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
                     csvContent += `,當日總計,$${dayTotal},\n`;
                     dayTotal = 0; 

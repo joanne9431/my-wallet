@@ -535,12 +535,42 @@
             });
         }
 
+        // 核心智慧日期修正：精準解析日/月/年格式 (例如：1/6/2026, 30/5/2026)
         function ensureISODate(dateStr) {
-            if (dateStr && dateStr.includes('-') && dateStr.split('-').length === 3) {
-                return dateStr;
+            if (!dateStr) return "2026-06-01";
+            
+            let cleanStr = dateStr.trim();
+            
+            // 如果已經是標準的 YYYY-MM-DD 格式，直接返回
+            if (cleanStr.includes('-') && cleanStr.split('-').length === 3) {
+                return cleanStr;
             }
+            
+            // 如果包含斜線（如 1/6/2026 或 30/5/2026），手動強拆解析，防止瀏覽器胡亂解讀
+            if (cleanStr.includes('/')) {
+                let parts = cleanStr.split('/');
+                if (parts.length === 3) {
+                    let d = parts[0].trim();
+                    let m = parts[1].trim();
+                    let y = parts[2].trim();
+                    
+                    // 如果年份寫在前面 (YYYY/MM/DD)
+                    if (y.length !== 4 && d.length === 4) {
+                        let temp = y;
+                        y = d;
+                        d = temp;
+                    }
+                    
+                    let finalY = y;
+                    let finalM = m.padStart(2, '0');
+                    let finalD = d.padStart(2, '0');
+                    return `${finalY}-${finalM}-${finalD}`;
+                }
+            }
+            
+            // 萬一有其他例外，使用原生兜底
             try {
-                const d = new Date(dateStr);
+                const d = new Date(cleanStr);
                 if (isNaN(d.getTime())) return "2026-06-01"; 
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -551,7 +581,6 @@
             }
         }
 
-        // CSV 智慧導入處理（精準修復日期留白與統計行過濾）
         function handleCSVImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -562,7 +591,7 @@
                 const lines = text.split(/\r?\n/);
                 
                 let importedCount = 0;
-                let activeDate = ""; // 用來記住並向下傳遞的最新有效日期
+                let activeDate = ""; 
 
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
@@ -592,17 +621,14 @@
                     let rawAmount = parts[2] ? parts[2].trim() : "";
                     let rawNote = parts[3] ? parts[3].trim() : "";
 
-                    // 1. 如果是統計關鍵字列（Total 等），直接跳過不讀
                     if (rawCategory.toLowerCase().includes("total") || rawDate.toLowerCase().includes("total")) {
                         continue;
                     }
 
-                    // 2. 核心修正：如果這一列有填寫新日期，就更新並鎖定它
                     if (rawDate !== "") {
                         activeDate = ensureISODate(rawDate);
                     }
                     
-                    // 3. 安全過濾：必須有有效日期、種類、金額
                     if (!activeDate || !rawCategory || !rawAmount) continue;
 
                     let cleanAmountStr = rawAmount.replace(/HK\$/g, '').replace(/,/g, '').trim();
@@ -611,19 +637,17 @@
 
                     let finalCategory = matchCategoryWithEmoji(rawCategory);
                     
-                    // 將資料安全推入系統陣列
                     records.push({
                         id: Date.now() + i, 
                         amount: amount,
                         category: finalCategory,
                         note: rawNote,
-                        date: activeDate // 使用精確補滿後的日期
+                        date: activeDate 
                     });
                     importedCount++;
                 }
 
                 if (importedCount > 0) {
-                    // 重新依據新日期做全域排序
                     records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                     await saveRecords();
                     renderRecords();
@@ -678,7 +702,9 @@
                 
                 let displayDate = "";
                 if (currentIsoDate !== lastIsoDate) {
-                    displayDate = currentIsoDate;
+                    // 匯出時統一轉換為 日/月/年，保持與匯入系統一致
+                    const dParts = currentIsoDate.split('-');
+                    displayDate = `${parseInt(dParts[2],10)}/${parseInt(dParts[1],10)}/${dParts[0]}`;
                     lastIsoDate = currentIsoDate;
                 } else {
                     displayDate = ""; 

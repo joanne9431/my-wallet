@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.9</title>
+    <title>Minimalist Local Budget Pro v7.1</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="本地記帳">
+    <meta name="apple-mobile-web-app-title" content="Budget">
 
     <style>
         /* 全域變數（顏色主題） */
@@ -22,17 +22,17 @@
             --grey: #e1e4e8;       
             
             /* 各種消費種類的 Highlight 顏色背景 */
-            --hl-food: #ffeaf0;    /* 餐飲：粉紅色 */
+            --hl-food: #ffeaf0;    /* Food: 粉紅色 */
             --hl-food-txt: #d6336c;
-            --hl-trans: #e7f5ff;   /* 交通：粉藍色 */
+            --hl-trans: #e7f5ff;   /* Transport: 粉藍色 */
             --hl-trans-txt: #1c7ed6;
-            --hl-play: #f3f0ff;    /* 娛樂：粉紫色 */
+            --hl-play: #f3f0ff;    /* Entertainment: 粉紫色 */
             --hl-play-txt: #7048e8;
-            --hl-shop: #fff4e6;    /* 購物：粉橘色 */
+            --hl-shop: #fff4e6;    /* Shopping: 粉橘色 */
             --hl-shop-txt: #f76707;
-            --hl-home: #e6fcf5;    /* 居家：粉綠色 */
+            --hl-home: #e6fcf5;    /* Home: 粉綠色 */
             --hl-home-txt: #0ca678;
-            --hl-other: #f1f3f5;   /* 其他：淺灰色 */
+            --hl-other: #f1f3f5;   /* Others: 淺灰色 */
             --hl-other-txt: #495057;
         }
         
@@ -124,6 +124,7 @@
         }
         input:focus { outline: none; border-color: var(--primary); } 
         
+        /* 編輯日期專用樣式 */
         .edit-date-wrapper {
             display: none; 
             background: #fff8e6;
@@ -226,48 +227,52 @@
     <div class="card top-sticky-card">
         <div class="dashboard-layout">
             <div class="total-box">
-                <h2>本月總花費</h2>
-                <div class="total-amount">$<span id="total">0</span></div>
+                <h2>Total This Month</h2>
+                <div class="total-amount">HK$<span id="total">0</span></div>
             </div>
             <div class="category-totals-box" id="category-totals-container"></div>
         </div>
     </div>
 
     <div class="card">
-        <h2 id="form-title">新增消費</h2>
+        <h2 id="form-title">Add Transaction</h2>
         
-        <div id="edit-indicator" class="edit-mode-indicator">✏️ 正在修改歷史紀錄... (儲存後覆蓋)</div>
+        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing historical record... (will overwrite on save)</div>
         
-        <input type="number" id="amount" placeholder="輸入金額" inputmode="decimal">
-        <input type="text" id="note" placeholder="輸入備註（如：餐廳名字、購買品項）">
+        <input type="number" id="amount" placeholder="Enter amount" inputmode="decimal">
+        <input type="text" id="note" placeholder="Enter notes (e.g., restaurant name, item name)">
         
         <div class="edit-date-wrapper" id="date-field-block">
-            <label for="edit-date">修改消費日期：</label>
+            <label for="edit-date">Modify Transaction Date:</label>
             <input type="date" id="edit-date">
         </div>
         
         <div class="category-picker" id="category-picker"></div>
         
-        <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">儲存紀錄</button>
+        <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">Save Record</button>
     </div>
 
     <div class="card">
-        <h2>歷史紀錄</h2>
+        <h2>History Logs</h2>
         <div class="list-container" id="history-list"></div>
     </div>
 
     <div style="padding: 0 2px;">
-        <button class="btn-backup" onclick="exportToCSV()">備份資料 (匯出 Excel CSV)</button>
+        <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
     </div>
 
     <script>
         const DATA_FILE = "accounting_records_v5.json"; 
         
-        let categories = ["🍔 餐飲", "🚗 交通", "🎬 娛樂", "🛍️ 購物", "🏠 居家", "📦 其他"];
+        // 分類選單（英文版面）
+        let categories = ["🍔 Food", "🚗 Transport", "🎬 Entertainment", "🛍️ Shopping", "🏠 Home", "📦 Others"];
         
         let records = [];           
         let selectedCategory = "";  
         let editingRecordId = null; 
+
+        // 供 CSV 轉換使用的英文月份名稱對照
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
         // 初始化
         async function init() {
@@ -340,7 +345,7 @@
             const amount = parseFloat(amountInput.value);
             const note = noteInput.value.trim(); 
 
-            if (isNaN(amount) || amount <= 0) return alert('請輸入正確的金額！');
+            if (isNaN(amount) || amount <= 0) return alert('Please enter a valid amount!');
 
             if (editingRecordId !== null) {
                 const recordIndex = records.findIndex(r => r.id === editingRecordId);
@@ -354,11 +359,12 @@
                     }
                 }
                 
+                // 依照日期最新重新排序
                 records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                 
                 editingRecordId = null;
-                document.getElementById('form-title').innerText = "新增消費";
-                document.getElementById('btn-save-main').innerText = "儲存紀錄";
+                document.getElementById('form-title').innerText = "Add Transaction";
+                document.getElementById('btn-save-main').innerText = "Save Record";
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
                 document.getElementById('edit-indicator').style.display = "none"; 
                 document.getElementById('date-field-block').style.display = "none"; 
@@ -386,6 +392,7 @@
             renderRecords();         
         }
 
+        // 點擊編輯時觸發
         function startEdit(id) {
             const record = records.find(r => r.id === id);
             if(!record) return;
@@ -396,8 +403,8 @@
             document.getElementById('edit-date').value = ensureISODate(record.date); 
             selectedCategory = record.category;
             
-            document.getElementById('form-title').innerText = "修改歷史紀錄";
-            document.getElementById('btn-save-main').innerText = "更新（覆蓋）紀錄";
+            document.getElementById('form-title').innerText = "Edit History Record";
+            document.getElementById('btn-save-main').innerText = "Update Record";
             document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
             document.getElementById('edit-indicator').style.display = "block";
             document.getElementById('date-field-block').style.display = "block"; 
@@ -407,7 +414,7 @@
         }
 
         async function deleteRecord(id) {
-            if (confirm("確定要刪除這筆紀錄嗎？")) {
+            if (confirm("Are you sure you want to delete this record?")) {
                 records = records.filter(r => r.id !== id);
                 await saveRecords(); 
                 renderRecords();     
@@ -417,15 +424,15 @@
         // 依關鍵字自動取得 Highlight 顏色樣式
         function getHighlightStyle(category) {
             const catStr = String(category);
-            if (catStr.includes("餐飲")) {
+            if (catStr.includes("Food")) {
                 return "background-color: var(--hl-food); color: var(--hl-food-txt);";
-            } else if (catStr.includes("交通")) {
+            } else if (catStr.includes("Transport")) {
                 return "background-color: var(--hl-trans); color: var(--hl-trans-txt);";
-            } else if (catStr.includes("娛樂")) {
+            } else if (catStr.includes("Entertainment")) {
                 return "background-color: var(--hl-play); color: var(--hl-play-txt);";
-            } else if (catStr.includes("購物")) {
+            } else if (catStr.includes("Shopping")) {
                 return "background-color: var(--hl-shop); color: var(--hl-shop-txt);";
-            } else if (catStr.includes("居家")) {
+            } else if (catStr.includes("Home")) {
                 return "background-color: var(--hl-home); color: var(--hl-home-txt);";
             } else {
                 return "background-color: var(--hl-other); color: var(--hl-other-txt);";
@@ -446,14 +453,15 @@
             categories.forEach(cat => { catSums[cat] = 0; });
 
             if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">目前尚無消費紀錄</div>`;
+                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
                 totalContainer.innerText = '0';
                 
                 categories.forEach(cat => {
+                    const cleanLabel = cat.split(' ').slice(1).join(' ') || cat;
                     catTotalsContainer.innerHTML += `
                         <div class="cat-total-item">
-                            <span class="cat-name">${cat}</span>
-                            <span class="cat-num">$0</span>
+                            <span class="cat-name">${cleanLabel}</span>
+                            <span class="cat-num">HK$0</span>
                         </div>`;
                 });
                 return;
@@ -470,18 +478,19 @@
 
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
                 const colorStyle = getHighlightStyle(r.category);
+                const displayCategoryLabel = r.category.split(' ').slice(1).join(' ') || r.category;
 
                 listContainer.innerHTML += `
                     <div class="list-item">
                         <div class="item-info">
-                            <span class="tag" style="${colorStyle}">${r.category}</span>
+                            <span class="tag" style="${colorStyle}">${displayCategoryLabel}</span>
                             <div class="item-details">
                                 <span>${r.date}</span>
                                 ${noteHTML}
                             </div>
                         </div>
                         <div class="item-right">
-                            <span class="amount">$${r.amount.toLocaleString()}</span>
+                            <span class="amount">HK$${r.amount.toLocaleString()}</span>
                             <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
                             <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
                         </div>
@@ -492,10 +501,11 @@
             totalContainer.innerText = total.toLocaleString();
 
             Object.keys(catSums).forEach(cat => {
+                const cleanLabel = cat.split(' ').slice(1).join(' ') || cat;
                 catTotalsContainer.innerHTML += `
                     <div class="cat-total-item">
-                        <span class="cat-name">${cat}</span>
-                        <span class="cat-num">$${catSums[cat].toLocaleString()}</span>
+                        <span class="cat-name">${cleanLabel}</span>
+                        <span class="cat-num">HK$${catSums[cat].toLocaleString()}</span>
                     </div>
                 `;
             });
@@ -518,12 +528,12 @@
             }
         }
 
-        // 💡 核心修改：將 CSV 所有計價符號全數改為 HK$
+        // 匯出 CSV 流程 (包含英文統計標籤，第一欄維持留白)
         function exportToCSV() {
-            if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
+            if (records.length === 0) return alert("There is no data to export yet!");
             
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
-            let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; 
+            let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
             
             let lastIsoDate = "";
             let dayTotal = 0;
@@ -539,7 +549,8 @@
                 const currentYear = parts[0];
                 const currentMonth = parts[1]; 
                 
-                const cleanMonth = parseInt(currentMonth, 10);
+                const cleanMonthIdx = parseInt(currentMonth, 10) - 1;
+                const EnglishMonthLabel = monthNames[cleanMonthIdx] || "Month";
 
                 let nextYear = null;
                 let nextMonth = null;
@@ -551,8 +562,9 @@
                     nextMonth = nParts[1];
                 }
 
-                // 寫入一般交易明細 (更改為 HK$)
-                const category = r.category.includes(',') ? `"${r.category}"` : r.category;
+                // 去除分類前的 Emoji 圖示匯出
+                const rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
+                const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `HK$${r.amount}`;
                 
@@ -566,36 +578,35 @@
                 
                 csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
 
-                // 累加統計
                 dayTotal += r.amount;
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 當日總計 -> (更改為 HK$)
+                // 當日總計 -> 第一欄留白
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
-                    csvContent += `,當日總計,HK$${dayTotal},\n`;
+                    csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
                 }
 
-                // 每月總計 -> (更改為 HK$)
+                // 每月總計 -> 第一欄留白
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
-                    csvContent += `,${cleanMonth}月總計,HK$${monthTotal},\n`;
+                    csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
                 }
 
-                // 每年大計 -> (更改為 HK$)
+                // 每年總計 -> 第一欄留白
                 if (!nextRecord || nextYear !== currentYear) {
-                    csvContent += `,${currentYear}年總計,HK$${yearTotal},\n`;
+                    csvContent += `,Year ${currentYear} Total,HK$${yearTotal},\n`;
                     yearTotal = 0; 
                 }
             }
             
-            // 下載程序
+            // 下載程序啟動
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", `本地記帳本明細與統計_${new Date().toISOString().slice(0,10)}.csv`);
+            link.setAttribute("download", `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

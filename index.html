@@ -365,7 +365,8 @@
                     records[recordIndex].note = note; 
                     if (dateInput.value) records[recordIndex].date = dateInput.value;
                 }
-                records.sort((a, b) => a.date.localeCompare(b.date) || b.id - a.id);
+                // 【核心修正】編輯儲存時，嚴格確保按日期最新排序（越近越高）
+                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                 editingRecordId = null;
                 document.getElementById('form-title').innerText = "Add Transaction";
                 document.getElementById('btn-save-main').innerText = "Save Record";
@@ -378,7 +379,8 @@
                 const mm = String(now.getMonth() + 1).padStart(2, '0');
                 const dd = String(now.getDate()).padStart(2, '0');
                 records.unshift({ id: Date.now(), amount: amount, category: selectedCategory, note: note, date: `${yyyy}-${mm}-${dd}` });
-                records.sort((a, b) => a.date.localeCompare(b.date) || b.id - a.id);
+                // 【核心修正】新紀錄儲存時，嚴格確保按日期最新排序（越近越高）
+                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
             }
             await saveRecords();     
             amountInput.value = ''; noteInput.value = ''; renderRecords();         
@@ -417,6 +419,7 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
+        // 【核心修正】網頁 UI 渲染清單，確保「日期越近就越高」
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -433,6 +436,9 @@
                 });
                 return;
             }
+
+            // 在計算加總前，強制將清單按日期做倒序排序（日期近的在最上面）
+            records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
             records.forEach(r => {
                 total += r.amount;
@@ -534,7 +540,8 @@
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
                     }
-                    records.sort((a, b) => a.date.localeCompare(b.date) || b.id - a.id);
+                    // 【核心修正】匯入後，嚴格確保按日期最新排序（越近越高）
+                    records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                     await saveRecords(); renderRecords(); alert(`Successfully imported ${records.length} records!`);
                 } catch(err) {
                     alert("Import failed! Format layout unmatched.");
@@ -544,17 +551,17 @@
             reader.readAsText(file);
         }
 
-        // 核心修正：匯出排版演算法（滿足：同一天僅顯示首筆日期、跨月與跨天留空行需求）
+        // 【核心修正】重新規劃的 CSV 匯出排版演算法
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
-            // 排序：日期由舊到新
+            // 匯出時由舊到新排序 (方便 Excel 報表從上到下閱讀)
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
             
             let dayTotal = 0; 
             let monthTotal = 0; 
             let yearTotal = 0;
-            let lastDisplayedDate = ""; // 用來追蹤前一行處理的「真正日期」
+            let lastDisplayedDate = ""; 
 
             for (let i = 0; i < sortedRecords.length; i++) {
                 const r = sortedRecords[i];
@@ -574,21 +581,18 @@
                     nextMonth = nParts[1];
                 }
 
-                // 種類、備註防逗號破壞欄位處理
                 const rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
                 const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 
-                // 【需求 1】：同一天的 data，只有在「第一項消費」顯示日期，其餘留白
                 let dateFieldToPrint = "";
                 if (currentIsoDate !== lastDisplayedDate) {
                     dateFieldToPrint = currentIsoDate;
-                    lastDisplayedDate = currentIsoDate; // 標記這天已經顯示過
+                    lastDisplayedDate = currentIsoDate; 
                 } else {
-                    dateFieldToPrint = ""; // 當天後續項目留白
+                    dateFieldToPrint = ""; 
                 }
 
-                // 寫入當前消費列資料
                 csvContent += `${dateFieldToPrint},${category},HK$${r.amount},${note}\n`;
 
                 dayTotal += r.amount; 
@@ -604,7 +608,7 @@
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
                     
-                    // 只有當「純粹跨日」而不是「跨月/跨年」時，才在 Daily Total 後補常規空行
+                    // 【需求修正】：只有在「純粹跨日、但不是月尾」的時候，Daily Total 後面才放常規空行
                     if (!isMonthEnd && nextRecord) {
                         csvContent += ",,,\n";
                     }
@@ -612,10 +616,13 @@
 
                 // 2. 每月結算 (Monthly Total)
                 if (isMonthEnd) {
+                    // 【需求修正】：滿足「Daily Total 和 Monthly Total 之間空白一行!!!」
+                    // 我們在 Daily Total 輸出後，先加一行空行，然後才接 Monthly Total
+                    csvContent += ",,,\n"; 
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
                     
-                    // 【需求 2】：在 Month Total 和新月份（例如 6月1日）資料之間強制隔一行
+                    // Monthly Total 與接下來的新內容（例如下個月的資料或 Year Total）隔開一行
                     if (nextRecord || isYearEnd) {
                         csvContent += ",,,\n"; 
                     }
@@ -632,7 +639,6 @@
                 }
             }
             
-            // 觸發下載
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

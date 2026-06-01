@@ -14,41 +14,239 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        /* 全域變數（森林系 / 大地色主題） */
         :root {
-            --bg-color: #f1f4f1; --card-bg: #ffffff; --primary: #3a5f43; --primary-light: #4e7c57;
-            --danger: #c05c46; --success: #5e8c61; --warning: #cca043; --text: #222f25; --grey: #d5dbd6;
-            --hl-food: #fdf2ee; --hl-food-txt: #b35d46; --hl-trans: #eef7f6; --hl-trans-txt: #3d8580;
-            --hl-play: #f6f4f8; --hl-play-txt: #715c8c; --hl-shop: #fbf8ed; --hl-shop-txt: #a67c2e;
-            --hl-home: #edf4ee; --hl-home-txt: #467a4e; --hl-other: #f0f2f1; --hl-other-txt: #5c635f;
+            --bg-color: #f1f4f1;   /* 溫和的淡草地綠灰 */
+            --card-bg: #ffffff;    
+            --primary: #3a5f43;    /* 沉穩森林深綠 */
+            --primary-light: #4e7c57; /* 茂盛林葉綠 */
+            --danger: #c05c46;     /* 溫暖泥土磚紅 */
+            --success: #5e8c61;    /* 療癒鼠尾草綠 */
+            --warning: #cca043;    /* 暖秋麥芽黃 */
+            --text: #222f25;       /* 深松針墨綠 (高對比閱讀舒適) */
+            --grey: #d5dbd6;       /* 淺石灰色 */
+            
+            /* 各種消費種類的 Highlight 顏色背景 (採用灰調低飽和的自然色彩) */
+            --hl-food: #fdf2ee;    /* Food: 溫暖麥芽粉橘 */
+            --hl-food-txt: #b35d46;
+            --hl-trans: #eef7f6;   /* Transport: 湖水綠藍 */
+            --hl-trans-txt: #3d8580;
+            --hl-play: #f6f4f8;    /* Entertainment: 暮光薰衣草紫 */
+            --hl-play-txt: #715c8c;
+            --hl-shop: #fbf8ed;    /* Shopping: 暖秋金黃 */
+            --hl-shop-txt: #a67c2e;
+            --hl-home: #edf4ee;    /* Home: 森林苔蘚綠 */
+            --hl-home-txt: #467a4e;
+            --hl-other: #f0f2f1;   /* Others: 溪畔卵石灰 */
+            --hl-other-txt: #5c635f;
         }
-        body { font-family: "Plus Jakarta Sans", -apple-system, sans-serif; background-color: var(--bg-color); color: var(--text); margin: 0; padding: 10px; padding-top: 0; }
-        .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(43, 58, 47, 0.04); margin-bottom: 10px; }
-        .top-sticky-card { border-top-left-radius: 0; border-top-right-radius: 0; margin-left: -10px; margin-right: -10px; margin-bottom: 12px; padding: 18px 14px; background: linear-gradient(135deg, #ffffff 0%, #f7faf8 100%); border-bottom: 1px solid rgba(0,0,0,0.02); }
-        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        h2 { margin: 0; font-size: 0.85rem; color: #6e7c71; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
-        .btn-import-link { font-size: 0.78rem; color: var(--primary); font-weight: 700; cursor: pointer; background: none; border: none; padding: 2px 6px; width: auto; border-radius: 4px; }
-        .dashboard-layout { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-        .total-amount { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-top: 2px; letter-spacing: -0.5px; }
-        .category-totals-box { flex: 1.3; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: rgba(58, 95, 67, 0.03); padding: 10px; border-radius: 12px; border: 1px solid rgba(58, 95, 67, 0.05); }
-        .cat-total-item { display: flex; flex-direction: column; font-size: 0.75rem; }
-        .cat-name { color: #7d8c80; font-size: 0.68rem; font-weight: 600; }
-        .cat-num { font-weight: 700; color: var(--text); }
-        input[type="number"], input[type="text"], input[type="date"] { width: 100%; padding: 12px 14px; margin: 6px 0; border-radius: 10px; border: 1px solid var(--grey); box-sizing: border-box; font-size: 0.95rem; background: #fbfcfb; }
-        .edit-date-wrapper { display: none; background: #fdfaf3; padding: 8px 12px; border-radius: 10px; border: 1px dashed var(--warning); margin: 6px 0; }
-        button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
-        .btn-save { background-color: var(--primary); color: white; }
-        .btn-backup { background-color: var(--success); color: white; }
-        .category-picker { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
-        .category-btn { flex: 1 1 calc(33.33% - 6px); background-color: var(--card-bg); color: var(--text); border: 1.5px solid var(--grey); border-radius: 12px; padding: 10px 2px; display: flex; flex-direction: column; align-items: center; }
-        .category-btn.active { background-color: var(--primary); border-color: var(--primary); color: white; }
-        .edit-mode-indicator { display: none; background-color: var(--warning); color: #3f2e0f; padding: 8px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; text-align: center; }
+        
+        body {
+            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 10px; 
+            padding-top: 0; 
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 16px; 
+            box-shadow: 0 4px 12px rgba(43, 58, 47, 0.04); 
+            margin-bottom: 10px;
+        }
+        
+        .top-sticky-card {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            margin-left: -10px;
+            margin-right: -10px;
+            margin-bottom: 12px;
+            padding: 18px 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7faf8 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.02);
+        }
+        
+        h2 { 
+            margin-top: 0; 
+            font-size: 0.85rem; 
+            color: #6e7c71; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            margin-bottom: 8px; 
+        }
+        
+        .dashboard-layout {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .total-box {
+            flex: 1;
+            padding-left: 10px; 
+            text-align: left;
+        }
+        .total-amount { 
+            font-size: 1.8rem; 
+            font-weight: 800; 
+            color: var(--primary); 
+            margin-top: 2px;
+            letter-spacing: -0.5px;
+        }
+        
+        .category-totals-box {
+            flex: 1.3;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            background: rgba(58, 95, 67, 0.03);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(58, 95, 67, 0.05);
+        }
+        
+        .cat-total-item {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.75rem;
+            color: var(--text);
+        }
+        .cat-total-item .cat-name {
+            color: #7d8c80;
+            font-size: 0.68rem;
+            font-weight: 600;
+        }
+        .cat-total-item .cat-num {
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        input[type="number"], input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 12px 14px; 
+            margin: 6px 0;      
+            border-radius: 10px;
+            border: 1px solid var(--grey);
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            background-color: #fbfcfb;
+            color: var(--text);
+            transition: all 0.2s;
+            -webkit-appearance: none; 
+        }
+        input:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
+        } 
+        
+        /* 編輯日期專用樣式 */
+        .edit-date-wrapper {
+            display: none; 
+            background: #fdfaf3;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px dashed var(--warning);
+            margin: 6px 0;
+        }
+        .edit-date-wrapper label {
+            font-size: 0.75rem;
+            color: #a67c2e;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        button:active { opacity: 0.85; transform: scale(0.99); } 
+        
+        .btn-save { background-color: var(--primary); color: white; margin-top: 8px; }
+        .btn-save:hover { background-color: var(--primary-light); }
+        .btn-backup { background-color: var(--success); color: white; margin-top: 8px; }
+        .btn-backup:hover { opacity: 0.95; }
+        
+        .category-picker {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 6px;       
+            margin: 10px 0;
+        }
+        
+        .category-btn {
+            flex: 1 1 calc(33.33% - 6px); 
+            background-color: var(--card-bg);
+            color: var(--text);
+            border: 1.5px solid var(--grey);
+            border-radius: 12px;
+            padding: 10px 2px; 
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            gap: 4px;
+            margin: 0;
+            font-family: inherit;
+        }
+        .category-btn .icon-label { font-size: 1.2rem; } 
+        .category-btn .label { font-size: 0.75rem; font-weight: 700; } 
+        
+        .category-btn.active {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 8px rgba(58, 95, 67, 0.2);
+        }
+        
+        .edit-mode-indicator {
+            display: none; 
+            background-color: var(--warning);
+            color: #3f2e0f;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
         .list-container { max-height: 280px; overflow-y: auto; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
-        .tag { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
-        .item-details { color: #829285; font-size: 0.72rem; margin-top: 5px; }
-        .note-text { color: var(--text); font-weight: 600; background: #faf8f0; padding: 1px 6px; border-radius: 4px; border: 1px solid #eadebe; }
-        .amount { font-weight: 700; font-size: 1.05rem; }
-        .btn-action { background: none; padding: 6px; width: auto; font-size: 0.95rem; }
+        .list-item:last-child { border-bottom: none; }
+        .item-info { display: flex; flex-direction: column; }
+        
+        .tag { 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            align-self: flex-start; 
+        }
+        
+        .item-details { color: #829285; font-size: 0.72rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
+        .note-text { color: var(--text); font-weight: 600; background: #faf8f0; padding: 1px 6px; border-radius: 4px; border: 1px solid #eadebe; } 
+
+        .item-right { display: flex; align-items: center; gap: 8px; }
+        .amount { font-weight: 700; font-size: 1.05rem; margin-right: 2px; color: var(--text); }
+        .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; }
+        .btn-action:active { transform: scale(0.9); }
+        
+        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
 </head>
 <body>
@@ -65,134 +263,403 @@
 
     <div class="card">
         <h2 id="form-title">Add Transaction</h2>
-        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing historical record...</div>
+        
+        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing historical record... (will overwrite on save)</div>
+        
         <input type="number" id="amount" placeholder="Enter amount" inputmode="decimal">
-        <input type="text" id="note" placeholder="Enter notes">
+        <input type="text" id="note" placeholder="Enter notes (e.g., restaurant name, item name)">
+        
         <div class="edit-date-wrapper" id="date-field-block">
             <label for="edit-date">Modify Transaction Date:</label>
             <input type="date" id="edit-date">
         </div>
+        
         <div class="category-picker" id="category-picker"></div>
+        
         <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">Save Record</button>
     </div>
 
     <div class="card">
-        <div class="card-header-flex">
-            <h2>History Logs</h2>
-            <button type="button" class="btn-import-link" onclick="document.getElementById('csv-file-input').click()">🪵 Import CSV</button>
-        </div>
-        <input type="file" id="csv-file-input" accept=".csv" onchange="handleCSVImport(event)" style="display:none">
+        <h2>History Logs</h2>
         <div class="list-container" id="history-list"></div>
     </div>
 
-    <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
+    <div style="padding: 0 2px;">
+        <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
+    </div>
 
     <script>
-        const DATA_FILE = "accounting_records_v5.json";
+        const DATA_FILE = "accounting_records_v5.json"; 
+        
+        // 分類選單（英文版面）
         let categories = ["🍔 Food", "🚗 Transport", "🎬 Entertainment", "🛍️ Shopping", "🏠 Home", "📦 Others"];
-        let records = []; let selectedCategory = categories[0]; let editingRecordId = null;
+        
+        let records = [];           
+        let selectedCategory = "";  
+        let editingRecordId = null; 
+
+        // 供 CSV 轉換使用的英文月份名稱對照
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-        async function init() { await loadRecords(); renderCategories(); renderRecords(); }
-        async function loadRecords() {
-            try { const root = await navigator.storage.getDirectory(); const fileHandle = await root.getFileHandle(DATA_FILE, { create: true }); const file = await fileHandle.getFile(); const text = await file.text(); records = text ? JSON.parse(text) : []; }
-            catch (e) { records = JSON.parse(localStorage.getItem('acc_rec_v5')) || []; }
-        }
-        async function saveRecords() {
-            try { const root = await navigator.storage.getDirectory(); const fileHandle = await root.getFileHandle(DATA_FILE, { create: true }); const writable = await fileHandle.createWritable(); await writable.write(JSON.stringify(records)); await writable.close(); }
-            catch (e) { localStorage.setItem('acc_rec_v5', JSON.stringify(records)); }
+        // 初始化
+        async function init() {
+            if(categories.length > 0) selectedCategory = categories[0];
+            await loadRecords();     
+            renderCategories();   
+            renderRecords();      
         }
 
+        // 讀取本地硬碟檔案
+        async function loadRecords() {
+            try {
+                const root = await navigator.storage.getDirectory(); 
+                const fileHandle = await root.getFileHandle(DATA_FILE, { create: true });
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                records = text ? JSON.parse(text) : [];
+            } catch (e) {
+                console.error("OPFS 讀取失敗:", e);
+                records = JSON.parse(localStorage.getItem('acc_rec_v5')) || [];
+            }
+        }
+
+        // 寫入本地硬碟檔案
+        async function saveRecords() {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const fileHandle = await root.getFileHandle(DATA_FILE, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(records));
+                await writable.close();
+            } catch (e) {
+                console.error("OPFS 寫入失敗:", e);
+                localStorage.setItem('acc_rec_v5', JSON.stringify(records));
+            }
+        }
+
+        // 渲染分類按鈕
         function renderCategories() {
-            const picker = document.getElementById('category-picker'); picker.innerHTML = '';
+            const picker = document.getElementById('category-picker');
+            picker.innerHTML = ''; 
+            
             categories.forEach(cat => {
                 const isActive = (cat === selectedCategory) ? 'active' : '';
                 const parts = cat.split(' ');
-                picker.innerHTML += `<button type="button" class="category-btn ${isActive}" onclick="selectCategory('${cat}', this)"><span style="font-size:1.2rem">${parts[0]}</span><span style="font-size:0.75rem">${parts.slice(1).join(' ')}</span></button>`;
+                const icon = parts.length > 1 ? parts[0] : '📝';
+                const label = parts.length > 1 ? parts.slice(1).join(' ') : cat;
+
+                picker.innerHTML += `
+                    <button type="button" class="category-btn ${isActive}" onclick="selectCategory('${cat}', this)">
+                        <span class="icon-label">${icon}</span>
+                        <span class="label">${label}</span>
+                    </button>
+                `;
             });
         }
-        function selectCategory(cat, btn) { selectedCategory = cat; document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
 
+        function selectCategory(cat, btn) {
+            selectedCategory = cat; 
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); 
+            btn.classList.add('active'); 
+        }
+
+        // 處理儲存與覆蓋修改
         async function handleSubmit() {
-            const amount = parseFloat(document.getElementById('amount').value);
-            const note = document.getElementById('note').value.trim();
-            if (isNaN(amount) || amount <= 0) return alert('Enter valid amount');
+            const amountInput = document.getElementById('amount');
+            const noteInput = document.getElementById('note'); 
+            const dateInput = document.getElementById('edit-date');
+            
+            const amount = parseFloat(amountInput.value);
+            const note = noteInput.value.trim(); 
+
+            if (isNaN(amount) || amount <= 0) return alert('Please enter a valid amount!');
+
             if (editingRecordId !== null) {
-                const idx = records.findIndex(r => r.id === editingRecordId);
-                records[idx].amount = amount; records[idx].category = selectedCategory; records[idx].note = note;
-                const d = document.getElementById('edit-date').value; if(d) records[idx].date = d;
-                editingRecordId = null;
-            } else {
-                records.unshift({ id: Date.now(), amount, category: selectedCategory, note, date: new Date().toISOString().split('T')[0] });
-            }
-            records.sort((a, b) => b.date.localeCompare(a.date));
-            await saveRecords(); renderRecords();
-            document.getElementById('amount').value = ''; document.getElementById('note').value = '';
-        }
-
-        function renderRecords() {
-            const list = document.getElementById('history-list'); list.innerHTML = '';
-            let total = 0; let catSums = {};
-            categories.forEach(c => catSums[c] = 0);
-            records.forEach(r => {
-                total += r.amount; catSums[r.category] = (catSums[r.category] || 0) + r.amount;
-                list.innerHTML += `<div class="list-item"><div><span class="tag">${r.category}</span><div class="item-details">${r.date} ${r.note ? '<span class="note-text">'+r.note+'</span>':''}</div></div><div class="item-right"><span class="amount">HK$${r.amount.toLocaleString()}</span><button class="btn-action" onclick="startEdit(${r.id})">✏️</button><button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button></div></div>`;
-            });
-            document.getElementById('total').innerText = total.toLocaleString();
-            const catBox = document.getElementById('category-totals-container'); catBox.innerHTML = '';
-            categories.forEach(c => catBox.innerHTML += `<div class="cat-total-item"><span class="cat-name">${c.split(' ')[1]}</span><span class="cat-num">HK$${(catSums[c]||0).toLocaleString()}</span></div>`);
-        }
-
-        function startEdit(id) {
-            const r = records.find(r => r.id === id);
-            editingRecordId = id; document.getElementById('amount').value = r.amount; document.getElementById('note').value = r.note;
-            document.getElementById('edit-date').value = r.date; document.getElementById('edit-indicator').style.display = "block";
-            document.getElementById('date-field-block').style.display = "block";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        async function deleteRecord(id) { if(confirm("Delete?")) { records = records.filter(r => r.id !== id); await saveRecords(); renderRecords(); } }
-
-        function handleCSVImport(event) {
-            const file = event.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                const lines = e.target.result.split('\n');
-                for (let i = 1; i < lines.length; i++) {
-                    const row = lines[i].split(','); if (row.length < 3) continue;
-                    const date = row[0].trim(), cat = row[1].trim(), amt = parseFloat(row[2].replace(/[^\d.]/g, ''));
-                    if (date && !isNaN(amt)) {
-                        const matched = categories.find(c => c.includes(cat)) || categories[5];
-                        records.push({ id: Date.now() + i, amount: amt, category: matched, note: row[3] || '', date: date.replace(/\//g, '-') });
+                const recordIndex = records.findIndex(r => r.id === editingRecordId);
+                if(recordIndex !== -1) {
+                    records[recordIndex].amount = amount;
+                    records[recordIndex].category = selectedCategory;
+                    records[recordIndex].note = note; 
+                    
+                    if (dateInput.value) {
+                        records[recordIndex].date = dateInput.value;
                     }
                 }
-                await saveRecords(); renderRecords(); alert("Import successful!");
-            };
-            reader.readAsText(file);
+                
+                // 依照日期最新重新排序
+                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                
+                editingRecordId = null;
+                document.getElementById('form-title').innerText = "Add Transaction";
+                document.getElementById('btn-save-main').innerText = "Save Record";
+                document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
+                document.getElementById('edit-indicator').style.display = "none"; 
+                document.getElementById('date-field-block').style.display = "none"; 
+            } else {
+                const now = new Date();
+                const yyyy = now.getFullYear();
+                const mm = String(now.getMonth() + 1).padStart(2, '0');
+                const dd = String(now.getDate()).padStart(2, '0');
+                const isoDateStr = `${yyyy}-${mm}-${dd}`;
+
+                const newRecord = {
+                    id: Date.now(), 
+                    amount: amount,
+                    category = selectedCategory,
+                    note: note, 
+                    date: isoDateStr 
+                };
+                records.unshift(newRecord);
+                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+            }
+
+            await saveRecords();     
+            amountInput.value = '';  
+            noteInput.value = '';  
+            renderRecords();         
         }
 
-        function exportToCSV() {
-            if (records.length === 0) return alert("No data!");
-            let sorted = [...records].sort((a, b) => a.date.localeCompare(b.date));
-            let csv = "\uFEFFDate,Category,Amount,Notes\n", lastD = "", dTot = 0, mTot = 0, yTot = 0;
-            for (let i = 0; i < sorted.length; i++) {
-                const r = sorted[i], next = sorted[i+1], p = r.date.split('-');
-                // 日期強制轉為 YYYY/MM/DD
-                let displayDate = (r.date !== lastD) ? `${p[0]}/${p[1]}/${p[2]}` : "";
-                csv += `${displayDate},${r.category.split(' ').pop()},HK$${r.amount},${r.note}\n`;
-                dTot += r.amount; mTot += r.amount; yTot += r.amount; lastD = r.date;
-                
-                // 1. 每日後留空行
-                if (!next || next.date !== r.date) { csv += `,\n`; dTot = 0; }
-                
-                // 2. 每月總計
-                if (!next || next.date.split('-')[1] !== p[1]) { csv += `,${monthNames[parseInt(p[1])-1]} Total,HK$${mTot},\n`; mTot = 0; }
-                
-                // 3. 年度總計 (刪除 Year 字眼，且與 Monthly 之間有間隔)
-                if (!next || next.date.split('-')[0] !== p[0]) { csv += `,${p[0]} Total,HK$${yTot},\n,\n`; yTot = 0; }
-            }
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = "Budget_Export.csv"; link.click();
+        // 點擊編輯時觸發
+        function startEdit(id) {
+            const record = records.find(r => r.id === id);
+            if(!record) return;
+
+            editingRecordId = id; 
+            document.getElementById('amount').value = record.amount;
+            document.getElementById('note').value = record.note || ''; 
+            document.getElementById('edit-date').value = ensureISODate(record.date); 
+            selectedCategory = record.category;
+            
+            document.getElementById('form-title').innerText = "Edit History Record";
+            document.getElementById('btn-save-main').innerText = "Update Record";
+            document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
+            document.getElementById('edit-indicator').style.display = "block";
+            document.getElementById('date-field-block').style.display = "block"; 
+            
+            renderCategories(); 
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        async function deleteRecord(id) {
+            if (confirm("Are you sure you want to delete this record?")) {
+                records = records.filter(r => r.id !== id);
+                await saveRecords(); 
+                renderRecords();     
+            }
+        }
+
+        // 依關鍵字自動取得 Highlight 顏色樣式
+        function getHighlightStyle(category) {
+            const catStr = String(category);
+            if (catStr.includes("Food")) {
+                return "background-color: var(--hl-food); color: var(--hl-food-txt);";
+            } else if (catStr.includes("Transport")) {
+                return "background-color: var(--hl-trans); color: var(--hl-trans-txt);";
+            } else if (catStr.includes("Entertainment")) {
+                return "background-color: var(--hl-play); color: var(--hl-play-txt);";
+            } else if (catStr.includes("Shopping")) {
+                return "background-color: var(--hl-shop); color: var(--hl-shop-txt);";
+            } else if (catStr.includes("Home")) {
+                return "background-color: var(--hl-home); color: var(--hl-home-txt);";
+            } else {
+                return "background-color: var(--hl-other); color: var(--hl-other-txt);";
+            }
+        }
+
+        // 渲染網頁歷史紀錄清單與各大項目看板金額加總
+        function renderRecords() {
+            const listContainer = document.getElementById('history-list');
+            const totalContainer = document.getElementById('total');
+            const catTotalsContainer = document.getElementById('category-totals-container');
+            
+            listContainer.innerHTML = ''; 
+            catTotalsContainer.innerHTML = '';
+            
+            let total = 0;
+            let catSums = {};
+            categories.forEach(cat => { catSums[cat] = 0; });
+
+            if (records.length === 0) {
+                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
+                totalContainer.innerText = '0';
+                
+                categories.forEach(cat => {
+                    const cleanLabel = cat.split(' ').slice(1).join(' ') || cat;
+                    catTotalsContainer.innerHTML += `
+                        <div class="cat-total-item">
+                            <span class="cat-name">${cleanLabel}</span>
+                            <span class="cat-num">HK$0</span>
+                        </div>`;
+                });
+                return;
+            }
+
+            records.forEach(r => {
+                total += r.amount;
+                
+                if (catSums[r.category] !== undefined) {
+                    catSums[r.category] += r.amount;
+                } else {
+                    catSums[r.category] = r.amount;
+                }
+
+                const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+                const colorStyle = getHighlightStyle(r.category);
+                const displayCategoryLabel = r.category.split(' ').slice(1).join(' ') || r.category;
+
+                listContainer.innerHTML += `
+                    <div class="list-item">
+                        <div class="item-info">
+                            <span class="tag" style="${colorStyle}">${displayCategoryLabel}</span>
+                            <div class="item-details">
+                                <span>${r.date}</span>
+                                ${noteHTML}
+                            </div>
+                        </div>
+                        <div class="item-right">
+                            <span class="amount">HK$${r.amount.toLocaleString()}</span>
+                            <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
+                            <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            totalContainer.innerText = total.toLocaleString();
+
+            Object.keys(catSums).forEach(cat => {
+                const cleanLabel = cat.split(' ').slice(1).join(' ') || cat;
+                catTotalsContainer.innerHTML += `
+                    <div class="cat-total-item">
+                        <span class="cat-name">${cleanLabel}</span>
+                        <span class="cat-num">HK$${catSums[cat].toLocaleString()}</span>
+                    </div>
+                `;
+            });
+        }
+
+        // 安全確保 ISO 日期格式
+        function ensureISODate(dateStr) {
+            if (dateStr && dateStr.includes('-') && dateStr.split('-').length === 3) {
+                return dateStr;
+            }
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return "2026-06-01"; 
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                return `${yyyy}-${mm}-${dd}`;
+            } catch(e) {
+                return "2026-06-01";
+            }
+        }
+
+        // 匯出 CSV 流程 (精確處理 Excel 留白與格式要求)
+        function exportToCSV() {
+            if (records.length === 0) return alert("There is no data to export yet!");
+            
+            // 從早到晚排序匯出，方便 Excel 閱讀與計算
+            let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+            let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
+            
+            let lastIsoDate = "";
+            let dayTotal = 0;
+            let monthTotal = 0;
+            let yearTotal = 0;
+
+            for (let i = 0; i < sortedRecords.length; i++) {
+                const r = sortedRecords[i];
+                const nextRecord = sortedRecords[i + 1];
+
+                const currentIsoDate = ensureISODate(r.date);
+                const parts = currentIsoDate.split('-');
+                const currentYear = parts[0];
+                const currentMonth = parts[1]; 
+                
+                const cleanMonthIdx = parseInt(currentMonth, 10) - 1;
+                const EnglishMonthLabel = monthNames[cleanMonthIdx] || "Month";
+
+                let nextYear = null;
+                let nextMonth = null;
+                let nextIsoDate = null;
+                if (nextRecord) {
+                    nextIsoDate = ensureISODate(nextRecord.date);
+                    const nParts = nextIsoDate.split('-');
+                    nextYear = nParts[0];
+                    nextMonth = nParts[1];
+                }
+
+                // 去除分類前的 Emoji 圖示匯出
+                const rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
+                const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
+                const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
+                const formattedAmount = `HK$${r.amount}`;
+                
+                // 日期格式統一顯示 (天重複日期留白)
+                let displayDate = "";
+                if (currentIsoDate !== lastIsoDate) {
+                    displayDate = currentIsoDate;
+                    lastIsoDate = currentIsoDate;
+                } else {
+                    displayDate = ""; 
+                }
+                
+                csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
+
+                dayTotal += r.amount;
+                monthTotal += r.amount;
+                yearTotal += r.amount;
+
+                // 判斷當日、當月、當年是否截止
+                const isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
+                const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
+                const isYearEnd = !nextRecord || nextYear !== currentYear;
+
+                // 1. 當日數據統計截止 -> 輸出 Daily Total，並且「一定」在後方加入一列乾淨空行（,,,\n）
+                if (isDayEnd) {
+                    csvContent += `,Daily Total,HK$${dayTotal},\n`;
+                    dayTotal = 0; 
+                    
+                    // 如果後面還有其他日期的數據，或正好要輸出月/年總計，先插入空行，確保與下個區塊隔開
+                    csvContent += ",,,\n";
+                }
+
+                // 2. 每月總計截止 -> 輸出 Monthly Total
+                if (isMonthEnd) {
+                    csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
+                    monthTotal = 0; 
+                    
+                    // 滿足需求：Monthly 與 Year Total 數據之間需要空白一行。
+                    // 只有當後面「緊跟著年度總計」時，我們才在此處先塞一列空行
+                    if (isYearEnd) {
+                        csvContent += ",,,\n";
+                    }
+                }
+
+                // 3. 年度總計截止 -> 輸出 [年份] Total (滿足需求：刪除 Year 字眼)
+                if (isYearEnd) {
+                    csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
+                    yearTotal = 0; 
+                    
+                    // 如果後面還有跨年度的下一個紀錄，年總結後也加入一列空行
+                    if (nextRecord) {
+                        csvContent += ",,,\n";
+                    }
+                }
+            }
+            
+            // 下載程序啟動
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
         init();
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>極簡本地記帳 Pro v6.8</title>
+    <title>極簡本地記帳 Pro v6.9</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -124,9 +124,8 @@
         }
         input:focus { outline: none; border-color: var(--primary); } 
         
-        /* 💡 編輯日期專用樣式 */
         .edit-date-wrapper {
-            display: none; /* 平常隱藏，修改時才展開 */
+            display: none; 
             background: #fff8e6;
             padding: 6px 10px;
             border-radius: 8px;
@@ -350,13 +349,11 @@
                     records[recordIndex].category = selectedCategory;
                     records[recordIndex].note = note; 
                     
-                    // 💡 核心修改：如果使用者改了日期，更新它（防呆防空值）
                     if (dateInput.value) {
                         records[recordIndex].date = dateInput.value;
                     }
                 }
                 
-                // 💡 修改完成，將陣列依照日期最新（降冪）重新排序
                 records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                 
                 editingRecordId = null;
@@ -364,7 +361,7 @@
                 document.getElementById('btn-save-main').innerText = "儲存紀錄";
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
                 document.getElementById('edit-indicator').style.display = "none"; 
-                document.getElementById('date-field-block').style.display = "none"; // 隱藏日期欄
+                document.getElementById('date-field-block').style.display = "none"; 
             } else {
                 const now = new Date();
                 const yyyy = now.getFullYear();
@@ -380,7 +377,6 @@
                     date: isoDateStr 
                 };
                 records.unshift(newRecord);
-                // 確保全新加入的順序正確
                 records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
             }
 
@@ -390,7 +386,6 @@
             renderRecords();         
         }
 
-        // 💡 核心修改：點擊編輯時，載入並顯示可跨日期調整的欄位
         function startEdit(id) {
             const record = records.find(r => r.id === id);
             if(!record) return;
@@ -398,14 +393,14 @@
             editingRecordId = id; 
             document.getElementById('amount').value = record.amount;
             document.getElementById('note').value = record.note || ''; 
-            document.getElementById('edit-date').value = ensureISODate(record.date); // 填入原本日期
+            document.getElementById('edit-date').value = ensureISODate(record.date); 
             selectedCategory = record.category;
             
             document.getElementById('form-title').innerText = "修改歷史紀錄";
             document.getElementById('btn-save-main').innerText = "更新（覆蓋）紀錄";
             document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
             document.getElementById('edit-indicator').style.display = "block";
-            document.getElementById('date-field-block').style.display = "block"; // 展開日期調整欄
+            document.getElementById('date-field-block').style.display = "block"; 
             
             renderCategories(); 
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -513,21 +508,20 @@
             }
             try {
                 const d = new Date(dateStr);
-                if (isNaN(d.getTime())) return "2026-05-30"; 
+                if (isNaN(d.getTime())) return "2026-06-01"; 
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
                 return `${yyyy}-${mm}-${dd}`;
             } catch(e) {
-                return "2026-05-30";
+                return "2026-06-01";
             }
         }
 
-        // 匯出 CSV 邏輯
+        // 💡 核心修改：將 CSV 所有計價符號全數改為 HK$
         function exportToCSV() {
             if (records.length === 0) return alert("目前沒有任何資料可以匯出喔！");
             
-            // 💡 確保匯出時是由舊到新（正序）處理統計
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFF日期,消費分類,金額,備註\n"; 
             
@@ -557,10 +551,10 @@
                     nextMonth = nParts[1];
                 }
 
-                // 寫入一般交易明細
+                // 寫入一般交易明細 (更改為 HK$)
                 const category = r.category.includes(',') ? `"${r.category}"` : r.category;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
-                const formattedAmount = `$${r.amount}`;
+                const formattedAmount = `HK$${r.amount}`;
                 
                 let displayDate = "";
                 if (currentIsoDate !== lastIsoDate) {
@@ -577,21 +571,21 @@
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 當日總計 -> 第一欄「留白」
+                // 當日總計 -> (更改為 HK$)
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
-                    csvContent += `,當日總計,$${dayTotal},\n`;
+                    csvContent += `,當日總計,HK$${dayTotal},\n`;
                     dayTotal = 0; 
                 }
 
-                // 每月總計 -> 第一欄「留白」
+                // 每月總計 -> (更改為 HK$)
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
-                    csvContent += `,${cleanMonth}月總計,$${monthTotal},\n`;
+                    csvContent += `,${cleanMonth}月總計,HK$${monthTotal},\n`;
                     monthTotal = 0; 
                 }
 
-                // 每年大計 -> 第一欄「留白」
+                // 每年大計 -> (更改為 HK$)
                 if (!nextRecord || nextYear !== currentYear) {
-                    csvContent += `,${currentYear}年總計,$${yearTotal},\n`;
+                    csvContent += `,${currentYear}年總計,HK$${yearTotal},\n`;
                     yearTotal = 0; 
                 }
             }

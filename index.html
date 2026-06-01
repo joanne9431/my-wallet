@@ -3,53 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Forest Budget</title>
+    <title>Budget</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Budget">
-    
-    <!-- 引入舒適自然的 Google 字型 -->
+
+    <!-- 引入高品質的自然感字型 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* 森林系配色主題 (Forest & Earthy Theme) */
+        /* 全域變數（森林系 / 大地色主題） */
         :root {
-            --bg-color: #f1f4f0;   /* 溫和的淺白綠/苔蘚灰底色 */
+            --bg-color: #f1f4f1;   /* 溫和的淡草地綠灰 */
             --card-bg: #ffffff;    
-            --primary: #3a5f43;    /* 森林深綠 */
-            --primary-hover: #2d4a34;
-            --danger: #a64b4b;     /* 泥土磚紅 */
-            --success: #5e8c61;    /* 鼠尾草綠 */
-            --warning: #d4a373;    /* 橡木暖橘/沙色 */
-            --text: #2b3a2f;       /* 深松針綠灰（取代純黑，視覺更溫和） */
-            --grey: #d3dad2;       /* 淺葉灰 */
+            --primary: #3a5f43;    /* 沉穩森林深綠 */
+            --primary-light: #4e7c57; /* 茂盛林葉綠 */
+            --danger: #c05c46;     /* 溫暖泥土磚紅 */
+            --success: #5e8c61;    /* 療癒鼠尾草綠 */
+            --warning: #cca043;    /* 暖秋麥芽黃 */
+            --text: #222f25;       /* 深松針墨綠 (高對比閱讀舒適) */
+            --grey: #d5dbd6;       /* 淺石灰色 */
             
-            /* 各種消費種類的療癒大自然色系 Highlight 背景 */
-            --hl-food: #fcf1eb;    /* Food: 暖杏色 */
-            --hl-food-txt: #a96b43;
-            --hl-trans: #e5f0ee;   /* Transport: 湖水綠 */
-            --hl-trans-txt: #3d7068;
-            --hl-play: #ebe7f5;    /* Entertainment: 暮紫 */
-            --hl-play-txt: #6d5b95;
-            --hl-shop: #f7edd3;    /* Shopping: 麥芽黃 */
-            --hl-shop-txt: #a0783a;
-            --hl-home: #e2ede2;    /* Home: 薄荷綠 */
-            --hl-home-txt: #3b693e;
-            --hl-other: #eae6df;   /* Others: 淺岩灰 */
-            --hl-other-txt: #6b6359;
+            /* 各種消費種類的 Highlight 顏色背景 (採用灰調低飽和的自然色彩) */
+            --hl-food: #fdf2ee;    /* Food: 溫暖麥芽粉橘 */
+            --hl-food-txt: #b35d46;
+            --hl-trans: #eef7f6;   /* Transport: 湖水綠藍 */
+            --hl-trans-txt: #3d8580;
+            --hl-play: #f6f4f8;    /* Entertainment: 暮光薰衣草紫 */
+            --hl-play-txt: #715c8c;
+            --hl-shop: #fbf8ed;    /* Shopping: 暖秋金黃 */
+            --hl-shop-txt: #a67c2e;
+            --hl-home: #edf4ee;    /* Home: 森林苔蘚綠 */
+            --hl-home-txt: #467a4e;
+            --hl-other: #f0f2f1;   /* Others: 溪畔卵石灰 */
+            --hl-other-txt: #5c635f;
         }
         
         body {
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
-            padding: 12px; 
+            padding: 10px; 
             padding-top: 0; 
-            letter-spacing: -0.1px;
         }
         
         .card {
@@ -57,25 +56,24 @@
             border-radius: 16px;
             padding: 16px; 
             box-shadow: 0 4px 12px rgba(43, 58, 47, 0.04); 
-            margin-bottom: 12px;
-            border: 1px solid rgba(58, 95, 67, 0.03);
+            margin-bottom: 10px;
         }
         
         .top-sticky-card {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
-            margin-left: -12px;
-            margin-right: -12px;
-            margin-bottom: 16px;
-            padding: 20px 16px;
-            background: linear-gradient(135deg, #ffffff 0%, #f7f9f6 100%);
-            border-bottom: 1px solid rgba(58, 95, 67, 0.06);
+            margin-left: -10px;
+            margin-right: -10px;
+            margin-bottom: 12px;
+            padding: 18px 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7faf8 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.02);
         }
         
         h2 { 
             margin-top: 0; 
-            font-size: 0.8rem; 
-            color: #647567; 
+            font-size: 0.85rem; 
+            color: #6e7c71; 
             font-weight: 700; 
             text-transform: uppercase; 
             letter-spacing: 0.8px; 
@@ -91,42 +89,42 @@
         
         .total-box {
             flex: 1;
-            padding-left: 8px; 
+            padding-left: 10px; 
             text-align: left;
         }
         .total-amount { 
-            font-size: 2rem; 
+            font-size: 1.8rem; 
             font-weight: 800; 
             color: var(--primary); 
             margin-top: 2px;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
         }
         
         .category-totals-box {
-            flex: 1.4;
+            flex: 1.3;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
-            background: rgba(58, 95, 67, 0.04);
+            background: rgba(58, 95, 67, 0.03);
             padding: 10px;
             border-radius: 12px;
-            border: 1px solid rgba(58, 95, 67, 0.02);
+            border: 1px solid rgba(58, 95, 67, 0.05);
         }
         
         .cat-total-item {
             display: flex;
             flex-direction: column;
             font-size: 0.75rem;
-            color: #435446;
+            color: var(--text);
         }
         .cat-total-item .cat-name {
-            color: #798c7c;
+            color: #7d8c80;
             font-size: 0.68rem;
-            font-weight: 500;
+            font-weight: 600;
         }
         .cat-total-item .cat-num {
             font-weight: 700;
-            color: #2b3a2f;
+            color: var(--text);
         }
         
         input[type="number"], input[type="text"], input[type="date"] {
@@ -134,13 +132,12 @@
             padding: 12px 14px; 
             margin: 6px 0;      
             border-radius: 10px;
-            border: 1.5px solid var(--grey);
-            background-color: #fafbfa;
+            border: 1px solid var(--grey);
             box-sizing: border-box;
             font-size: 0.95rem;
+            background-color: #fbfcfb;
             color: var(--text);
-            font-family: inherit;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
             -webkit-appearance: none; 
         }
         input:focus { 
@@ -153,7 +150,7 @@
         /* 編輯日期專用樣式 */
         .edit-date-wrapper {
             display: none; 
-            background: #fdfaf2;
+            background: #fdfaf3;
             padding: 8px 12px;
             border-radius: 10px;
             border: 1px dashed var(--warning);
@@ -161,7 +158,7 @@
         }
         .edit-date-wrapper label {
             font-size: 0.75rem;
-            color: #9c6e3d;
+            color: #a67c2e;
             font-weight: bold;
             display: block;
             margin-bottom: 4px;
@@ -175,37 +172,26 @@
             border: none;
             font-size: 0.95rem;
             font-weight: 700;
-            font-family: inherit;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
             -webkit-appearance: none;
             cursor: pointer;
         }
         button:active { opacity: 0.85; transform: scale(0.99); } 
         
-        .btn-save { 
-            background-color: var(--primary); 
-            color: white; 
-            margin-top: 8px; 
-            box-shadow: 0 4px 10px rgba(58, 95, 67, 0.2);
-        }
-        .btn-save:hover { background-color: var(--primary-hover); }
-        
-        .btn-backup { 
-            background-color: var(--success); 
-            color: white; 
-            margin-top: 8px; 
-            box-shadow: 0 4px 10px rgba(94, 140, 97, 0.2);
-        }
+        .btn-save { background-color: var(--primary); color: white; margin-top: 8px; }
+        .btn-save:hover { background-color: var(--primary-light); }
+        .btn-backup { background-color: var(--success); color: white; margin-top: 8px; }
+        .btn-backup:hover { opacity: 0.95; }
         
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
-            gap: 8px;       
+            gap: 6px;       
             margin: 10px 0;
         }
         
         .category-btn {
-            flex: 1 1 calc(33.33% - 8px); 
+            flex: 1 1 calc(33.33% - 6px); 
             background-color: var(--card-bg);
             color: var(--text);
             border: 1.5px solid var(--grey);
@@ -216,24 +202,22 @@
             align-items: center;
             gap: 4px;
             margin: 0;
+            font-family: inherit;
         }
-        .category-btn .icon-label { font-size: 1.1rem; } 
-        .category-btn .label { font-size: 0.75rem; font-weight: 700; color: #435446; } 
+        .category-btn .icon-label { font-size: 1.2rem; } 
+        .category-btn .label { font-size: 0.75rem; font-weight: 700; } 
         
         .category-btn.active {
             background-color: var(--primary);
             border-color: var(--primary);
             color: white;
-            box-shadow: 0 4px 8px rgba(58, 95, 67, 0.15);
-        }
-        .category-btn.active .label {
-            color: white;
+            box-shadow: 0 4px 8px rgba(58, 95, 67, 0.2);
         }
         
         .edit-mode-indicator {
             display: none; 
             background-color: var(--warning);
-            color: #5c3e1d;
+            color: #3f2e0f;
             padding: 8px;
             border-radius: 8px;
             font-size: 0.8rem;
@@ -243,13 +227,7 @@
         }
         
         .list-container { max-height: 280px; overflow-y: auto; }
-        .list-item { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            padding: 10px 0; 
-            border-bottom: 1px solid #eef1ed; 
-        }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         
@@ -261,40 +239,15 @@
             align-self: flex-start; 
         }
         
-        .item-details { 
-            color: #8c9e8f; 
-            font-size: 0.72rem; 
-            margin-top: 6px; 
-            display: flex; 
-            gap: 6px; 
-            align-items: center; 
-        }
-        .note-text { 
-            color: #5c5446; 
-            font-weight: 500; 
-            background: #fdfaf2; 
-            padding: 2px 6px; 
-            border-radius: 4px; 
-            border: 1px solid #f2e9d5; 
-        } 
+        .item-details { color: #829285; font-size: 0.72rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
+        .note-text { color: var(--text); font-weight: 600; background: #faf8f0; padding: 1px 6px; border-radius: 4px; border: 1px solid #eadebe; } 
 
         .item-right { display: flex; align-items: center; gap: 8px; }
-        .amount { font-weight: 700; font-size: 1rem; color: var(--text); margin-right: 2px; }
-        .btn-action { 
-            background: rgba(58, 95, 67, 0.05); 
-            padding: 6px 8px; 
-            margin: 0; 
-            width: auto; 
-            font-size: 0.85rem; 
-            border-radius: 8px;
-            display: inline-block;
-            transition: all 0.2s ease;
-        }
-        .btn-action:hover {
-            background: rgba(58, 95, 67, 0.12);
-        }
+        .amount { font-weight: 700; font-size: 1.05rem; margin-right: 2px; color: var(--text); }
+        .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; }
+        .btn-action:active { transform: scale(0.9); }
         
-        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 8px); } }
+        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
 </head>
 <body>
@@ -312,7 +265,7 @@
     <div class="card">
         <h2 id="form-title">Add Transaction</h2>
         
-        <div id="edit-indicator" class="edit-mode-indicator">🌲 Editing historical record... (will overwrite on save)</div>
+        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing historical record... (will overwrite on save)</div>
         
         <input type="number" id="amount" placeholder="Enter amount" inputmode="decimal">
         <input type="text" id="note" placeholder="Enter notes (e.g., restaurant name, item name)">
@@ -332,7 +285,7 @@
         <div class="list-container" id="history-list"></div>
     </div>
 
-    <div style="padding: 0 2px; margin-bottom: 12px;">
+    <div style="padding: 0 2px;">
         <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
     </div>
 
@@ -528,7 +481,7 @@
             categories.forEach(cat => { catSums[cat] = 0; });
 
             if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #8c9e8f; text-align: center; padding: 24px; font-size: 0.9rem;">No transactions yet.</div>`;
+                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
                 totalContainer.innerText = '0';
                 
                 categories.forEach(cat => {
@@ -603,7 +556,7 @@
             }
         }
 
-        // 匯出 CSV 流程 (包含英文統計標籤，第一欄維持留白)
+        // 匯出 CSV 流程 (高度客製化空行間隔與格式)
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
             
@@ -657,22 +610,39 @@
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
+                // 判斷當日、當月、當年是否截止
+                const isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
+                const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
+                const isYearEnd = !nextRecord || nextYear !== currentYear;
+
                 // 當日總計 -> 第一欄留白
-                if (!nextRecord || nextIsoDate !== currentIsoDate) {
+                if (isDayEnd) {
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
+                    // 若「日總計」是當日唯一的總計（非月末/年末），則與隔天隔一行
+                    if (!isMonthEnd && nextRecord) {
+                        csvContent += ",,,\n";
+                    }
                 }
 
                 // 每月總計 -> 第一欄留白
-                if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
+                if (isMonthEnd) {
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
+                    // 若「月總計」是當月唯一的總結（非年末），則與隔天隔一行
+                    if (!isYearEnd && nextRecord) {
+                        csvContent += ",,,\n";
+                    }
                 }
 
-                // 每年總計 -> 第一欄留白
-                if (!nextRecord || nextYear !== currentYear) {
-                    csvContent += `,Year ${currentYear} Total,HK$${yearTotal},\n`;
+                // 每年總計 -> 第一欄留白 (刪除 "Year " 字眼，改為 "2026 Total")
+                if (isYearEnd) {
+                    csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
                     yearTotal = 0; 
+                    // 每年總計與隔天隔一行
+                    if (nextRecord) {
+                        csvContent += ",,,\n";
+                    }
                 }
             }
             

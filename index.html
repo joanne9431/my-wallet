@@ -405,7 +405,7 @@
                 const newRecord = {
                     id: Date.now(), 
                     amount: amount,
-                    category = selectedCategory,
+                    category: selectedCategory,
                     note: note, 
                     date: isoDateStr 
                 };
@@ -555,11 +555,10 @@
             }
         }
 
-        // 匯出 CSV 流程 (精確處理 Excel 留白與格式要求)
+        // 匯出 CSV 流程 (高度客製化空行間隔與格式)
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
             
-            // 從早到晚排序匯出，方便 Excel 閱讀與計算
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
             
@@ -596,7 +595,6 @@
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `HK$${r.amount}`;
                 
-                // 日期格式統一顯示 (天重複日期留白)
                 let displayDate = "";
                 if (currentIsoDate !== lastIsoDate) {
                     displayDate = currentIsoDate;
@@ -611,38 +609,36 @@
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 判斷當日、當月、當年是否截止
                 const isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                 const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
                 const isYearEnd = !nextRecord || nextYear !== currentYear;
 
-                // 1. 當日數據統計截止 -> 輸出 Daily Total，並且「一定」在後方加入一列乾淨空行（,,,\n）
+                // 1. 當日總計 -> 隨後插入一行空行（,,,\n），達成每日數據與下日數據間有空行
                 if (isDayEnd) {
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
-                    
-                    // 如果後面還有其他日期的數據，或正好要輸出月/年總計，先插入空行，確保與下個區塊隔開
-                    csvContent += ",,,\n";
+                    csvContent += ",,,\n"; 
                 }
 
-                // 2. 每月總計截止 -> 輸出 Monthly Total
+                // 2. 每月總計
                 if (isMonthEnd) {
+                    // 滿足需求：在 monthly 和 year total 數據之間空白一行。
+                    // 如果同時是年結尾，我們先把 Monthly Total 印出，再補一行空行，隨後才由下方 logic 輸出 Year Total
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
                     
-                    // 滿足需求：Monthly 與 Year Total 數據之間需要空白一行。
-                    // 只有當後面「緊跟著年度總計」時，我們才在此處先塞一列空行
                     if (isYearEnd) {
                         csvContent += ",,,\n";
+                    } else if (nextRecord) {
+                        // 如果僅是跨月而非跨年，上面 Daily Total 已塞過一空行，此處視需求不重複堆疊
                     }
                 }
 
-                // 3. 年度總計截止 -> 輸出 [年份] Total (滿足需求：刪除 Year 字眼)
+                // 3. 每年總計 -> 刪除 "Year" 字眼，直接輸出 "2026 Total"
                 if (isYearEnd) {
                     csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
                     yearTotal = 0; 
                     
-                    // 如果後面還有跨年度的下一個紀錄，年總結後也加入一列空行
                     if (nextRecord) {
                         csvContent += ",,,\n";
                     }

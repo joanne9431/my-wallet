@@ -181,6 +181,8 @@
         .btn-save:hover { background-color: var(--primary-light); }
         .btn-backup { background-color: var(--success); color: white; margin-top: 8px; }
         .btn-backup:hover { opacity: 0.95; }
+        .btn-import { background-color: #5c635f; color: white; margin-top: 6px; }
+        .btn-import:hover { opacity: 0.95; }
         
         .category-picker {
             display: flex;
@@ -286,6 +288,8 @@
 
     <div style="padding: 0 2px;">
         <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
+        <input type="file" id="import-file-input" accept=".json,.csv" style="display: none;" onchange="handleFileImport(this)">
+        <button class="btn-import" onclick="document.getElementById('import-file-input').click()">Import Data (JSON/CSV)</button>
     </div>
 
     <script>
@@ -555,14 +559,90 @@
             }
         }
 
-        // 匯出 CSV 流程 (高度客製化空行間隔與格式)
+        // 處理資料匯入 (支援 JSON 與從此系統導出的 CSV)
+        function handleFileImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                try {
+                    if (file.name.endsWith('.json')) {
+                        const parsed = JSON.parse(text);
+                        if (Array.isArray(parsed)) {
+                            records = parsed;
+                        } else {
+                            throw new Error("Invalid JSON format");
+                        }
+                    } else if (file.name.endsWith('.csv')) {
+                        // 簡單解析從本系統導出的 CSV 檔案
+                        const lines = text.split('\n');
+                        const importedRecords = [];
+                        
+                        for (let i = 1; i < lines.length; i++) {
+                            let line = lines[i].trim();
+                            if (!line) continue;
+                            
+                            // 移除 BOM 
+                            if (line.startsWith('\uFEFF')) line = line.replace('\uFEFF', '');
+                            
+                            // 以逗號分割（不考慮複雜引號，因為本系統常規備份足夠使用）
+                            const cols = line.split(',');
+                            if (cols.length < 3) continue;
+                            
+                            const dateStr = cols[0].trim();
+                            const catLabel = cols[1].trim();
+                            let amtStr = cols[2].trim();
+                            const noteStr = cols[3] ? cols[3].replace(/"/g, '').trim() : '';
+                            
+                            // 跳過匯出時自動生成的各式 Total 計算行與空行
+                            if (!dateStr || catLabel.includes('Total') || catLabel === '') continue;
+                            
+                            amtStr = amtStr.replace('HK$', '').replace(/"/g, '');
+                            const amount = parseFloat(amtStr);
+                            if (isNaN(amount)) continue;
+                            
+                            // 匹配回原本帶有標籤的完整分類名
+                            let finalCategory = categories.find(c => c.includes(catLabel)) || "📦 Others";
+                            
+                            importedRecords.push({
+                                id: Date.now() + i,
+                                amount: amount,
+                                category: finalCategory,
+                                note: noteStr,
+                                date: ensureISODate(dateStr)
+                            });
+                        }
+                        
+                        if (importedRecords.length === 0) {
+                            alert("No valid records found in CSV!");
+                            return;
+                        }
+                        records = importedRecords;
+                    }
+
+                    // 重新排序並儲存
+                    records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                    await saveRecords();
+                    renderRecords();
+                    alert(`Successfully imported ${records.length} records!`);
+                } catch(err) {
+                    alert("Import failed! Please make sure the file format matches.");
+                    console.error(err);
+                }
+                input.value = ''; // 清空檔案選取狀態
+            };
+            reader.readAsText(file);
+        }
+
+        // 匯出 CSV 流程 (高度客製化空行間隔、同時「統一每行顯示完整日期」)
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
             
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
             
-            let lastIsoDate = "";
             let dayTotal = 0;
             let monthTotal = 0;
             let yearTotal = 0;
@@ -595,15 +675,8 @@
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `HK$${r.amount}`;
                 
-                let displayDate = "";
-                if (currentIsoDate !== lastIsoDate) {
-                    displayDate = currentIsoDate;
-                    lastIsoDate = currentIsoDate;
-                } else {
-                    displayDate = ""; 
-                }
-                
-                csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
+                // 【修正：統一日期格式】不論是否重複，每一行均完整印出 YYYY-MM-DD
+                csvContent += `${currentIsoDate},${category},${formattedAmount},${note}\n`;
 
                 dayTotal += r.amount;
                 monthTotal += r.amount;
@@ -622,15 +695,13 @@
 
                 // 2. 每月總計
                 if (isMonthEnd) {
-                    // 滿足需求：在 monthly 和 year total 數據之間空白一行。
-                    // 如果同時是年結尾，我們先把 Monthly Total 印出，再補一行空行，隨後才由下方 logic 輸出 Year Total
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
                     
+                    // 滿足需求：在 monthly 和 year total 數據之間空白一行。
+                    // 如果同時是年結尾，我們先把 Monthly Total 印出，再補一行空行，隨後才由下方 logic 輸出 Year Total
                     if (isYearEnd) {
                         csvContent += ",,,\n";
-                    } else if (nextRecord) {
-                        // 如果僅是跨月而非跨年，上面 Daily Total 已塞過一空行，此處視需求不重複堆疊
                     }
                 }
 

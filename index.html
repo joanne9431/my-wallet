@@ -26,7 +26,7 @@
             --text: #222f25;       /* 深松針墨綠 (高對比閱讀舒適) */
             --grey: #d5dbd6;       /* 淺石灰色 */
             
-            /* 各種消費種類的 Highlight 顏色背景 (採用灰調低飽和的自然色彩) */
+            /* 各種消費種類的 Highlight 顏色背景 */
             --hl-food: #fdf2ee;    /* Food: 溫暖麥芽粉橘 */
             --hl-food-txt: #b35d46;
             --hl-trans: #eef7f6;   /* Transport: 湖水綠藍 */
@@ -146,7 +146,6 @@
             box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
         } 
         
-        /* 編輯日期專用樣式 */
         .edit-date-wrapper {
             display: none; 
             background: #fdfaf3;
@@ -366,7 +365,7 @@
                     records[recordIndex].note = note; 
                     if (dateInput.value) records[recordIndex].date = dateInput.value;
                 }
-                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                records.sort((a, b) => a.date.localeCompare(b.date) || b.id - a.id);
                 editingRecordId = null;
                 document.getElementById('form-title').innerText = "Add Transaction";
                 document.getElementById('btn-save-main').innerText = "Save Record";
@@ -379,7 +378,7 @@
                 const mm = String(now.getMonth() + 1).padStart(2, '0');
                 const dd = String(now.getDate()).padStart(2, '0');
                 records.unshift({ id: Date.now(), amount: amount, category: selectedCategory, note: note, date: `${yyyy}-${mm}-${dd}` });
-                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                records.sort((a, b) => a.date.localeCompare(b.date) || b.id - a.id);
             }
             await saveRecords();     
             amountInput.value = ''; noteInput.value = ''; renderRecords();         
@@ -460,23 +459,20 @@
             });
         }
 
-        // 強制解析並確保轉換為正確的 YYYY-MM-DD
         function ensureISODate(dateStr) {
             if (!dateStr) return "2026-06-01";
             let clean = dateStr.trim();
             if (clean.includes('-') && clean.split('-').length === 3) return clean;
             
-            // 處理像 1/5/2026 或 01/05/2026 這種斜線日/月/年格式
             if (clean.includes('/')) {
                 const p = clean.split('/');
                 if (p.length === 3) {
+                    if (p[0].length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
                     let d = p[0].padStart(2, '0');
                     let m = p[1].padStart(2, '0');
                     let y = p[2];
-                    if (y.length === 2) y = "20" + y; // 補齊兩位數年份
-                    // 如果格式是年/月/日，進行調換調整
-                    if (p[0].length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
-                    return `${y}-${m}-${d}`; // 返回標準 ISO 橫線格式
+                    if (y.length === 2) y = "20" + y;
+                    return `${y}-${m}-${d}`;
                 }
             }
             try {
@@ -488,7 +484,6 @@
             }
         }
 
-        // 智慧型資料匯入邏輯 (修復斜線格式與多重欄位留白對齊問題)
         function handleFileImport(input) {
             const file = input.files[0];
             if (!file) return;
@@ -503,7 +498,7 @@
                     } else if (file.name.endsWith('.csv')) {
                         const lines = text.split('\n');
                         const importedRecords = [];
-                        let lastValidDate = ""; // 用於記憶並沿用上一行留白的日期
+                        let lastValidDate = ""; 
 
                         for (let i = 1; i < lines.length; i++) {
                             let line = lines[i].trim();
@@ -518,15 +513,13 @@
                             let amtStr = cols[2].trim();
                             const noteStr = cols[3] ? cols[3].replace(/"/g, '').trim() : '';
                             
-                            // 跳過各式統計合計列
                             if (catLabel.includes('Total') || catLabel === 'Date' || (dateStr === "" && catLabel === "")) continue;
                             
-                            // 如果日期欄位因合併/重複而留白，智慧套用同組別上一個日期的紀錄
                             if (dateStr === "") {
                                 dateStr = lastValidDate;
                             } else {
                                 dateStr = ensureISODate(dateStr);
-                                lastValidDate = dateStr; // 儲存供下一列無日期的欄位沿用
+                                lastValidDate = dateStr; 
                             }
                             
                             if (!dateStr) continue;
@@ -541,7 +534,7 @@
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
                     }
-                    records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                    records.sort((a, b) => a.date.localeCompare(b.date) || b.id - a.id);
                     await saveRecords(); renderRecords(); alert(`Successfully imported ${records.length} records!`);
                 } catch(err) {
                     alert("Import failed! Format layout unmatched.");
@@ -551,48 +544,103 @@
             reader.readAsText(file);
         }
 
+        // 核心修正：匯出排版演算法（滿足：同一天僅顯示首筆日期、跨月與跨天留空行需求）
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
+            // 排序：日期由舊到新
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
-            let dayTotal = 0; let monthTotal = 0; let yearTotal = 0;
+            
+            let dayTotal = 0; 
+            let monthTotal = 0; 
+            let yearTotal = 0;
+            let lastDisplayedDate = ""; // 用來追蹤前一行處理的「真正日期」
 
             for (let i = 0; i < sortedRecords.length; i++) {
                 const r = sortedRecords[i];
                 const nextRecord = sortedRecords[i + 1];
+
                 const currentIsoDate = ensureISODate(r.date);
                 const parts = currentIsoDate.split('-');
-                const currentYear = parts[0]; const currentMonth = parts[1]; 
+                const currentYear = parts[0]; 
+                const currentMonth = parts[1]; 
                 const EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
 
                 let nextYear = null, nextMonth = null, nextIsoDate = null;
                 if (nextRecord) {
                     nextIsoDate = ensureISODate(nextRecord.date);
                     const nParts = nextIsoDate.split('-');
-                    nextYear = nParts[0]; nextMonth = nParts[1];
+                    nextYear = nParts[0]; 
+                    nextMonth = nParts[1];
                 }
 
+                // 種類、備註防逗號破壞欄位處理
                 const rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
                 const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 
-                csvContent += `${currentIsoDate},${category},HK$${r.amount},${note}\n`;
+                // 【需求 1】：同一天的 data，只有在「第一項消費」顯示日期，其餘留白
+                let dateFieldToPrint = "";
+                if (currentIsoDate !== lastDisplayedDate) {
+                    dateFieldToPrint = currentIsoDate;
+                    lastDisplayedDate = currentIsoDate; // 標記這天已經顯示過
+                } else {
+                    dateFieldToPrint = ""; // 當天後續項目留白
+                }
 
-                dayTotal += r.amount; monthTotal += r.amount; yearTotal += r.amount;
+                // 寫入當前消費列資料
+                csvContent += `${dateFieldToPrint},${category},HK$${r.amount},${note}\n`;
+
+                dayTotal += r.amount; 
+                monthTotal += r.amount; 
+                yearTotal += r.amount;
+
                 const isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                 const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
                 const isYearEnd = !nextRecord || nextYear !== currentYear;
 
-                if (isDayEnd) { csvContent += `,Daily Total,HK$${dayTotal},\n,,,\n`; dayTotal = 0; }
-                if (isMonthEnd) { csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`; monthTotal = 0; if (isYearEnd) csvContent += ",,,\n"; }
-                if (isYearEnd) { csvContent += `,${currentYear} Total,HK$${yearTotal},\n`; yearTotal = 0; if (nextRecord) csvContent += ",,,\n"; }
+                // 1. 當日結算 (Daily Total)
+                if (isDayEnd) {
+                    csvContent += `,Daily Total,HK$${dayTotal},\n`;
+                    dayTotal = 0; 
+                    
+                    // 只有當「純粹跨日」而不是「跨月/跨年」時，才在 Daily Total 後補常規空行
+                    if (!isMonthEnd && nextRecord) {
+                        csvContent += ",,,\n";
+                    }
+                }
+
+                // 2. 每月結算 (Monthly Total)
+                if (isMonthEnd) {
+                    csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
+                    monthTotal = 0; 
+                    
+                    // 【需求 2】：在 Month Total 和新月份（例如 6月1日）資料之間強制隔一行
+                    if (nextRecord || isYearEnd) {
+                        csvContent += ",,,\n"; 
+                    }
+                }
+
+                // 3. 年度總結 (Year Total)
+                if (isYearEnd) {
+                    csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
+                    yearTotal = 0; 
+                    
+                    if (nextRecord) {
+                        csvContent += ",,,\n";
+                    }
+                }
             }
+            
+            // 觸發下載
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.setAttribute("href", url);
             link.setAttribute("download", `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            document.body.appendChild(link); 
+            link.click(); 
+            document.body.removeChild(link);
         }
 
         init();

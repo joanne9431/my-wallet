@@ -9,40 +9,35 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Budget">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
     <style>
-        /* 全域變數（森林系 / 大地色主題） */
+        /* 全域變數（顏色主題） */
         :root {
-            --bg-color: #f1f4f1;   /* 溫和的淡草地綠灰 */
+            --bg-color: #f5f7fa;   
             --card-bg: #ffffff;    
-            --primary: #3a5f43;    /* 沉穩森林深綠 */
-            --primary-light: #4e7c57; /* 茂盛林葉綠 */
-            --danger: #c05c46;     /* 溫暖泥土磚紅 */
-            --success: #5e8c61;    /* 療癒鼠尾草綠 */
-            --warning: #cca043;    /* 暖秋麥芽黃 */
-            --text: #222f25;       /* 深松針墨綠 (高對比閱讀舒適) */
-            --grey: #d5dbd6;       /* 淺石灰色 */
+            --primary: #d3de73;    
+            --danger: #ff4d4f;     
+            --success: #2ecc71;    
+            --warning: #f1c40f;    
+            --text: #333333;       
+            --grey: #e1e4e8;       
             
-            /* 各種消費種類的 Highlight 顏色背景 (採用灰調低飽和的自然色彩) */
-            --hl-food: #fdf2ee;    /* Food: 溫暖麥芽粉橘 */
-            --hl-food-txt: #b35d46;
-            --hl-trans: #eef7f6;   /* Transport: 湖水綠藍 */
-            --hl-trans-txt: #3d8580;
-            --hl-play: #f6f4f8;    /* Entertainment: 暮光薰衣草紫 */
-            --hl-play-txt: #715c8c;
-            --hl-shop: #fbf8ed;    /* Shopping: 暖秋金黃 */
-            --hl-shop-txt: #a67c2e;
-            --hl-home: #edf4ee;    /* Home: 森林苔蘚綠 */
-            --hl-home-txt: #467a4e;
-            --hl-other: #f0f2f1;   /* Others: 溪畔卵石灰 */
-            --hl-other-txt: #5c635f;
+            /* 各種消費種類的 Highlight 顏色背景 */
+            --hl-food: #ffeaf0;    /* Food: 粉紅色 */
+            --hl-food-txt: #d6336c;
+            --hl-trans: #e7f5ff;   /* Transport: 粉藍色 */
+            --hl-trans-txt: #1c7ed6;
+            --hl-play: #f3f0ff;    /* Entertainment: 粉紫色 */
+            --hl-play-txt: #7048e8;
+            --hl-shop: #fff4e6;    /* Shopping: 粉橘色 */
+            --hl-shop-txt: #f76707;
+            --hl-home: #e6fcf5;    /* Home: 粉綠色 */
+            --hl-home-txt: #0ca678;
+            --hl-other: #f1f3f5;   /* Others: 淺灰色 */
+            --hl-other-txt: #495057;
         }
         
         body {
-            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
@@ -52,9 +47,9 @@
         
         .card {
             background: var(--card-bg);
-            border-radius: 16px;
-            padding: 16px; 
-            box-shadow: 0 4px 12px rgba(43, 58, 47, 0.04); 
+            border-radius: 14px;
+            padding: 14px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
             margin-bottom: 10px;
         }
         
@@ -64,31 +59,25 @@
             margin-left: -10px;
             margin-right: -10px;
             margin-bottom: 12px;
-            padding: 18px 14px;
-            background: linear-gradient(135deg, #ffffff 0%, #f7faf8 100%);
-            border-bottom: 1px solid rgba(0,0,0,0.02);
+            padding: 15px 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #fafdff 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.03);
         }
         
         .card-header-flex {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         
-        h2 { 
-            margin: 0; 
-            font-size: 0.85rem; 
-            color: #6e7c71; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 0.8px; 
-        }
+        h2 { margin-top: 0; font-size: 0.9rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .card-header-flex h2 { margin-bottom: 0; }
         
         .btn-import-link {
             font-size: 0.78rem;
-            color: var(--primary);
-            font-weight: 700;
+            color: #7048e8;
+            font-weight: bold;
             cursor: pointer;
             background: none;
             border: none;
@@ -96,120 +85,106 @@
             margin: 0;
             width: auto;
             border-radius: 4px;
-            transition: background 0.2s;
         }
-        .btn-import-link:hover {
-            background: rgba(58, 95, 67, 0.08);
-        }
+        .btn-import-link:active { background: rgba(0,0,0,0.05); }
         
         .dashboard-layout {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
         }
         
         .total-box {
             flex: 1;
-            padding-left: 10px; 
+            padding-left: 20px; 
             text-align: left;
         }
         .total-amount { 
-            font-size: 1.8rem; 
-            font-weight: 800; 
+            font-size: 2rem; 
+            font-weight: 900; 
             color: var(--primary); 
             margin-top: 2px;
-            letter-spacing: -0.5px;
+            letter-spacing: -1px;
         }
         
         .category-totals-box {
             flex: 1.3;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
-            background: rgba(58, 95, 67, 0.03);
-            padding: 10px;
-            border-radius: 12px;
-            border: 1px solid rgba(58, 95, 67, 0.05);
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.02);
+            padding: 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 0, 0, 0.01);
         }
         
         .cat-total-item {
             display: flex;
             flex-direction: column;
             font-size: 0.75rem;
-            color: var(--text);
+            color: #555;
         }
         .cat-total-item .cat-name {
-            color: #7d8c80;
-            font-size: 0.68rem;
-            font-weight: 600;
+            color: #888;
+            font-size: 0.7rem;
         }
         .cat-total-item .cat-num {
             font-weight: 700;
-            color: var(--text);
+            color: #222;
         }
         
         input[type="number"], input[type="text"], input[type="date"] {
             width: 100%;
-            padding: 12px 14px; 
-            margin: 6px 0;      
-            border-radius: 10px;
+            padding: 10px 12px; 
+            margin: 4px 0;      
+            border-radius: 8px;
             border: 1px solid var(--grey);
             box-sizing: border-box;
             font-size: 0.95rem;
-            background-color: #fbfcfb;
-            color: var(--text);
-            transition: all 0.2s;
             -webkit-appearance: none; 
         }
-        input:focus { 
-            outline: none; 
-            border-color: var(--primary); 
-            background-color: #ffffff;
-            box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
-        } 
+        input:focus { outline: none; border-color: var(--primary); } 
         
         /* 編輯日期專用樣式 */
         .edit-date-wrapper {
             display: none; 
-            background: #fdfaf3;
-            padding: 8px 12px;
-            border-radius: 10px;
+            background: #fff8e6;
+            padding: 6px 10px;
+            border-radius: 8px;
             border: 1px dashed var(--warning);
-            margin: 6px 0;
+            margin: 4px 0;
         }
         .edit-date-wrapper label {
             font-size: 0.75rem;
-            color: #a67c2e;
+            color: #b78103;
             font-weight: bold;
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 2px;
         }
         
         button {
             width: 100%;
-            padding: 12px;
-            margin: 6px 0;
-            border-radius: 10px;
+            padding: 11px;
+            margin: 4px 0;
+            border-radius: 8px;
             border: none;
             font-size: 0.95rem;
-            font-weight: 700;
+            font-weight: bold;
             transition: all 0.2s;
             -webkit-appearance: none;
             cursor: pointer;
         }
-        button:active { opacity: 0.85; transform: scale(0.99); } 
+        button:active { opacity: 0.8; } 
         
-        .btn-save { background-color: var(--primary); color: white; margin-top: 8px; }
-        .btn-save:hover { background-color: var(--primary-light); }
-        .btn-backup { background-color: var(--success); color: white; margin-top: 8px; }
-        .btn-backup:hover { opacity: 0.95; }
+        .btn-save { background-color: var(--primary); color: white; margin-top: 6px; }
+        .btn-backup { background-color: var(--success); color: white; margin-top: 6px; }
         
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
             gap: 6px;       
-            margin: 10px 0;
+            margin: 8px 0;
         }
         
         .category-btn {
@@ -217,59 +192,55 @@
             background-color: var(--card-bg);
             color: var(--text);
             border: 1.5px solid var(--grey);
-            border-radius: 12px;
-            padding: 10px 2px; 
+            border-radius: 10px;
+            padding: 8px 2px; 
             display: flex;
             flex-direction: column; 
             align-items: center;
-            gap: 4px;
+            gap: 2px;
             margin: 0;
-            font-family: inherit;
         }
-        .category-btn .icon-label { font-size: 1.2rem; } 
-        .category-btn .label { font-size: 0.75rem; font-weight: 700; } 
+        .category-btn .icon-label { font-size: 1.05rem; } 
+        .category-btn .label { font-size: 0.75rem; font-weight: bold; } 
         
         .category-btn.active {
             background-color: var(--primary);
             border-color: var(--primary);
             color: white;
-            box-shadow: 0 4px 8px rgba(58, 95, 67, 0.2);
         }
         
         .edit-mode-indicator {
             display: none; 
             background-color: var(--warning);
-            color: #3f2e0f;
-            padding: 8px;
-            border-radius: 8px;
+            color: #333;
+            padding: 6px;
+            border-radius: 6px;
             font-size: 0.8rem;
-            font-weight: 700;
-            margin-bottom: 10px;
+            font-weight: bold;
+            margin-bottom: 8px;
             text-align: center;
         }
         
-        .list-container { max-height: 280px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
+        .list-container { max-height: 260px; overflow-y: auto; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f2f5; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         
         .tag { 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-size: 0.75rem; 
-            font-weight: 700; 
+            padding: 3px 8px; 
+            border-radius: 5px; 
+            font-size: 0.78rem; 
+            font-weight: bold; 
             align-self: flex-start; 
         }
         
-        .item-details { color: #829285; font-size: 0.72rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
-        .note-text { color: var(--text); font-weight: 600; background: #faf8f0; padding: 1px 6px; border-radius: 4px; border: 1px solid #eadebe; } 
+        .item-details { color: #aaa; font-size: 0.72rem; margin-top: 4px; display: flex; gap: 6px; align-items: center; }
+        .note-text { color: #555; font-weight: 500; background: #fffbe6; padding: 1px 4px; border-radius: 4px; border: 1px solid #ffe58f; } 
 
-        .item-right { display: flex; align-items: center; gap: 8px; }
-        .amount { font-weight: 700; font-size: 1.05rem; margin-right: 2px; color: var(--text); }
-        .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; }
-        .btn-action:active { transform: scale(0.9); }
+        .item-right { display: flex; align-items: center; gap: 6px; }
+        .amount { font-weight: 700; font-size: 1rem; margin-right: 2px; }
+        .btn-action { background: none; padding: 4px; margin: 0; width: auto; font-size: 0.9rem; display: inline-block;}
         
-        /* 隱藏原生檔案選取器 */
         #csv-file-input { display: none; }
         
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
@@ -308,7 +279,7 @@
     <div class="card">
         <div class="card-header-flex">
             <h2>History Logs</h2>
-            <button type="button" class="btn-import-link" onclick="document.getElementById('csv-file-input').click()">🪵 Import CSV</button>
+            <button type="button" class="btn-import-link" onclick="document.getElementById('csv-file-input').click()">📁 Import CSV</button>
         </div>
         <input type="file" id="csv-file-input" accept=".csv" onchange="handleCSVImport(event)">
         
@@ -322,17 +293,14 @@
     <script>
         const DATA_FILE = "accounting_records_v5.json"; 
         
-        // 分類選單
         let categories = ["🍔 Food", "🚗 Transport", "🎬 Entertainment", "🛍️ Shopping", "🏠 Home", "📦 Others"];
         
         let records = [];           
         let selectedCategory = "";  
         let editingRecordId = null; 
 
-        // 供 CSV 轉換使用的英文月份名稱對照
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-        // 初始化
         async function init() {
             if(categories.length > 0) selectedCategory = categories[0];
             await loadRecords();     
@@ -340,7 +308,6 @@
             renderRecords();      
         }
 
-        // 讀取本地硬碟檔案
         async function loadRecords() {
             try {
                 const root = await navigator.storage.getDirectory(); 
@@ -354,7 +321,6 @@
             }
         }
 
-        // 寫入本地硬碟檔案
         async function saveRecords() {
             try {
                 const root = await navigator.storage.getDirectory();
@@ -368,7 +334,6 @@
             }
         }
 
-        // 渲染分類按鈕
         function renderCategories() {
             const picker = document.getElementById('category-picker');
             picker.innerHTML = ''; 
@@ -394,7 +359,6 @@
             btn.classList.add('active'); 
         }
 
-        // 處理儲存與覆蓋修改
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
             const noteInput = document.getElementById('note'); 
@@ -449,7 +413,6 @@
             renderRecords();         
         }
 
-        // 點擊編輯
         function startEdit(id) {
             const record = records.find(r => r.id === id);
             if(!record) return;
@@ -478,7 +441,6 @@
             }
         }
 
-        // 依種類取得對應的自然色調 Highlight
         function getHighlightStyle(category) {
             const catStr = String(category);
             if (catStr.includes("Food")) {
@@ -496,14 +458,12 @@
             }
         }
 
-        // 補回畫面上分類缺少的 Emoji（比對用）
         function matchCategoryWithEmoji(rawCatLabel) {
             const clean = rawCatLabel.trim();
             const matched = categories.find(c => c.includes(clean));
             return matched || `📦 ${clean}`;
         }
 
-        // 渲染網頁歷史紀錄清單
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -517,7 +477,7 @@
             categories.forEach(cat => { catSums[cat] = 0; });
 
             if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
+                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
                 totalContainer.innerText = '0';
                 
                 categories.forEach(cat => {
@@ -533,6 +493,7 @@
 
             records.forEach(r => {
                 total += r.amount;
+                
                 if (catSums[r.category] !== undefined) {
                     catSums[r.category] += r.amount;
                 } else {
@@ -590,7 +551,7 @@
             }
         }
 
-        // CSV 導入邏輯處理
+        // CSV 智慧導入處理（精準修復日期留白與統計行過濾）
         function handleCSVImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -601,14 +562,12 @@
                 const lines = text.split(/\r?\n/);
                 
                 let importedCount = 0;
-                let activeDate = ""; // 記住上一個有效的日期，用來補滿前欄留白的行紀錄
+                let activeDate = ""; // 用來記住並向下傳遞的最新有效日期
 
-                // 從第二行開始讀取數據 (跳過標題 Date,Category,Amount,Notes)
                 for (let i = 1; i < lines.length; i++) {
                     const line = lines[i].trim();
-                    if (!line) continue; // 跳過極端空行
+                    if (!line) continue; 
 
-                    // 解析 CSV 逗號
                     let parts = [];
                     let currentPart = "";
                     let inQuotes = false;
@@ -633,55 +592,52 @@
                     let rawAmount = parts[2] ? parts[2].trim() : "";
                     let rawNote = parts[3] ? parts[3].trim() : "";
 
-                    // 如果這一行是統計線（Daily Total、Month Total、Year Total 等等），直接過濾跳過
+                    // 1. 如果是統計關鍵字列（Total 等），直接跳過不讀
                     if (rawCategory.toLowerCase().includes("total") || rawDate.toLowerCase().includes("total")) {
                         continue;
                     }
 
-                    // 如果 Date 欄位有值，就更新當前日期；如果為空，就延用之前的日期 (配合匯出首欄留白排版)
-                    if (rawDate) {
+                    // 2. 核心修正：如果這一列有填寫新日期，就更新並鎖定它
+                    if (rawDate !== "") {
                         activeDate = ensureISODate(rawDate);
                     }
                     
+                    // 3. 安全過濾：必須有有效日期、種類、金額
                     if (!activeDate || !rawCategory || !rawAmount) continue;
 
-                    // 清理金額字串中的 HK$ 與逗號
                     let cleanAmountStr = rawAmount.replace(/HK\$/g, '').replace(/,/g, '').trim();
                     let amount = parseFloat(cleanAmountStr);
                     if (isNaN(amount) || amount <= 0) continue;
 
-                    // 還原分類與備註
                     let finalCategory = matchCategoryWithEmoji(rawCategory);
                     
-                    // 新增入陣列（給予新的時間戳 ID 避免衝突）
+                    // 將資料安全推入系統陣列
                     records.push({
-                        id: Date.now() + i, // 加 i 確保在同批次迴圈中 ID 不重複
+                        id: Date.now() + i, 
                         amount: amount,
                         category: finalCategory,
                         note: rawNote,
-                        date: activeDate
+                        date: activeDate // 使用精確補滿後的日期
                     });
                     importedCount++;
                 }
 
                 if (importedCount > 0) {
-                    // 重新排序
+                    // 重新依據新日期做全域排序
                     records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                     await saveRecords();
                     renderRecords();
                     alert(`Successfully imported ${importedCount} transactions!`);
                 } else {
-                    alert("No valid records found in the selected CSV file.");
+                    alert("No valid records found in the CSV file.");
                 }
                 
-                // 重置 file input，讓使用者可以重複選取相同檔案
                 document.getElementById('csv-file-input').value = "";
             };
             
             reader.readAsText(file, 'UTF-8');
         }
 
-        // 匯出 CSV 流程
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
             
@@ -734,32 +690,19 @@
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                const isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
-                const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
-                const isYearEnd = !nextRecord || nextYear !== currentYear;
-
-                if (isDayEnd) {
+                if (!nextRecord || nextIsoDate !== currentIsoDate) {
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
-                    if (isMonthEnd || isYearEnd || nextRecord) {
-                        csvContent += ",,,\n";
-                    }
                 }
 
-                if (isMonthEnd) {
+                if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
-                    if (isYearEnd || nextRecord) {
-                        csvContent += ",,,\n";
-                    }
                 }
 
-                if (isYearEnd) {
-                    csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
+                if (!nextRecord || nextYear !== currentYear) {
+                    csvContent += `,Year ${currentYear} Total,HK$${yearTotal},\n`;
                     yearTotal = 0; 
-                    if (nextRecord) {
-                        csvContent += ",,,\n";
-                    }
                 }
             }
             

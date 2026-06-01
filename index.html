@@ -3,223 +3,298 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Budget</title>
+    <title>Forest Budget</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Budget">
+    
+    <!-- 引入舒適自然的 Google 字型 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* 全域變數（顏色主題） */
+        /* 森林系配色主題 (Forest & Earthy Theme) */
         :root {
-            --bg-color: #f5f7fa;   
+            --bg-color: #f1f4f0;   /* 溫和的淺白綠/苔蘚灰底色 */
             --card-bg: #ffffff;    
-            --primary: #d3de73;    
-            --danger: #ff4d4f;     
-            --success: #2ecc71;    
-            --warning: #f1c40f;    
-            --text: #333333;       
-            --grey: #e1e4e8;       
+            --primary: #3a5f43;    /* 森林深綠 */
+            --primary-hover: #2d4a34;
+            --danger: #a64b4b;     /* 泥土磚紅 */
+            --success: #5e8c61;    /* 鼠尾草綠 */
+            --warning: #d4a373;    /* 橡木暖橘/沙色 */
+            --text: #2b3a2f;       /* 深松針綠灰（取代純黑，視覺更溫和） */
+            --grey: #d3dad2;       /* 淺葉灰 */
             
-            /* 各種消費種類的 Highlight 顏色背景 */
-            --hl-food: #ffeaf0;    /* Food: 粉紅色 */
-            --hl-food-txt: #d6336c;
-            --hl-trans: #e7f5ff;   /* Transport: 粉藍色 */
-            --hl-trans-txt: #1c7ed6;
-            --hl-play: #f3f0ff;    /* Entertainment: 粉紫色 */
-            --hl-play-txt: #7048e8;
-            --hl-shop: #fff4e6;    /* Shopping: 粉橘色 */
-            --hl-shop-txt: #f76707;
-            --hl-home: #e6fcf5;    /* Home: 粉綠色 */
-            --hl-home-txt: #0ca678;
-            --hl-other: #f1f3f5;   /* Others: 淺灰色 */
-            --hl-other-txt: #495057;
+            /* 各種消費種類的療癒大自然色系 Highlight 背景 */
+            --hl-food: #fcf1eb;    /* Food: 暖杏色 */
+            --hl-food-txt: #a96b43;
+            --hl-trans: #e5f0ee;   /* Transport: 湖水綠 */
+            --hl-trans-txt: #3d7068;
+            --hl-play: #ebe7f5;    /* Entertainment: 暮紫 */
+            --hl-play-txt: #6d5b95;
+            --hl-shop: #f7edd3;    /* Shopping: 麥芽黃 */
+            --hl-shop-txt: #a0783a;
+            --hl-home: #e2ede2;    /* Home: 薄荷綠 */
+            --hl-home-txt: #3b693e;
+            --hl-other: #eae6df;   /* Others: 淺岩灰 */
+            --hl-other-txt: #6b6359;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
-            padding: 10px; 
+            padding: 12px; 
             padding-top: 0; 
+            letter-spacing: -0.1px;
         }
         
         .card {
             background: var(--card-bg);
-            border-radius: 14px;
-            padding: 14px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
-            margin-bottom: 10px;
+            border-radius: 16px;
+            padding: 16px; 
+            box-shadow: 0 4px 12px rgba(43, 58, 47, 0.04); 
+            margin-bottom: 12px;
+            border: 1px solid rgba(58, 95, 67, 0.03);
         }
         
         .top-sticky-card {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
-            margin-left: -10px;
-            margin-right: -10px;
-            margin-bottom: 12px;
-            padding: 15px 12px;
-            background: linear-gradient(135deg, #ffffff 0%, #fafdff 100%);
-            border-bottom: 1px solid rgba(0,0,0,0.03);
+            margin-left: -12px;
+            margin-right: -12px;
+            margin-bottom: 16px;
+            padding: 20px 16px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7f9f6 100%);
+            border-bottom: 1px solid rgba(58, 95, 67, 0.06);
         }
         
-        h2 { margin-top: 0; font-size: 0.9rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        h2 { 
+            margin-top: 0; 
+            font-size: 0.8rem; 
+            color: #647567; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            margin-bottom: 8px; 
+        }
         
         .dashboard-layout {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         
         .total-box {
             flex: 1;
-            padding-left: 20px; 
+            padding-left: 8px; 
             text-align: left;
         }
         .total-amount { 
             font-size: 2rem; 
-            font-weight: 900; 
+            font-weight: 800; 
             color: var(--primary); 
             margin-top: 2px;
             letter-spacing: -1px;
         }
         
         .category-totals-box {
-            flex: 1.3;
+            flex: 1.4;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 4px;
-            background: rgba(0, 0, 0, 0.02);
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 0, 0, 0.01);
+            gap: 6px;
+            background: rgba(58, 95, 67, 0.04);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(58, 95, 67, 0.02);
         }
         
         .cat-total-item {
             display: flex;
             flex-direction: column;
             font-size: 0.75rem;
-            color: #555;
+            color: #435446;
         }
         .cat-total-item .cat-name {
-            color: #888;
-            font-size: 0.7rem;
+            color: #798c7c;
+            font-size: 0.68rem;
+            font-weight: 500;
         }
         .cat-total-item .cat-num {
             font-weight: 700;
-            color: #222;
+            color: #2b3a2f;
         }
         
         input[type="number"], input[type="text"], input[type="date"] {
             width: 100%;
-            padding: 10px 12px; 
-            margin: 4px 0;      
-            border-radius: 8px;
-            border: 1px solid var(--grey);
+            padding: 12px 14px; 
+            margin: 6px 0;      
+            border-radius: 10px;
+            border: 1.5px solid var(--grey);
+            background-color: #fafbfa;
             box-sizing: border-box;
             font-size: 0.95rem;
+            color: var(--text);
+            font-family: inherit;
+            transition: all 0.2s ease;
             -webkit-appearance: none; 
         }
-        input:focus { outline: none; border-color: var(--primary); } 
+        input:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
+        } 
         
         /* 編輯日期專用樣式 */
         .edit-date-wrapper {
             display: none; 
-            background: #fff8e6;
-            padding: 6px 10px;
-            border-radius: 8px;
+            background: #fdfaf2;
+            padding: 8px 12px;
+            border-radius: 10px;
             border: 1px dashed var(--warning);
-            margin: 4px 0;
+            margin: 6px 0;
         }
         .edit-date-wrapper label {
             font-size: 0.75rem;
-            color: #b78103;
+            color: #9c6e3d;
             font-weight: bold;
             display: block;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         
         button {
             width: 100%;
-            padding: 11px;
-            margin: 4px 0;
-            border-radius: 8px;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 10px;
             border: none;
             font-size: 0.95rem;
-            font-weight: bold;
-            transition: all 0.2s;
+            font-weight: 700;
+            font-family: inherit;
+            transition: all 0.2s ease;
             -webkit-appearance: none;
             cursor: pointer;
         }
-        button:active { opacity: 0.8; } 
+        button:active { opacity: 0.85; transform: scale(0.99); } 
         
-        .btn-save { background-color: var(--primary); color: white; margin-top: 6px; }
-        .btn-backup { background-color: var(--success); color: white; margin-top: 6px; }
+        .btn-save { 
+            background-color: var(--primary); 
+            color: white; 
+            margin-top: 8px; 
+            box-shadow: 0 4px 10px rgba(58, 95, 67, 0.2);
+        }
+        .btn-save:hover { background-color: var(--primary-hover); }
+        
+        .btn-backup { 
+            background-color: var(--success); 
+            color: white; 
+            margin-top: 8px; 
+            box-shadow: 0 4px 10px rgba(94, 140, 97, 0.2);
+        }
         
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
-            gap: 6px;       
-            margin: 8px 0;
+            gap: 8px;       
+            margin: 10px 0;
         }
         
         .category-btn {
-            flex: 1 1 calc(33.33% - 6px); 
+            flex: 1 1 calc(33.33% - 8px); 
             background-color: var(--card-bg);
             color: var(--text);
             border: 1.5px solid var(--grey);
-            border-radius: 10px;
-            padding: 8px 2px; 
+            border-radius: 12px;
+            padding: 10px 2px; 
             display: flex;
             flex-direction: column; 
             align-items: center;
-            gap: 2px;
+            gap: 4px;
             margin: 0;
         }
-        .category-btn .icon-label { font-size: 1.05rem; } 
-        .category-btn .label { font-size: 0.75rem; font-weight: bold; } 
+        .category-btn .icon-label { font-size: 1.1rem; } 
+        .category-btn .label { font-size: 0.75rem; font-weight: 700; color: #435446; } 
         
         .category-btn.active {
             background-color: var(--primary);
             border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 8px rgba(58, 95, 67, 0.15);
+        }
+        .category-btn.active .label {
             color: white;
         }
         
         .edit-mode-indicator {
             display: none; 
             background-color: var(--warning);
-            color: #333;
-            padding: 6px;
-            border-radius: 6px;
+            color: #5c3e1d;
+            padding: 8px;
+            border-radius: 8px;
             font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 8px;
+            font-weight: 700;
+            margin-bottom: 10px;
             text-align: center;
         }
         
-        .list-container { max-height: 260px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f2f5; }
+        .list-container { max-height: 280px; overflow-y: auto; }
+        .list-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 0; 
+            border-bottom: 1px solid #eef1ed; 
+        }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         
         .tag { 
-            padding: 3px 8px; 
-            border-radius: 5px; 
-            font-size: 0.78rem; 
-            font-weight: bold; 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
             align-self: flex-start; 
         }
         
-        .item-details { color: #aaa; font-size: 0.72rem; margin-top: 4px; display: flex; gap: 6px; align-items: center; }
-        .note-text { color: #555; font-weight: 500; background: #fffbe6; padding: 1px 4px; border-radius: 4px; border: 1px solid #ffe58f; } 
+        .item-details { 
+            color: #8c9e8f; 
+            font-size: 0.72rem; 
+            margin-top: 6px; 
+            display: flex; 
+            gap: 6px; 
+            align-items: center; 
+        }
+        .note-text { 
+            color: #5c5446; 
+            font-weight: 500; 
+            background: #fdfaf2; 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            border: 1px solid #f2e9d5; 
+        } 
 
-        .item-right { display: flex; align-items: center; gap: 6px; }
-        .amount { font-weight: 700; font-size: 1rem; margin-right: 2px; }
-        .btn-action { background: none; padding: 4px; margin: 0; width: auto; font-size: 0.9rem; display: inline-block;}
+        .item-right { display: flex; align-items: center; gap: 8px; }
+        .amount { font-weight: 700; font-size: 1rem; color: var(--text); margin-right: 2px; }
+        .btn-action { 
+            background: rgba(58, 95, 67, 0.05); 
+            padding: 6px 8px; 
+            margin: 0; 
+            width: auto; 
+            font-size: 0.85rem; 
+            border-radius: 8px;
+            display: inline-block;
+            transition: all 0.2s ease;
+        }
+        .btn-action:hover {
+            background: rgba(58, 95, 67, 0.12);
+        }
         
-        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
+        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 8px); } }
     </style>
 </head>
 <body>
@@ -237,7 +312,7 @@
     <div class="card">
         <h2 id="form-title">Add Transaction</h2>
         
-        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing historical record... (will overwrite on save)</div>
+        <div id="edit-indicator" class="edit-mode-indicator">🌲 Editing historical record... (will overwrite on save)</div>
         
         <input type="number" id="amount" placeholder="Enter amount" inputmode="decimal">
         <input type="text" id="note" placeholder="Enter notes (e.g., restaurant name, item name)">
@@ -257,7 +332,7 @@
         <div class="list-container" id="history-list"></div>
     </div>
 
-    <div style="padding: 0 2px;">
+    <div style="padding: 0 2px; margin-bottom: 12px;">
         <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
     </div>
 
@@ -453,7 +528,7 @@
             categories.forEach(cat => { catSums[cat] = 0; });
 
             if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
+                listContainer.innerHTML = `<div style="color: #8c9e8f; text-align: center; padding: 24px; font-size: 0.9rem;">No transactions yet.</div>`;
                 totalContainer.innerText = '0';
                 
                 categories.forEach(cat => {

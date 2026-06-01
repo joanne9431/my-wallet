@@ -146,17 +146,18 @@
             box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
         } 
         
+        /* 預設直接顯示日期欄位，方便隨時切換實際到期日 */
         .edit-date-wrapper {
-            display: none; 
-            background: #fdfaf3;
+            display: block; 
+            background: #fafbfa;
             padding: 8px 12px;
             border-radius: 10px;
-            border: 1px dashed var(--warning);
+            border: 1px solid var(--grey);
             margin: 6px 0;
         }
         .edit-date-wrapper label {
             font-size: 0.75rem;
-            color: #a67c2e;
+            color: var(--primary);
             font-weight: bold;
             display: block;
             margin-bottom: 4px;
@@ -255,7 +256,7 @@
     <div class="card top-sticky-card">
         <div class="dashboard-layout">
             <div class="total-box">
-                <h2>Monthly Total</h2>
+                <h2 id="current-month-heading">Current Month Total</h2>
                 <div class="total-amount">HK$<span id="total">0</span></div>
             </div>
             <div class="category-totals-box" id="category-totals-container"></div>
@@ -265,13 +266,13 @@
     <div class="card">
         <h2 id="form-title">Add Transaction</h2>
         
-        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing historical record... (will overwrite on save)</div>
+        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing record... (will overwrite on save)</div>
         
         <input type="number" id="amount" placeholder="Enter amount" inputmode="decimal">
-        <input type="text" id="note" placeholder="Enter notes (e.g., restaurant name, item name)">
+        <input type="text" id="note" placeholder="Enter notes (e.g., ticket description, item name)">
         
         <div class="edit-date-wrapper" id="date-field-block">
-            <label for="edit-date">Modify Transaction Date:</label>
+            <label for="edit-date">Transaction Date (Actual Expiry/Due Date):</label>
             <input type="date" id="edit-date">
         </div>
         
@@ -301,9 +302,21 @@
 
         async function init() {
             if(categories.length > 0) selectedCategory = categories[0];
+            
+            // 預設日期輸入框為今天
+            resetDateInputToToday();
+            
             await loadRecords();     
             renderCategories();   
             renderRecords();      
+        }
+
+        function resetDateInputToToday() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            document.getElementById('edit-date').value = `${yyyy}-${mm}-${dd}`;
         }
 
         async function loadRecords() {
@@ -356,6 +369,12 @@
             const note = noteInput.value.trim(); 
 
             if (isNaN(amount) || amount <= 0) return alert('Please enter a valid amount!');
+            
+            let chosenDate = dateInput.value;
+            if(!chosenDate) {
+                const now = new Date();
+                chosenDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            }
 
             if (editingRecordId !== null) {
                 const recordIndex = records.findIndex(r => r.id === editingRecordId);
@@ -363,27 +382,24 @@
                     records[recordIndex].amount = amount;
                     records[recordIndex].category = selectedCategory;
                     records[recordIndex].note = note; 
-                    if (dateInput.value) records[recordIndex].date = dateInput.value;
+                    records[recordIndex].date = chosenDate;
                 }
-                // 【核心修正】編輯儲存時，嚴格確保按日期最新排序（越近越高）
-                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                 editingRecordId = null;
                 document.getElementById('form-title').innerText = "Add Transaction";
                 document.getElementById('btn-save-main').innerText = "Save Record";
                 document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
                 document.getElementById('edit-indicator').style.display = "none"; 
-                document.getElementById('date-field-block').style.display = "none"; 
             } else {
-                const now = new Date();
-                const yyyy = now.getFullYear();
-                const mm = String(now.getMonth() + 1).padStart(2, '0');
-                const dd = String(now.getDate()).padStart(2, '0');
-                records.unshift({ id: Date.now(), amount: amount, category: selectedCategory, note: note, date: `${yyyy}-${mm}-${dd}` });
-                // 【核心修正】新紀錄儲存時，嚴格確保按日期最新排序（越近越高）
-                records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                records.unshift({ id: Date.now(), amount: amount, category: selectedCategory, note: note, date: chosenDate });
             }
+            
+            // 強制按日期最新（日期越近越高）排序
+            records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+            
             await saveRecords();     
-            amountInput.value = ''; noteInput.value = ''; renderRecords();         
+            amountInput.value = ''; noteInput.value = ''; 
+            resetDateInputToToday();
+            renderRecords();         
         }
 
         function startEdit(id) {
@@ -398,7 +414,6 @@
             document.getElementById('btn-save-main').innerText = "Update Record";
             document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
             document.getElementById('edit-indicator').style.display = "block";
-            document.getElementById('date-field-block').style.display = "block"; 
             renderCategories(); window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -419,13 +434,25 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
-        // 【核心修正】網頁 UI 渲染清單，確保「日期越近就越高」
+        // 核心邏輯重構：頂部方塊只統計當前真實月份，且清單嚴格日期由新到舊
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
             const catTotalsContainer = document.getElementById('category-totals-container');
+            const headingContainer = document.getElementById('current-month-heading');
+            
             listContainer.innerHTML = ''; catTotalsContainer.innerHTML = '';
-            let total = 0; let catSums = {};
+            
+            // 獲取當前的系統真實年分與月份 (格式如 "2026-06")
+            const sysDate = new Date();
+            const sysYearStr = String(sysDate.getFullYear());
+            const sysMonthStr = String(sysDate.getMonth() + 1).padStart(2, '0');
+            const currentMonthName = monthNames[sysDate.getMonth()];
+            
+            headingContainer.innerText = `${currentMonthName} Total (${sysYearStr})`;
+
+            let currentMonthTotal = 0; 
+            let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
             if (records.length === 0) {
@@ -437,20 +464,30 @@
                 return;
             }
 
-            // 在計算加總前，強制將清單按日期做倒序排序（日期近的在最上面）
+            // 【規則2】：確保 History Logs 順序，日期越近越在最高處
             records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
             records.forEach(r => {
-                total += r.amount;
-                if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
-                else catSums[r.category] = r.amount;
+                const recordIsoDate = ensureISODate(r.date);
+                const rParts = recordIsoDate.split('-'); // [ "2026", "06", "01" ]
+                
+                // 【規則1】：只統計實際到期日符合「本月」的支出，跨月的（如6月付7月的門票）在本月一律不計入
+                const isBelongToCurrentMonth = (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
+                
+                if (isBelongToCurrentMonth) {
+                    currentMonthTotal += r.amount;
+                    if (catSums[r.category] !== undefined) {
+                        catSums[r.category] += r.amount;
+                    }
+                }
 
+                // 歷史清單無論是不是本月都正常印出，依時間遠近排序
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
                 listContainer.innerHTML += `
                     <div class="list-item">
                         <div class="item-info">
                             <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
-                            <div class="item-details"><span>${r.date}</span>${noteHTML}</div>
+                            <div class="item-details"><span>${recordIsoDate}</span>${noteHTML}</div>
                         </div>
                         <div class="item-right">
                             <span class="amount">HK$${r.amount.toLocaleString()}</span>
@@ -459,7 +496,9 @@
                         </div>
                     </div>`;
             });
-            totalContainer.innerText = total.toLocaleString();
+            
+            // 更新頂部卡片的數值 (只反映本月數據)
+            totalContainer.innerText = currentMonthTotal.toLocaleString();
             Object.keys(catSums).forEach(cat => {
                 catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$${catSums[cat].toLocaleString()}</span></div>`;
             });
@@ -540,7 +579,6 @@
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
                     }
-                    // 【核心修正】匯入後，嚴格確保按日期最新排序（越近越高）
                     records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                     await saveRecords(); renderRecords(); alert(`Successfully imported ${records.length} records!`);
                 } catch(err) {
@@ -551,10 +589,11 @@
             reader.readAsText(file);
         }
 
-        // 【核心修正】重新規劃的 CSV 匯出排版演算法
+        // CSV 導出排版演算法（完美實現同一日首項顯示日期、Daily 和 Monthly 間精確空一行）
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
-            // 匯出時由舊到新排序 (方便 Excel 報表從上到下閱讀)
+            
+            // 匯出報表：依時間由舊到新排列（方便 Excel 清爽閱讀）
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
             
@@ -585,6 +624,7 @@
                 const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 
+                // 同一日的 data 只在第一項顯示日期
                 let dateFieldToPrint = "";
                 if (currentIsoDate !== lastDisplayedDate) {
                     dateFieldToPrint = currentIsoDate;
@@ -608,7 +648,7 @@
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
                     
-                    // 【需求修正】：只有在「純粹跨日、但不是月尾」的時候，Daily Total 後面才放常規空行
+                    // 如果僅僅是普通跨天（還未到月尾），在 Daily Total 後補常規空行
                     if (!isMonthEnd && nextRecord) {
                         csvContent += ",,,\n";
                     }
@@ -616,13 +656,13 @@
 
                 // 2. 每月結算 (Monthly Total)
                 if (isMonthEnd) {
-                    // 【需求修正】：滿足「Daily Total 和 Monthly Total 之間空白一行!!!」
-                    // 我們在 Daily Total 輸出後，先加一行空行，然後才接 Monthly Total
+                    // 滿足要求：Daily Total 和 Monthly Total 之間精確空白一行!!!
                     csvContent += ",,,\n"; 
+                    
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
                     
-                    // Monthly Total 與接下來的新內容（例如下個月的資料或 Year Total）隔開一行
+                    // Monthly Total 輸出後，與隔天新紀錄隔開一行
                     if (nextRecord || isYearEnd) {
                         csvContent += ",,,\n"; 
                     }

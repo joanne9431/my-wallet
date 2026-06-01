@@ -1,81 +1,199 @@
-function exportToCSV() {
-            if (records.length === 0) return alert("There is no data to export yet!");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Budget</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Budget">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #f1f4f1;
+            --card-bg: #ffffff;    
+            --primary: #3a5f43;
+            --primary-light: #4e7c57;
+            --danger: #c05c46;
+            --success: #5e8c61;
+            --warning: #cca043;
+            --text: #222f25;
+            --grey: #d5dbd6;
             
-            let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
-            let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
-            
-            let lastIsoDate = "";
-            let dayTotal = 0;
-            let monthTotal = 0;
-            let yearTotal = 0;
+            --hl-food: #fdf2ee;
+            --hl-food-txt: #b35d46;
+            --hl-trans: #eef7f6;
+            --hl-trans-txt: #3d8580;
+            --hl-play: #f6f4f8;
+            --hl-play-txt: #715c8c;
+            --hl-shop: #fbf8ed;
+            --hl-shop-txt: #a67c2e;
+            --hl-home: #edf4ee;
+            --hl-home-txt: #467a4e;
+            --hl-other: #f0f2f1;
+            --hl-other-txt: #5c635f;
+        }
+        
+        body { font-family: "Plus Jakarta Sans", sans-serif; background-color: var(--bg-color); color: var(--text); margin: 0; padding: 10px; padding-top: 0; }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 16px; box-shadow: 0 4px 12px rgba(43, 58, 47, 0.04); margin-bottom: 10px; }
+        .top-sticky-card { border-top-left-radius: 0; border-top-right-radius: 0; margin-left: -10px; margin-right: -10px; margin-bottom: 12px; padding: 18px 14px; background: linear-gradient(135deg, #ffffff 0%, #f7faf8 100%); border-bottom: 1px solid rgba(0,0,0,0.02); }
+        .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        h2 { margin: 0; font-size: 0.85rem; color: #6e7c71; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+        .btn-import-link { font-size: 0.78rem; color: var(--primary); font-weight: 700; cursor: pointer; background: none; border: none; padding: 2px 6px; width: auto; border-radius: 4px; }
+        .dashboard-layout { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .total-amount { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-top: 2px; letter-spacing: -0.5px; }
+        .category-totals-box { flex: 1.3; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; background: rgba(58, 95, 67, 0.03); padding: 10px; border-radius: 12px; border: 1px solid rgba(58, 95, 67, 0.05); }
+        .cat-total-item { display: flex; flex-direction: column; font-size: 0.75rem; }
+        .cat-name { color: #7d8c80; font-size: 0.68rem; font-weight: 600; }
+        .cat-num { font-weight: 700; color: var(--text); }
+        input[type="number"], input[type="text"], input[type="date"] { width: 100%; padding: 12px 14px; margin: 6px 0; border-radius: 10px; border: 1px solid var(--grey); box-sizing: border-box; font-size: 0.95rem; }
+        .edit-date-wrapper { display: none; background: #fdfaf3; padding: 8px 12px; border-radius: 10px; border: 1px dashed var(--warning); margin: 6px 0; }
+        button { width: 100%; padding: 12px; margin: 6px 0; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; cursor: pointer; }
+        .btn-save { background-color: var(--primary); color: white; }
+        .btn-backup { background-color: var(--success); color: white; }
+        .category-picker { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+        .category-btn { flex: 1 1 calc(33.33% - 6px); background-color: var(--card-bg); color: var(--text); border: 1.5px solid var(--grey); border-radius: 12px; padding: 10px 2px; display: flex; flex-direction: column; align-items: center; }
+        .category-btn.active { background-color: var(--primary); border-color: var(--primary); color: white; }
+        .edit-mode-indicator { display: none; background-color: var(--warning); color: #3f2e0f; padding: 8px; border-radius: 8px; font-size: 0.8rem; font-weight: 700; margin-bottom: 10px; text-align: center; }
+        .list-container { max-height: 280px; overflow-y: auto; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
+        .tag { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+        .item-details { color: #829285; font-size: 0.72rem; margin-top: 5px; }
+        .note-text { color: var(--text); font-weight: 600; background: #faf8f0; padding: 1px 6px; border-radius: 4px; border: 1px solid #eadebe; }
+        .amount { font-weight: 700; font-size: 1.05rem; }
+        .btn-action { background: none; padding: 6px; width: auto; font-size: 0.95rem; }
+    </style>
+</head>
+<body>
+
+    <div class="card top-sticky-card">
+        <div class="dashboard-layout">
+            <div class="total-box">
+                <h2>Monthly Total</h2>
+                <div class="total-amount">HK$<span id="total">0</span></div>
+            </div>
+            <div class="category-totals-box" id="category-totals-container"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2 id="form-title">Add Transaction</h2>
+        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing historical record...</div>
+        <input type="number" id="amount" placeholder="Enter amount" inputmode="decimal">
+        <input type="text" id="note" placeholder="Enter notes">
+        <div class="edit-date-wrapper" id="date-field-block">
+            <label for="edit-date">Modify Transaction Date:</label>
+            <input type="date" id="edit-date">
+        </div>
+        <div class="category-picker" id="category-picker"></div>
+        <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">Save Record</button>
+    </div>
+
+    <div class="card">
+        <div class="card-header-flex">
+            <h2>History Logs</h2>
+            <button type="button" class="btn-import-link" onclick="document.getElementById('csv-file-input').click()">🪵 Import CSV</button>
+        </div>
+        <input type="file" id="csv-file-input" accept=".csv" onchange="handleCSVImport(event)" style="display:none">
+        <div class="list-container" id="history-list"></div>
+    </div>
+
+    <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
+
+    <script>
+        const DATA_FILE = "accounting_records_v5.json";
+        let categories = ["🍔 Food", "🚗 Transport", "🎬 Entertainment", "🛍️ Shopping", "🏠 Home", "📦 Others"];
+        let records = []; let selectedCategory = categories[0]; let editingRecordId = null;
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+        async function init() { await loadRecords(); renderCategories(); renderRecords(); }
+        async function loadRecords() {
+            try { const root = await navigator.storage.getDirectory(); const fileHandle = await root.getFileHandle(DATA_FILE, { create: true }); const file = await fileHandle.getFile(); const text = await file.text(); records = text ? JSON.parse(text) : []; }
+            catch (e) { records = JSON.parse(localStorage.getItem('acc_rec_v5')) || []; }
+        }
+        async function saveRecords() {
+            try { const root = await navigator.storage.getDirectory(); const fileHandle = await root.getFileHandle(DATA_FILE, { create: true }); const writable = await fileHandle.createWritable(); await writable.write(JSON.stringify(records)); await writable.close(); }
+            catch (e) { localStorage.setItem('acc_rec_v5', JSON.stringify(records)); }
+        }
+
+        function renderCategories() {
+            const picker = document.getElementById('category-picker'); picker.innerHTML = '';
+            categories.forEach(cat => {
+                const isActive = (cat === selectedCategory) ? 'active' : '';
+                const parts = cat.split(' ');
+                picker.innerHTML += `<button type="button" class="category-btn ${isActive}" onclick="selectCategory('${cat}', this)"><span style="font-size:1.2rem">${parts[0]}</span><span style="font-size:0.75rem">${parts.slice(1).join(' ')}</span></button>`;
+            });
+        }
+        function selectCategory(cat, btn) { selectedCategory = cat; document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+
+        async function handleSubmit() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const note = document.getElementById('note').value.trim();
+            if (isNaN(amount) || amount <= 0) return alert('Enter valid amount');
+            if (editingRecordId !== null) {
+                const idx = records.findIndex(r => r.id === editingRecordId);
+                records[idx].amount = amount; records[idx].category = selectedCategory; records[idx].note = note;
+                const d = document.getElementById('edit-date').value; if(d) records[idx].date = d;
+                editingRecordId = null;
+            } else {
+                records.unshift({ id: Date.now(), amount, category: selectedCategory, note, date: new Date().toISOString().split('T')[0] });
+            }
+            records.sort((a, b) => b.date.localeCompare(a.date));
+            await saveRecords(); renderRecords();
+        }
+
+        function renderRecords() {
+            const list = document.getElementById('history-list'); list.innerHTML = '';
+            let total = 0;
+            records.forEach(r => {
+                total += r.amount;
+                list.innerHTML += `<div class="list-item"><div><span class="tag">${r.category}</span><div class="item-details">${r.date} ${r.note ? '<span class="note-text">'+r.note+'</span>':''}</div></div><div class="item-right"><span class="amount">HK$${r.amount.toLocaleString()}</span><button class="btn-action" onclick="startEdit(${r.id})">✏️</button><button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button></div></div>`;
+            });
+            document.getElementById('total').innerText = total.toLocaleString();
+        }
+
+        function startEdit(id) {
+            const r = records.find(r => r.id === id);
+            editingRecordId = id; document.getElementById('amount').value = r.amount; document.getElementById('note').value = r.note;
+            document.getElementById('edit-date').value = r.date; document.getElementById('edit-indicator').style.display = "block";
+            document.getElementById('date-field-block').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteRecord(id) { if(confirm("Delete?")) { records = records.filter(r => r.id !== id); await saveRecords(); renderRecords(); } }
+
+        function ensureISODate(dateStr) { return dateStr; }
+
+        function exportToCSV() {
+            if (records.length === 0) return alert("No data!");
+            let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date));
+            let csvContent = "\uFEFFDate,Category,Amount,Notes\n";
+            let lastIsoDate = "", dayTotal = 0, monthTotal = 0, yearTotal = 0;
 
             for (let i = 0; i < sortedRecords.length; i++) {
-                const r = sortedRecords[i];
-                const nextRecord = sortedRecords[i + 1];
-
-                const currentIsoDate = ensureISODate(r.date);
-                const parts = currentIsoDate.split('-');
-                const currentYear = parts[0];
-                const currentMonth = parts[1]; 
+                const r = sortedRecords[i], next = sortedRecords[i + 1];
+                const curDate = r.date, curParts = curDate.split('-'), curY = curParts[0], curM = curParts[1];
                 
-                const cleanMonthIdx = parseInt(currentMonth, 10) - 1;
-                const EnglishMonthLabel = monthNames[cleanMonthIdx] || "Month";
+                let displayDate = (curDate !== lastIsoDate) ? `${parseInt(curParts[2])}/${parseInt(curM)}/${curY}` : "";
+                csvContent += `${displayDate},${r.category.split(' ').slice(1).join(' ')},HK$${r.amount},${r.note}\n`;
 
-                let nextYear = null;
-                let nextMonth = null;
-                let nextIsoDate = null;
-                if (nextRecord) {
-                    nextIsoDate = ensureISODate(nextRecord.date);
-                    const nParts = nextIsoDate.split('-');
-                    nextYear = nParts[0];
-                    nextMonth = nParts[1];
-                }
+                dayTotal += r.amount; monthTotal += r.amount; yearTotal += r.amount; lastIsoDate = curDate;
 
-                const rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
-                const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
-                const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
-                const formattedAmount = `HK$${r.amount}`;
-                
-                let displayDate = "";
-                if (currentIsoDate !== lastIsoDate) {
-                    const dParts = currentIsoDate.split('-');
-                    displayDate = `${parseInt(dParts[2],10)}/${parseInt(dParts[1],10)}/${dParts[0]}`;
-                    lastIsoDate = currentIsoDate;
-                } else {
-                    displayDate = ""; 
-                }
-                
-                csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
-
-                dayTotal += r.amount;
-                monthTotal += r.amount;
-                yearTotal += r.amount;
-
-                // 1. 當日總計後空一行
-                if (!nextRecord || nextIsoDate !== currentIsoDate) {
-                    csvContent += `,Daily Total,HK$${dayTotal},\n\n`;
-                    dayTotal = 0; 
-                }
-
-                // 2. 月份總計
-                if (!nextRecord || nextMonth !== currentMonth || nextYear !== currentYear) {
-                    csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
-                    monthTotal = 0; 
-                }
-
-                // 3. 年度總計 (刪除 "Year" 字眼，並在與下一個數據間留空)
-                if (!nextRecord || nextYear !== currentYear) {
-                    csvContent += `,${currentYear} Total,HK$${yearTotal},\n\n`;
-                    yearTotal = 0; 
-                }
+                if (!next || next.date !== curDate) { csvContent += `,Daily Total,HK$${dayTotal},\n\n`; dayTotal = 0; }
+                if (!next || next.date.split('-')[1] !== curM || next.date.split('-')[0] !== curY) { csvContent += `,${monthNames[parseInt(curM)-1]} Total,HK$${monthTotal},\n`; monthTotal = 0; }
+                if (!next || next.date.split('-')[0] !== curY) { csvContent += `,${curY} Total,HK$${yearTotal},\n\n`; yearTotal = 0; }
             }
-            
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            link.href = url; link.download = "Budget_Export.csv"; link.click();
         }
+        init();
+    </script>
+</body>
+</html>

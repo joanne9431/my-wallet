@@ -9,7 +9,6 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Budget">
 
-    <!-- 引入高品質的自然感字型 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -70,14 +69,37 @@
             border-bottom: 1px solid rgba(0,0,0,0.02);
         }
         
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
         h2 { 
-            margin-top: 0; 
+            margin: 0; 
             font-size: 0.85rem; 
             color: #6e7c71; 
             font-weight: 700; 
             text-transform: uppercase; 
             letter-spacing: 0.8px; 
-            margin-bottom: 8px; 
+        }
+        
+        .btn-import-link {
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-weight: 700;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 2px 6px;
+            margin: 0;
+            width: auto;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .btn-import-link:hover {
+            background: rgba(58, 95, 67, 0.08);
         }
         
         .dashboard-layout {
@@ -247,6 +269,9 @@
         .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; }
         .btn-action:active { transform: scale(0.9); }
         
+        /* 隱藏原生檔案選取器 */
+        #csv-file-input { display: none; }
+        
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
 </head>
@@ -281,7 +306,12 @@
     </div>
 
     <div class="card">
-        <h2>History Logs</h2>
+        <div class="card-header-flex">
+            <h2>History Logs</h2>
+            <button type="button" class="btn-import-link" onclick="document.getElementById('csv-file-input').click()">🪵 Import CSV</button>
+        </div>
+        <input type="file" id="csv-file-input" accept=".csv" onchange="handleCSVImport(event)">
+        
         <div class="list-container" id="history-list"></div>
     </div>
 
@@ -292,7 +322,7 @@
     <script>
         const DATA_FILE = "accounting_records_v5.json"; 
         
-        // 分類選單（英文版面）
+        // 分類選單
         let categories = ["🍔 Food", "🚗 Transport", "🎬 Entertainment", "🛍️ Shopping", "🏠 Home", "📦 Others"];
         
         let records = [];           
@@ -387,7 +417,6 @@
                     }
                 }
                 
-                // 依照日期最新重新排序
                 records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                 
                 editingRecordId = null;
@@ -420,7 +449,7 @@
             renderRecords();         
         }
 
-        // 點擊編輯時觸發
+        // 點擊編輯
         function startEdit(id) {
             const record = records.find(r => r.id === id);
             if(!record) return;
@@ -449,7 +478,7 @@
             }
         }
 
-        // 依關鍵字自動取得 Highlight 顏色樣式
+        // 依種類取得對應的自然色調 Highlight
         function getHighlightStyle(category) {
             const catStr = String(category);
             if (catStr.includes("Food")) {
@@ -467,7 +496,14 @@
             }
         }
 
-        // 渲染網頁歷史紀錄清單與各大項目看板金額加總
+        // 補回畫面上分類缺少的 Emoji（比對用）
+        function matchCategoryWithEmoji(rawCatLabel) {
+            const clean = rawCatLabel.trim();
+            const matched = categories.find(c => c.includes(clean));
+            return matched || `📦 ${clean}`;
+        }
+
+        // 渲染網頁歷史紀錄清單
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -497,7 +533,6 @@
 
             records.forEach(r => {
                 total += r.amount;
-                
                 if (catSums[r.category] !== undefined) {
                     catSums[r.category] += r.amount;
                 } else {
@@ -539,7 +574,6 @@
             });
         }
 
-        // 安全確保 ISO 日期格式
         function ensureISODate(dateStr) {
             if (dateStr && dateStr.includes('-') && dateStr.split('-').length === 3) {
                 return dateStr;
@@ -556,7 +590,98 @@
             }
         }
 
-        // 匯出 CSV 流程 (高度客製化空行間隔與格式)
+        // CSV 導入邏輯處理
+        function handleCSVImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/);
+                
+                let importedCount = 0;
+                let activeDate = ""; // 記住上一個有效的日期，用來補滿前欄留白的行紀錄
+
+                // 從第二行開始讀取數據 (跳過標題 Date,Category,Amount,Notes)
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue; // 跳過極端空行
+
+                    // 解析 CSV 逗號
+                    let parts = [];
+                    let currentPart = "";
+                    let inQuotes = false;
+                    
+                    for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                        let c = line[charIndex];
+                        if (c === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (c === ',' && !inQuotes) {
+                            parts.push(currentPart);
+                            currentPart = "";
+                        } else {
+                            currentPart += c;
+                        }
+                    }
+                    parts.push(currentPart);
+
+                    if (parts.length < 3) continue;
+
+                    let rawDate = parts[0] ? parts[0].trim() : "";
+                    let rawCategory = parts[1] ? parts[1].trim() : "";
+                    let rawAmount = parts[2] ? parts[2].trim() : "";
+                    let rawNote = parts[3] ? parts[3].trim() : "";
+
+                    // 如果這一行是統計線（Daily Total、Month Total、Year Total 等等），直接過濾跳過
+                    if (rawCategory.toLowerCase().includes("total") || rawDate.toLowerCase().includes("total")) {
+                        continue;
+                    }
+
+                    // 如果 Date 欄位有值，就更新當前日期；如果為空，就延用之前的日期 (配合匯出首欄留白排版)
+                    if (rawDate) {
+                        activeDate = ensureISODate(rawDate);
+                    }
+                    
+                    if (!activeDate || !rawCategory || !rawAmount) continue;
+
+                    // 清理金額字串中的 HK$ 與逗號
+                    let cleanAmountStr = rawAmount.replace(/HK\$/g, '').replace(/,/g, '').trim();
+                    let amount = parseFloat(cleanAmountStr);
+                    if (isNaN(amount) || amount <= 0) continue;
+
+                    // 還原分類與備註
+                    let finalCategory = matchCategoryWithEmoji(rawCategory);
+                    
+                    // 新增入陣列（給予新的時間戳 ID 避免衝突）
+                    records.push({
+                        id: Date.now() + i, // 加 i 確保在同批次迴圈中 ID 不重複
+                        amount: amount,
+                        category: finalCategory,
+                        note: rawNote,
+                        date: activeDate
+                    });
+                    importedCount++;
+                }
+
+                if (importedCount > 0) {
+                    // 重新排序
+                    records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                    await saveRecords();
+                    renderRecords();
+                    alert(`Successfully imported ${importedCount} transactions!`);
+                } else {
+                    alert("No valid records found in the selected CSV file.");
+                }
+                
+                // 重置 file input，讓使用者可以重複選取相同檔案
+                document.getElementById('csv-file-input').value = "";
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // 匯出 CSV 流程
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
             
@@ -590,7 +715,6 @@
                     nextMonth = nParts[1];
                 }
 
-                // 去除分類前的 Emoji 圖示匯出
                 const rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
                 const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
@@ -610,46 +734,35 @@
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 判斷當日、當月、當年是否截止
                 const isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                 const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
                 const isYearEnd = !nextRecord || nextYear !== currentYear;
 
-                // 當日總計 -> 第一欄留白
                 if (isDayEnd) {
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
-                    
-                    // 日總結後面永遠插入一行空行（與接下來的 Month Total、Year Total 或隔天紀錄隔開）
                     if (isMonthEnd || isYearEnd || nextRecord) {
                         csvContent += ",,,\n";
                     }
                 }
 
-                // 每月總計 -> 第一欄留白
                 if (isMonthEnd) {
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
-                    
-                    // 月總結後面永遠插入一行空行（與接下來的 Year Total 或隔天紀錄隔開）
                     if (isYearEnd || nextRecord) {
                         csvContent += ",,,\n";
                     }
                 }
 
-                // 每年總計 -> 第一欄留白 (簡化標題，刪除 "Year " 字眼)
                 if (isYearEnd) {
                     csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
                     yearTotal = 0; 
-                    
-                    // 年總結後面插入一行空行（與隔天紀錄隔開）
                     if (nextRecord) {
                         csvContent += ",,,\n";
                     }
                 }
             }
             
-            // 下載程序啟動
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");

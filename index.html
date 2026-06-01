@@ -176,13 +176,15 @@
             let csv = "\uFEFFDate,Category,Amount,Notes\n", lastD = "", dTot = 0, mTot = 0, yTot = 0;
             for (let i = 0; i < sorted.length; i++) {
                 const r = sorted[i], next = sorted[i+1], p = r.date.split('-');
-                csv += `${(r.date !== lastD ? r.date : "")},${r.category.split(' ').pop()},HK$${r.amount},${r.note}\n`;
+                // 日期強制轉為 YYYY/MM/DD
+                let displayDate = (r.date !== lastD) ? `${p[0]}/${p[1]}/${p[2]}` : "";
+                csv += `${displayDate},${r.category.split(' ').pop()},HK$${r.amount},${r.note}\n`;
                 dTot += r.amount; mTot += r.amount; yTot += r.amount; lastD = r.date;
                 
-                // 1. 每一日數據後空白一行
+                // 1. 每日後留空行
                 if (!next || next.date !== r.date) { csv += `,\n`; dTot = 0; }
                 
-                // 2. 月份總計
+                // 2. 每月總計
                 if (!next || next.date.split('-')[1] !== p[1]) { csv += `,${monthNames[parseInt(p[1])-1]} Total,HK$${mTot},\n`; mTot = 0; }
                 
                 // 3. 年度總計 (刪除 Year 字眼，且與 Monthly 之間有間隔)

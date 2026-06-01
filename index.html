@@ -619,8 +619,9 @@
                 if (isDayEnd) {
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
-                    // 若「日總計」是當日唯一的總計（非月末/年末），則與隔天隔一行
-                    if (!isMonthEnd && nextRecord) {
+                    
+                    // 日總結後面永遠插入一行空行（與接下來的 Month Total、Year Total 或隔天紀錄隔開）
+                    if (isMonthEnd || isYearEnd || nextRecord) {
                         csvContent += ",,,\n";
                     }
                 }
@@ -629,17 +630,19 @@
                 if (isMonthEnd) {
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
-                    // 若「月總計」是當月唯一的總結（非年末），則與隔天隔一行
-                    if (!isYearEnd && nextRecord) {
+                    
+                    // 月總結後面永遠插入一行空行（與接下來的 Year Total 或隔天紀錄隔開）
+                    if (isYearEnd || nextRecord) {
                         csvContent += ",,,\n";
                     }
                 }
 
-                // 每年總計 -> 第一欄留白 (刪除 "Year " 字眼，改為 "2026 Total")
+                // 每年總計 -> 第一欄留白 (簡化標題，刪除 "Year " 字眼)
                 if (isYearEnd) {
                     csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
                     yearTotal = 0; 
-                    // 每年總計與隔天隔一行
+                    
+                    // 年總結後面插入一行空行（與隔天紀錄隔開）
                     if (nextRecord) {
                         csvContent += ",,,\n";
                     }

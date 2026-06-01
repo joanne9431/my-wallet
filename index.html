@@ -9,35 +9,40 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Budget">
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        /* 全域變數（顏色主題） */
+        /* 全域變數（原森林系 / 大地色主題） */
         :root {
-            --bg-color: #f5f7fa;   
+            --bg-color: #f1f4f1;   /* 溫和的淡草地綠灰 */
             --card-bg: #ffffff;    
-            --primary: #d3de73;    
-            --danger: #ff4d4f;     
-            --success: #2ecc71;    
-            --warning: #f1c40f;    
-            --text: #333333;       
-            --grey: #e1e4e8;       
+            --primary: #3a5f43;    /* 沉穩森林深綠 */
+            --primary-light: #4e7c57; /* 茂盛林葉綠 */
+            --danger: #c05c46;     /* 溫暖泥土磚紅 */
+            --success: #5e8c61;    /* 療癒鼠尾草綠 */
+            --warning: #cca043;    /* 暖秋麥芽黃 */
+            --text: #222f25;       /* 深松針墨綠 (高對比閱讀舒適) */
+            --grey: #d5dbd6;       /* 淺石灰色 */
             
-            /* 各種消費種類的 Highlight 顏色背景 */
-            --hl-food: #ffeaf0;    /* Food: 粉紅色 */
-            --hl-food-txt: #d6336c;
-            --hl-trans: #e7f5ff;   /* Transport: 粉藍色 */
-            --hl-trans-txt: #1c7ed6;
-            --hl-play: #f3f0ff;    /* Entertainment: 粉紫色 */
-            --hl-play-txt: #7048e8;
-            --hl-shop: #fff4e6;    /* Shopping: 粉橘色 */
-            --hl-shop-txt: #f76707;
-            --hl-home: #e6fcf5;    /* Home: 粉綠色 */
-            --hl-home-txt: #0ca678;
-            --hl-other: #f1f3f5;   /* Others: 淺灰色 */
-            --hl-other-txt: #495057;
+            /* 各種消費種類的 Highlight 顏色背景 (採用灰調低飽和的自然色彩) */
+            --hl-food: #fdf2ee;    /* Food: 溫暖麥芽粉橘 */
+            --hl-food-txt: #b35d46;
+            --hl-trans: #eef7f6;   /* Transport: 湖水綠藍 */
+            --hl-trans-txt: #3d8580;
+            --hl-play: #f6f4f8;    /* Entertainment: 暮光薰衣草紫 */
+            --hl-play-txt: #715c8c;
+            --hl-shop: #fbf8ed;    /* Shopping: 暖秋金黃 */
+            --hl-shop-txt: #a67c2e;
+            --hl-home: #edf4ee;    /* Home: 森林苔蘚綠 */
+            --hl-home-txt: #467a4e;
+            --hl-other: #f0f2f1;   /* Others: 溪畔卵石灰 */
+            --hl-other-txt: #5c635f;
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
@@ -47,9 +52,9 @@
         
         .card {
             background: var(--card-bg);
-            border-radius: 14px;
-            padding: 14px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+            border-radius: 16px;
+            padding: 16px; 
+            box-shadow: 0 4px 12px rgba(43, 58, 47, 0.04); 
             margin-bottom: 10px;
         }
         
@@ -59,110 +64,151 @@
             margin-left: -10px;
             margin-right: -10px;
             margin-bottom: 12px;
-            padding: 15px 12px;
-            background: linear-gradient(135deg, #ffffff 0%, #fafdff 100%);
-            border-bottom: 1px solid rgba(0,0,0,0.03);
+            padding: 18px 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7faf8 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.02);
         }
         
-        h2 { margin-top: 0; font-size: 0.9rem; color: #777; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+        .card-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        h2 { 
+            margin: 0; 
+            font-size: 0.85rem; 
+            color: #6e7c71; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+        }
+        
+        .btn-import-link {
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-weight: 700;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 2px 6px;
+            margin: 0;
+            width: auto;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        .btn-import-link:hover {
+            background: rgba(58, 95, 67, 0.08);
+        }
         
         .dashboard-layout {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         
         .total-box {
             flex: 1;
-            padding-left: 20px; 
+            padding-left: 10px; 
             text-align: left;
         }
         .total-amount { 
-            font-size: 2rem; 
-            font-weight: 900; 
+            font-size: 1.8rem; 
+            font-weight: 800; 
             color: var(--primary); 
             margin-top: 2px;
-            letter-spacing: -1px;
+            letter-spacing: -0.5px;
         }
         
         .category-totals-box {
             flex: 1.3;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 4px;
-            background: rgba(0, 0, 0, 0.02);
-            padding: 8px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 0, 0, 0.01);
+            gap: 6px;
+            background: rgba(58, 95, 67, 0.03);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(58, 95, 67, 0.05);
         }
         
         .cat-total-item {
             display: flex;
             flex-direction: column;
             font-size: 0.75rem;
-            color: #555;
+            color: var(--text);
         }
         .cat-total-item .cat-name {
-            color: #888;
-            font-size: 0.7rem;
+            color: #7d8c80;
+            font-size: 0.68rem;
+            font-weight: 600;
         }
         .cat-total-item .cat-num {
             font-weight: 700;
-            color: #222;
+            color: var(--text);
         }
         
         input[type="number"], input[type="text"], input[type="date"] {
             width: 100%;
-            padding: 10px 12px; 
-            margin: 4px 0;      
-            border-radius: 8px;
+            padding: 12px 14px; 
+            margin: 6px 0;      
+            border-radius: 10px;
             border: 1px solid var(--grey);
             box-sizing: border-box;
             font-size: 0.95rem;
+            background-color: #fbfcfb;
+            color: var(--text);
+            transition: all 0.2s;
             -webkit-appearance: none; 
         }
-        input:focus { outline: none; border-color: var(--primary); } 
+        input:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
+        } 
         
-        /* 編輯日期專用樣式 */
         .edit-date-wrapper {
             display: none; 
-            background: #fff8e6;
-            padding: 6px 10px;
-            border-radius: 8px;
+            background: #fdfaf3;
+            padding: 8px 12px;
+            border-radius: 10px;
             border: 1px dashed var(--warning);
-            margin: 4px 0;
+            margin: 6px 0;
         }
         .edit-date-wrapper label {
             font-size: 0.75rem;
-            color: #b78103;
+            color: #a67c2e;
             font-weight: bold;
             display: block;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         
         button {
             width: 100%;
-            padding: 11px;
-            margin: 4px 0;
-            border-radius: 8px;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 10px;
             border: none;
             font-size: 0.95rem;
-            font-weight: bold;
+            font-weight: 700;
             transition: all 0.2s;
             -webkit-appearance: none;
             cursor: pointer;
         }
-        button:active { opacity: 0.8; } 
+        button:active { opacity: 0.85; transform: scale(0.99); } 
         
-        .btn-save { background-color: var(--primary); color: white; margin-top: 6px; }
-        .btn-backup { background-color: var(--success); color: white; margin-top: 6px; }
+        .btn-save { background-color: var(--primary); color: white; margin-top: 8px; }
+        .btn-save:hover { background-color: var(--primary-light); }
+        .btn-backup { background-color: var(--success); color: white; margin-top: 8px; }
+        .btn-backup:hover { opacity: 0.95; }
         
         .category-picker {
             display: flex;
             flex-wrap: wrap; 
             gap: 6px;       
-            margin: 8px 0;
+            margin: 10px 0;
         }
         
         .category-btn {
@@ -170,54 +216,59 @@
             background-color: var(--card-bg);
             color: var(--text);
             border: 1.5px solid var(--grey);
-            border-radius: 10px;
-            padding: 8px 2px; 
+            border-radius: 12px;
+            padding: 10px 2px; 
             display: flex;
             flex-direction: column; 
             align-items: center;
-            gap: 2px;
+            gap: 4px;
             margin: 0;
+            font-family: inherit;
         }
-        .category-btn .icon-label { font-size: 1.05rem; } 
-        .category-btn .label { font-size: 0.75rem; font-weight: bold; } 
+        .category-btn .icon-label { font-size: 1.2rem; } 
+        .category-btn .label { font-size: 0.75rem; font-weight: 700; } 
         
         .category-btn.active {
             background-color: var(--primary);
             border-color: var(--primary);
             color: white;
+            box-shadow: 0 4px 8px rgba(58, 95, 67, 0.2);
         }
         
         .edit-mode-indicator {
             display: none; 
             background-color: var(--warning);
-            color: #333;
-            padding: 6px;
-            border-radius: 6px;
+            color: #3f2e0f;
+            padding: 8px;
+            border-radius: 8px;
             font-size: 0.8rem;
-            font-weight: bold;
-            margin-bottom: 8px;
+            font-weight: 700;
+            margin-bottom: 10px;
             text-align: center;
         }
         
-        .list-container { max-height: 260px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f0f2f5; }
+        .list-container { max-height: 280px; overflow-y: auto; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
         
         .tag { 
-            padding: 3px 8px; 
-            border-radius: 5px; 
-            font-size: 0.78rem; 
-            font-weight: bold; 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
             align-self: flex-start; 
         }
         
-        .item-details { color: #aaa; font-size: 0.72rem; margin-top: 4px; display: flex; gap: 6px; align-items: center; }
-        .note-text { color: #555; font-weight: 500; background: #fffbe6; padding: 1px 4px; border-radius: 4px; border: 1px solid #ffe58f; } 
+        .item-details { color: #829285; font-size: 0.72rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
+        .note-text { color: var(--text); font-weight: 600; background: #faf8f0; padding: 1px 6px; border-radius: 4px; border: 1px solid #eadebe; } 
 
-        .item-right { display: flex; align-items: center; gap: 6px; }
-        .amount { font-weight: 700; font-size: 1rem; margin-right: 2px; }
-        .btn-action { background: none; padding: 4px; margin: 0; width: auto; font-size: 0.9rem; display: inline-block;}
+        .item-right { display: flex; align-items: center; gap: 8px; }
+        .amount { font-weight: 700; font-size: 1.05rem; margin-right: 2px; color: var(--text); }
+        .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; }
+        .btn-action:active { transform: scale(0.9); }
+        
+        #csv-file-input { display: none; }
         
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
@@ -253,7 +304,12 @@
     </div>
 
     <div class="card">
-        <h2>History Logs</h2>
+        <div class="card-header-flex">
+            <h2>History Logs</h2>
+            <button type="button" class="btn-import-link" onclick="document.getElementById('csv-file-input').click()">🪵 Import CSV</button>
+        </div>
+        <input type="file" id="csv-file-input" accept=".csv" onchange="handleCSVImport(event)">
+        
         <div class="list-container" id="history-list"></div>
     </div>
 
@@ -429,6 +485,12 @@
             }
         }
 
+        function matchCategoryWithEmoji(rawCatLabel) {
+            const clean = rawCatLabel.trim();
+            const matched = categories.find(c => c.includes(clean));
+            return matched || `📦 ${clean}`;
+        }
+
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -442,7 +504,7 @@
             categories.forEach(cat => { catSums[cat] = 0; });
 
             if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #bbb; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
+                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
                 totalContainer.innerText = '0';
                 
                 categories.forEach(cat => {
@@ -500,12 +562,38 @@
             });
         }
 
+        // 精準拆解 日/月/年 (如 30/5/2026)，停用原生錯誤猜測
         function ensureISODate(dateStr) {
-            if (dateStr && dateStr.includes('-') && dateStr.split('-').length === 3) {
-                return dateStr;
+            if (!dateStr) return "2026-06-01";
+            
+            let cleanStr = dateStr.trim();
+            
+            if (cleanStr.includes('-') && cleanStr.split('-').length === 3) {
+                return cleanStr;
             }
+            
+            if (cleanStr.includes('/')) {
+                let parts = cleanStr.split('/');
+                if (parts.length === 3) {
+                    let d = parts[0].trim();
+                    let m = parts[1].trim();
+                    let y = parts[2].trim();
+                    
+                    if (y.length !== 4 && d.length === 4) {
+                        let temp = y;
+                        y = d;
+                        d = temp;
+                    }
+                    
+                    let finalY = y;
+                    let finalM = m.padStart(2, '0');
+                    let finalD = d.padStart(2, '0');
+                    return `${finalY}-${finalM}-${finalD}`;
+                }
+            }
+            
             try {
-                const d = new Date(dateStr);
+                const d = new Date(cleanStr);
                 if (isNaN(d.getTime())) return "2026-06-01"; 
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -516,11 +604,92 @@
             }
         }
 
-        // 完美實行：當天重複日期留白、各大 Total 區塊獨立，且在總計下方安插「真正隔行」效果
+        function handleCSVImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/);
+                
+                let importedCount = 0;
+                let activeDate = ""; 
+
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue; 
+
+                    let parts = [];
+                    let currentPart = "";
+                    let inQuotes = false;
+                    
+                    for (let charIndex = 0; charIndex < line.length; charIndex++) {
+                        let c = line[charIndex];
+                        if (c === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (c === ',' && !inQuotes) {
+                            parts.push(currentPart);
+                            currentPart = "";
+                        } else {
+                            currentPart += c;
+                        }
+                    }
+                    parts.push(currentPart);
+
+                    if (parts.length < 3) continue;
+
+                    let rawDate = parts[0] ? parts[0].trim() : "";
+                    let rawCategory = parts[1] ? parts[1].trim() : "";
+                    let rawAmount = parts[2] ? parts[2].trim() : "";
+                    let rawNote = parts[3] ? parts[3].trim() : "";
+
+                    if (rawCategory.toLowerCase().includes("total") || rawDate.toLowerCase().includes("total")) {
+                        continue;
+                    }
+
+                    if (rawDate !== "") {
+                        activeDate = ensureISODate(rawDate);
+                    }
+                    
+                    if (!activeDate || !rawCategory || !rawAmount) continue;
+
+                    let cleanAmountStr = rawAmount.replace(/HK\$/g, '').replace(/,/g, '').trim();
+                    let amount = parseFloat(cleanAmountStr);
+                    if (isNaN(amount) || amount <= 0) continue;
+
+                    let finalCategory = matchCategoryWithEmoji(rawCategory);
+                    
+                    records.push({
+                        id: Date.now() + i, 
+                        amount: amount,
+                        category: finalCategory,
+                        note: rawNote,
+                        date: activeDate 
+                    });
+                    importedCount++;
+                }
+
+                if (importedCount > 0) {
+                    records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+                    await saveRecords();
+                    renderRecords();
+                    alert(`Successfully imported ${importedCount} transactions!`);
+                } else {
+                    alert("No valid records found in the CSV file.");
+                }
+                
+                document.getElementById('csv-file-input').value = "";
+            };
+            
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        // CSV 完美導出（還原當天重複日期留白、Daily/Monthly/Year Total 排版隔行設定）
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
             
-            // 依時間從舊到新排序匯出，方便 Excel 連貫觀看與統計
+            // 從早到晚排序匯出，方便 Excel 閱讀
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
             
@@ -556,10 +725,9 @@
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 const formattedAmount = `HK$${r.amount}`;
                 
-                // 1. 同一天內重複出現的日期，只顯示第一個，其餘留白
+                // 天天重複日期留白排版
                 let displayDate = "";
                 if (currentIsoDate !== lastIsoDate) {
-                    // 轉為日/月/年 (如 1/6/2026) 格式
                     const dParts = currentIsoDate.split('-');
                     displayDate = `${parseInt(dParts[2],10)}/${parseInt(dParts[1],10)}/${dParts[0]}`;
                     lastIsoDate = currentIsoDate;
@@ -567,31 +735,27 @@
                     displayDate = ""; 
                 }
                 
-                // 寫入當前消費明細
                 csvContent += `${displayDate},${category},${formattedAmount},${note}\n`;
 
                 dayTotal += r.amount;
                 monthTotal += r.amount;
                 yearTotal += r.amount;
 
-                // 2. 當日結算 (Daily Total) -> 輸出後下方插入一列完全空白列來隔行
+                // 當日總計 -> 第一欄留白並產生隔行效果
                 if (!nextRecord || nextIsoDate !== currentIsoDate) {
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
-                    csvContent += `,,,,\n`; // 真正隔行效果
                     dayTotal = 0; 
                 }
 
-                // 3. 每月結算 (Monthly Total) -> 輸出後下方插入一列完全空白列來隔行
+                // 每月總計 -> 第一欄留白並產生隔行效果
                 if (!nextRecord || nextYear !== currentYear || nextMonth !== currentMonth) {
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
-                    csvContent += `,,,,\n`; // 真正隔行效果
                     monthTotal = 0; 
                 }
 
-                // 4. 每年結算 (Yearly Total) -> 輸出後下方插入一列完全空白列來隔行
+                // 每年總計 -> 第一欄留白並產生隔行效果
                 if (!nextRecord || nextYear !== currentYear) {
                     csvContent += `,Year ${currentYear} Total,HK$${yearTotal},\n`;
-                    csvContent += `,,,,\n`; // 真正隔行效果
                     yearTotal = 0; 
                 }
             }

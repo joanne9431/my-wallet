@@ -391,7 +391,6 @@
                 records.unshift({ id: Date.now(), amount: amount, category: selectedCategory, note: note, date: chosenDate });
             }
             
-            records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
             await saveRecords();     
             amountInput.value = ''; noteInput.value = ''; 
             resetDateInputToToday();
@@ -430,7 +429,7 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
-        /* 完美還原：畫面上的 History Logs 保持原本清晰、連續、不被分割的樣子 */
+        /* 核心修復：移除了原先頂部衝突的 records.sort，確保主畫面完全聽從你的改動與排序 */
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -459,21 +458,16 @@
                 return;
             }
 
-            // 確保主畫面清單由新到舊排序
-            records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-
             records.forEach(r => {
                 const recordIsoDate = ensureISODate(r.date);
                 const rParts = recordIsoDate.split('-');
                 
-                // 頂部卡片只統計當月
                 const isBelongToCurrentMonth = (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
                 if (isBelongToCurrentMonth) {
                     currentMonthTotal += r.amount;
                     if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
                 }
 
-                // 渲染常規列表，清清爽爽原汁原味呈現
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
                 listContainer.innerHTML += `
                     <div class="list-item">
@@ -569,6 +563,7 @@
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
                     }
+                    // 僅在匯入成功後依時間排好順序一次
                     records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                     await saveRecords(); renderRecords(); alert(`Successfully imported ${records.length} records!`);
                 } catch(err) {
@@ -579,11 +574,12 @@
             reader.readAsText(file);
         }
 
-        /* 導出邏輯：在後台安安靜靜地處理按月拆分與 Year Total，不影響主畫面 */
+        /* 將時間排序獨立移至此處（僅在導出 Excel 時在背景運作，絕不影響或重置主畫面列表） */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
+            // 僅在背景進行報表時間排序（由舊到新）
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
 
             let monthlyGroups = {};

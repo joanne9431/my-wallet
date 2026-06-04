@@ -230,18 +230,18 @@
         /* 歷史記錄容器優化 */
         .list-container { max-height: 340px; overflow-y: auto; padding-right: 2px; }
         
-        /* 新增：按日期分組的卡片樣式 */
+        /* 按日期分組的卡片樣式 */
         .date-group {
             background: #fafcfb;
             border: 1px solid rgba(58, 95, 67, 0.08);
             border-radius: 12px;
             padding: 12px;
-            margin-bottom: 14px; /* 讓不同日子之間有明顯的外部間距 */
+            margin-bottom: 14px; 
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
         }
         .date-group:last-child { margin-bottom: 0; }
         
-        /* 新增：分組內的日期大標題 */
+        /* 分組內的日期大標題 */
         .date-group-title {
             font-size: 0.8rem;
             font-weight: 800;
@@ -313,7 +313,7 @@
     </div>
 
     <div style="padding: 0 2px;">
-        <button class="btn-backup" onclick="exportToCSV()">Backup Data (Export Excel CSV)</button>
+        <button class="btn-backup" onclick="exportToExcelXML()">Backup Data (Export Excel Multi-Sheets)</button>
         <input type="file" id="import-file-input" accept=".json,.csv" style="display: none;" onchange="handleFileImport(this)">
         <button class="btn-import" onclick="document.getElementById('import-file-input').click()">Import Data (JSON/CSV)</button>
     </div>
@@ -328,10 +328,7 @@
 
         async function init() {
             if(categories.length > 0) selectedCategory = categories[0];
-            
-            // 預設日期輸入框為今天
             resetDateInputToToday();
-            
             await loadRecords();     
             renderCategories();   
             renderRecords();      
@@ -420,7 +417,6 @@
             }
             
             records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
-            
             await saveRecords();     
             amountInput.value = ''; noteInput.value = ''; 
             resetDateInputToToday();
@@ -459,7 +455,6 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
-        // 核心修改：將當月資料依「日期」打包分組渲染，讓不同日子有極為明顯的界線
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -479,7 +474,6 @@
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
-            // 1. 篩選出當月資料
             const currentMonthRecords = records.filter(r => {
                 const recordIsoDate = ensureISODate(r.date);
                 const rParts = recordIsoDate.split('-');
@@ -495,37 +489,26 @@
                 return;
             }
 
-            // 2. 排序（由新到舊）
             currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
-            // 3. 執行高級重構：將資料按日期歸類進物件中（Group By Date）
             const groupedRecords = {};
             currentMonthRecords.forEach(r => {
                 const dateKey = ensureISODate(r.date);
-                if (!groupedRecords[dateKey]) {
-                    groupedRecords[dateKey] = [];
-                }
+                if (!groupedRecords[dateKey]) groupedRecords[dateKey] = [];
                 groupedRecords[dateKey].push(r);
                 
-                // 同步計算加總
                 currentMonthTotal += r.amount;
-                if (catSums[r.category] !== undefined) {
-                    catSums[r.category] += r.amount;
-                }
+                if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
             });
 
-            // 4. 開始依據日期群組渲染 HTML 結構
             Object.keys(groupedRecords).forEach(dateStr => {
                 const dayRecords = groupedRecords[dateStr];
-                
-                // 創建屬於這一天的獨立分組卡片 (date-group)
                 let groupHTML = `
                     <div class="date-group">
                         <div class="date-group-title">📅 ${dateStr}</div>
                         <div class="date-items-inner">
                 `;
                 
-                // 塞入該日期的所有消費項目
                 dayRecords.forEach(r => {
                     const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
                     groupHTML += `
@@ -542,16 +525,10 @@
                         </div>`;
                 });
                 
-                groupHTML += `
-                        </div>
-                    </div>
-                `;
-                
-                // 將這一天的區塊丟進容器中
+                groupHTML += `</div></div>`;
                 listContainer.innerHTML += groupHTML;
             });
             
-            // 更新頂部面板數據
             totalContainer.innerText = currentMonthTotal.toLocaleString();
             Object.keys(catSums).forEach(cat => {
                 catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$${catSums[cat].toLocaleString()}</span></div>`;
@@ -620,7 +597,6 @@
                                 dateStr = ensureISODate(dateStr);
                                 lastValidDate = dateStr; 
                             }
-                            
                             if (!dateStr) continue;
                             
                             amtStr = amtStr.replace('HK$', '').replace(/"/g, '');
@@ -643,88 +619,152 @@
             reader.readAsText(file);
         }
 
-        function exportToCSV() {
+        // 高級排版演算法：將資料導出為真正的 Excel XML 格式，完美呈現多 Sheet 與精確定位 Year Total
+        function exportToExcelXML() {
             if (records.length === 0) return alert("There is no data to export yet!");
-            
+
+            // 1. 依時間從舊到新進行基礎排序
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
-            let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
+
+            // 2. 將記錄按「年-月」歸類分組 (例如: "2026-06", "2026-05")
+            let monthlyGroups = {};
+            let allMonthsChronological = []; // 用來追蹤排序後的月份順序
             
-            let dayTotal = 0; 
-            let monthTotal = 0; 
-            let yearTotal = 0;
-            let lastDisplayedDate = ""; 
-
-            for (let i = 0; i < sortedRecords.length; i++) {
-                const r = sortedRecords[i];
-                const nextRecord = sortedRecords[i + 1];
-
-                const currentIsoDate = ensureISODate(r.date);
-                const parts = currentIsoDate.split('-');
-                const currentYear = parts[0]; 
-                const currentMonth = parts[1]; 
-                const EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
-
-                let nextYear = null, nextMonth = null, nextIsoDate = null;
-                if (nextRecord) {
-                    nextIsoDate = ensureISODate(nextRecord.date);
-                    const nParts = nextIsoDate.split('-');
-                    nextYear = nParts[0]; 
-                    nextMonth = nParts[1];
+            sortedRecords.forEach(r => {
+                let isoDate = ensureISODate(r.date);
+                let yearMonth = isoDate.substring(0, 7); // 擷取 "YYYY-MM"
+                if (!monthlyGroups[yearMonth]) {
+                    monthlyGroups[yearMonth] = [];
+                    allMonthsChronological.push(yearMonth);
                 }
+                monthlyGroups[yearMonth].push(r);
+            });
 
-                const rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
-                const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
-                const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
+            // 取得當前所有紀錄中「最新的一個月份」
+            allMonthsChronological.sort((a, b) => a.localeCompare(b));
+            let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
+
+            // 3. 開始建立 Excel XML 結構字串
+            let xmlContent = `<?xml version="1.0" encoding="utf-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font ss:FontName="Calibri" x:Family="Swiss" ss:Size="11" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="Header">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+   <Interior ss:Color="#E2EFDA" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="TotalStyle">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1"/>
+  </Style>
+ </Styles>
+`;
+
+            let yearTotalTracker = {}; // 用於統計各年份加總
+
+            // 4. 迴圈處理每一個月份，將其建立為獨立的 Worksheet Sheet
+            allMonthsChronological.forEach(currentMonthKey => {
+                let monthRecords = monthlyGroups[currentMonthKey];
                 
-                let dateFieldToPrint = "";
-                if (currentIsoDate !== lastDisplayedDate) {
-                    dateFieldToPrint = currentIsoDate;
-                    lastDisplayedDate = currentIsoDate; 
-                } else {
-                    dateFieldToPrint = ""; 
-                }
+                xmlContent += ` <Worksheet ss:Name="${currentMonthKey}">\n  <Table>\n`;
+                // 定義欄寬
+                xmlContent += `   <Column ss:Width="100"/>\n   <Column ss:Width="120"/>\n   <Column ss:Width="90"/>\n   <Column ss:Width="200"/>\n`;
+                
+                // 標頭行
+                xmlContent += `   <Row ss:StyleID="Header">\n    <Cell><Data ss:Type="String">Date</Data></Cell>\n    <Cell><Data ss:Type="String">Category</Data></Cell>\n    <Cell><Data ss:Type="String">Amount</Data></Cell>\n    <Cell><Data ss:Type="String">Notes</Data></Cell>\n   </Row>\n`;
 
-                csvContent += `${dateFieldToPrint},${category},HK$${r.amount},${note}\n`;
+                let dayTotal = 0;
+                let monthTotal = 0;
+                let lastDisplayedDate = "";
 
-                dayTotal += r.amount; 
-                monthTotal += r.amount; 
-                yearTotal += r.amount;
+                for (let i = 0; i < monthRecords.length; i++) {
+                    let r = monthRecords[i];
+                    let nextRecord = monthRecords[i + 1];
 
-                const isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
-                const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
-                const isYearEnd = !nextRecord || nextYear !== currentYear;
+                    let currentIsoDate = ensureISODate(r.date);
+                    let parts = currentIsoDate.split('-');
+                    let currentYear = parts[0];
+                    let currentMonth = parts[1];
 
-                if (isDayEnd) {
-                    csvContent += `,Daily Total,HK$${dayTotal},\n`;
-                    dayTotal = 0; 
-                    if (!isMonthEnd && nextRecord) {
-                        csvContent += ",,,\n";
+                    // 全局累計年度總計
+                    if (!yearTotalTracker[currentYear]) yearTotalTracker[currentYear] = 0;
+                    yearTotalTracker[currentYear] += r.amount;
+
+                    let nextIsoDate = nextRecord ? ensureISODate(nextRecord.date) : null;
+
+                    let rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
+                    let noteText = r.note || '';
+
+                    // 處理日期是否顯示機制 (同天只在第一列印出日期)
+                    let dateValue = "";
+                    if (currentIsoDate !== lastDisplayedDate) {
+                        dateValue = currentIsoDate;
+                        lastDisplayedDate = currentIsoDate;
+                    }
+
+                    // 輸出一般消費項目資料行
+                    xmlContent += `   <Row>\n    <Cell><Data ss:Type="String">${dateValue}</Data></Cell>\n    <Cell><Data ss:Type="String">${rawCategory}</Data></Cell>\n    <Cell><Data ss:Type="Number">${r.amount}</Data></Cell>\n    <Cell><Data ss:Type="String">${noteText}</Data></Cell>\n   </Row>\n`;
+
+                    dayTotal += r.amount;
+                    monthTotal += r.amount;
+
+                    let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
+                    let isMonthEnd = !nextRecord; // 由於已經分組，分組內最後一項即為月尾
+
+                    // 4a. 輸出 Daily Total (當日結算)
+                    if (isDayEnd) {
+                        xmlContent += `   <Row ss:StyleID="TotalStyle">\n    <Cell/>\n    <Cell><Data ss:Type="String">Daily Total</Data></Cell>\n    <Cell><Data ss:Type="Number">${dayTotal}</Data></Cell>\n    <Cell/>\n   </Row>\n`;
+                        dayTotal = 0;
+
+                        // 若僅是普通跨天（非本 Sheet 結尾），留空一行
+                        if (!isMonthEnd) {
+                            xmlContent += `   <Row/>\n`;
+                        }
+                    }
+
+                    // 4b. 輸出 Monthly Total (每月結算) 與 Year Total (年總計判斷)
+                    if (isMonthEnd) {
+                        let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
+                        
+                        // 滿足精確空白一行要求
+                        xmlContent += `   <Row/>\n`;
+                        
+                        xmlContent += `   <Row ss:StyleID="TotalStyle">\n    <Cell/>\n    <Cell><Data ss:Type="String">${EnglishMonthLabel} Total</Data></Cell>\n    <Cell><Data ss:Type="Number">${monthTotal}</Data></Cell>\n    <Cell/>\n   </Row>\n`;
+                        monthTotal = 0;
+
+                        // 核心要求：年 Total 只在最新月份顯示
+                        if (currentMonthKey === latestMonthKey) {
+                            xmlContent += `   <Row/>\n`; // 與 Monthly Total 間隔一行
+                            xmlContent += `   <Row ss:StyleID="TotalStyle">\n    <Cell/>\n    <Cell><Data ss:Type="String">${currentYear} Total</Data></Cell>\n    <Cell><Data ss:Type="Number">${yearTotalTracker[currentYear]}</Data></Cell>\n    <Cell/>\n   </Row>\n`;
+                        } else {
+                            // 非最新月份，在 Monthly Total 底部留空結尾即可
+                            xmlContent += `   <Row/>\n`;
+                        }
                     }
                 }
 
-                if (isMonthEnd) {
-                    csvContent += ",,,\n"; 
-                    csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
-                    monthTotal = 0; 
-                    if (nextRecord || isYearEnd) {
-                        csvContent += ",,,\n"; 
-                    }
-                }
+                xmlContent += `  </Table>\n </Worksheet>\n`;
+            });
 
-                if (isYearEnd) {
-                    csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
-                    yearTotal = 0; 
-                    if (nextRecord) {
-                        csvContent += ",,,\n";
-                    }
-                }
-            }
-            
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
+            xmlContent += `</Workbook>\n`;
+
+            // 5. 執行檔案安全下載
+            let blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            let url = URL.createObjectURL(blob);
+            let link = document.createElement("a");
             link.setAttribute("href", url);
-            link.setAttribute("download", `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.csv`);
+            link.setAttribute("download", `Local_Budget_MultiSheet_Report_${new Date().toISOString().slice(0,10)}.xls`);
             document.body.appendChild(link); 
             link.click(); 
             document.body.removeChild(link);

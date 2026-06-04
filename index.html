@@ -128,7 +128,7 @@
             color: var(--text);
         }
         
-        input[type="number"], input[type="text"], input[type="date"] {
+        input[type="number"], input[type="text"], input[type="date"], select {
             width: 100%;
             padding: 12px 14px; 
             margin: 6px 0;      
@@ -141,12 +141,21 @@
             transition: all 0.2s;
             -webkit-appearance: none; 
         }
-        input:focus { 
+        input:focus, select:focus { 
             outline: none; 
             border-color: var(--primary); 
             background-color: #ffffff;
             box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
         } 
+        
+        /* 讓下拉選單在 iOS 上有好看的箭頭（選填） */
+        select {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%236e7c71' d='M0 0l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 12px;
+            padding-right: 35px;
+        }
         
         .edit-date-wrapper {
             display: block; 
@@ -228,6 +237,25 @@
             text-align: center;
         }
         
+        .list-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .month-selector-inline {
+            width: 130px;
+            padding: 6px 10px;
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 8px;
+            height: auto;
+            background-color: rgba(58, 95, 67, 0.05);
+            border: 1px solid rgba(58, 95, 67, 0.15);
+            color: var(--primary);
+        }
+
         .list-container { max-height: 320px; overflow-y: auto; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
         .list-item:last-child { border-bottom: none; }
@@ -249,7 +277,6 @@
         .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; }
         .btn-action:active { transform: scale(0.9); }
         
-        /* 歷史保留：精緻的日期明顯分隔線樣式 */
         .day-separator {
             display: flex;
             align-items: center;
@@ -293,7 +320,7 @@
         <input type="text" id="note" placeholder="Enter notes (e.g., ticket description, item name)">
         
         <div class="edit-date-wrapper" id="date-field-block">
-            <label for="edit-date">Transaction Date (Actual Expiry/Due Date):</label>
+            <label for="edit-date">Transaction Date:</label>
             <input type="date" id="edit-date">
         </div>
         
@@ -303,7 +330,10 @@
     </div>
 
     <div class="card">
-        <h2>History Logs</h2>
+        <div class="list-header-flex">
+            <h2>History Logs</h2>
+            <select id="month-filter-dropdown" class="month-selector-inline" onchange="renderRecords()"></select>
+        </div>
         <div class="list-container" id="history-list"></div>
     </div>
 
@@ -326,6 +356,7 @@
             resetDateInputToToday();
             await loadRecords();     
             renderCategories();   
+            updateMonthFilterOptions(); // 初始化下拉選單的月份列表
             renderRecords();      
         }
 
@@ -379,6 +410,42 @@
             btn.classList.add('active'); 
         }
 
+        // 動態更新下拉選單中的月份選項（包含當月以及所有存在紀錄的歷史月份）
+        function updateMonthFilterOptions() {
+            const dropdown = document.getElementById('month-filter-dropdown');
+            const sysDate = new Date();
+            const currentMonthKey = `${sysDate.getFullYear()}-${String(sysDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            let monthsSet = new Set();
+            monthsSet.add(currentMonthKey); // 確保當前月份一定存在
+            
+            records.forEach(r => {
+                if(r.date) {
+                    monthsSet.add(ensureISODate(r.date).substring(0, 7));
+                }
+            });
+            
+            let sortedMonths = Array.from(monthsSet).sort((a, b) => b.localeCompare(a)); // 新月份排在最上面
+            
+            // 保留使用者原本選擇的月份（如果還存在的話）
+            const prevSelected = dropdown.value;
+            dropdown.innerHTML = '';
+            
+            sortedMonths.forEach(m => {
+                const parts = m.split('-');
+                const year = parts[0];
+                const monthIndex = parseInt(parts[1], 10) - 1;
+                const label = `${monthNames[monthIndex]} ${year}`;
+                dropdown.innerHTML += `<option value="${m}">${label}</option>`;
+            });
+            
+            if (prevSelected && sortedMonths.includes(prevSelected)) {
+                dropdown.value = prevSelected;
+            } else {
+                dropdown.value = currentMonthKey; // 預設顯示當月
+            }
+        }
+
         async function handleSubmit() {
             const amountInput = document.getElementById('amount');
             const noteInput = document.getElementById('note'); 
@@ -414,6 +481,9 @@
             await saveRecords();     
             amountInput.value = ''; noteInput.value = ''; 
             resetDateInputToToday();
+            
+            // 儲存後重新整理選單（避免使用者新增了全新的月份紀錄）與清單
+            updateMonthFilterOptions();
             renderRecords();         
         }
 
@@ -435,7 +505,9 @@
         async function deleteRecord(id) {
             if (confirm("Are you sure you want to delete this record?")) {
                 records = records.filter(r => r.id !== id);
-                await saveRecords(); renderRecords();     
+                await saveRecords(); 
+                updateMonthFilterOptions();
+                renderRecords();     
             }
         }
 
@@ -449,31 +521,31 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
-        /* 歷史保留功能：主畫面歷史清單只顯示當月（1日自清）＋ 不同日子間加入綠色圓點劃分線 */
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
             const catTotalsContainer = document.getElementById('category-totals-container');
             const headingContainer = document.getElementById('current-month-heading');
+            const dropdown = document.getElementById('month-filter-dropdown');
             
             listContainer.innerHTML = ''; catTotalsContainer.innerHTML = '';
             
-            const sysDate = new Date();
-            const sysYearStr = String(sysDate.getFullYear());
-            const sysMonthStr = String(sysDate.getMonth() + 1).padStart(2, '0');
-            const currentMonthName = monthNames[sysDate.getMonth()];
+            // 讀取目前使用者在下拉選單選中的月份金鑰 (例如: "2026-06")
+            const selectedMonthKey = dropdown.value || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+            const parts = selectedMonthKey.split('-');
+            const viewYear = parts[0];
+            const viewMonthIndex = parseInt(parts[1], 10) - 1;
             
-            headingContainer.innerText = `${currentMonthName} Total (${sysYearStr})`;
+            headingContainer.innerText = `${monthNames[viewMonthIndex]} Total (${viewYear})`;
 
             let currentMonthTotal = 0; 
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
-            // 歷史保留：篩選出「只屬於當前年份與月份」的歷史紀錄
+            // 依照下拉選單選定的「年份與月份」進行資料篩選
             let currentMonthRecords = records.filter(r => {
                 const recordIsoDate = ensureISODate(r.date);
-                const rParts = recordIsoDate.split('-');
-                return (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
+                return recordIsoDate.startsWith(selectedMonthKey);
             });
 
             if (currentMonthRecords.length === 0) {
@@ -485,7 +557,7 @@
                 return;
             }
 
-            // 確保畫面上顯示的當月資料是由新到舊（最新日期在最上面）
+            // 資料排序：新日期在上
             currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
             let lastDisplayedDate = "";
@@ -496,7 +568,6 @@
                 currentMonthTotal += r.amount;
                 if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
 
-                // 歷史保留：如果日期改變了，在上方插入明顯的日子分隔線
                 if (recordIsoDate !== lastDisplayedDate) {
                     listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}</div>`;
                     lastDisplayedDate = recordIsoDate;
@@ -597,7 +668,10 @@
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
                     }
-                    await saveRecords(); renderRecords(); alert(`Successfully imported ${records.length} records!`);
+                    await saveRecords(); 
+                    updateMonthFilterOptions();
+                    renderRecords(); 
+                    alert(`Successfully imported ${records.length} records!`);
                 } catch(err) {
                     alert("Import failed! Format layout unmatched.");
                 }
@@ -606,12 +680,10 @@
             reader.readAsText(file);
         }
 
-        /* 修正 3：對抗 Excel 安全防護，將分頁順序更改為「最新月份為第一 Page」，且校正為「新日期在上」 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
-            // 1. 預先計算好每年的累積總金額（維持全年度加總邏輯）
             let yearTotalTracker = {}; 
             records.forEach(r => {
                 let currentYear = ensureISODate(r.date).split('-')[0];
@@ -619,7 +691,6 @@
                 yearTotalTracker[currentYear] += r.amount;
             });
 
-            // 2. 將所有紀錄依照月份分組
             let monthlyGroups = {};
             let allMonthsChronological = [];
             
@@ -633,18 +704,16 @@
                 monthlyGroups[yearMonth].push(r);
             });
 
-            // 3. 取得時間由舊到新的排序，並反轉讓最新的月份排在最前面（第一分頁）
             allMonthsChronological.sort((a, b) => a.localeCompare(b));
             let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
             let sheetsOrder = [...allMonthsChronological].reverse();
 
             let wb = XLSX.utils.book_new();
 
-            // 4. 依照分頁順序生成各個月份的報表
             sheetsOrder.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
                 
-                // 【關鍵修改】將月份內的紀錄改為「由新到舊」排序（日期新的在上面）
+                // 確保匯出的 Excel 內容也是新日期在上
                 monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
                 let sheetRows = [
@@ -655,7 +724,6 @@
                 let monthTotal = 0;
                 let lastDisplayedDate = "";
 
-                // 先計算該月份的總金額
                 monthRecords.forEach(r => monthTotal += r.amount);
 
                 for (let i = 0; i < monthRecords.length; i++) {
@@ -671,7 +739,6 @@
                     let rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
                     let noteText = r.note || '';
 
-                    // 控制日期欄位：同一個日期的連續紀錄中，只在第一筆顯示日期
                     let dateValue = "";
                     if (currentIsoDate !== lastDisplayedDate) {
                         dateValue = currentIsoDate;
@@ -681,27 +748,22 @@
                     sheetRows.push([dateValue, rawCategory, r.amount, noteText]);
                     dayTotal += r.amount;
 
-                    // 當下一筆紀錄是更舊的一天，或者已經到了本月最後一筆紀錄時，結算該日總和
                     let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                     let isMonthEnd = !nextRecord;
 
                     if (isDayEnd) {
                         sheetRows.push(["", "Daily Total", dayTotal, ""]);
-                        dayTotal = 0; // 重置每日統計
-                        
-                        // 如果這天結束了但還沒到月底，空一行隔開不同日期的消費
+                        dayTotal = 0; 
                         if (!isMonthEnd) {
                             sheetRows.push(["", "", "", ""]);
                         }
                     }
 
-                    // 當整個月的資料都跑完時，在最底部打印月總和與年總和
                     if (isMonthEnd) {
                         let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
                         sheetRows.push(["", "", "", ""]); 
                         sheetRows.push(["", `${EnglishMonthLabel} Total`, monthTotal, ""]);
 
-                        // Year Total 只打印在全年度最新月份的頁面上
                         if (currentMonthKey === latestMonthKey) {
                             sheetRows.push(["", "", "", ""]); 
                             sheetRows.push(["", `${currentYear} Total`, yearTotalTracker[currentYear], ""]);

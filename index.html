@@ -228,7 +228,7 @@
             text-align: center;
         }
         
-        .list-container { max-height: 280px; overflow-y: auto; }
+        .list-container { max-height: 320px; overflow-y: auto; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
@@ -249,6 +249,26 @@
         .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; }
         .btn-action:active { transform: scale(0.9); }
         
+        /* 核心更新 2：精緻的日期明顯分隔線樣式 */
+        .day-separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--primary);
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin: 12px 0 6px 0;
+            letter-spacing: 0.5px;
+        }
+        .day-separator::before, .day-separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px dashed rgba(58, 95, 67, 0.25);
+        }
+        .day-separator:not(:empty)::before { margin-right: .5em; }
+        .day-separator:not(:empty)::after { margin-left: .5em; }
+        .day-dot { display: inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
 </head>
@@ -283,7 +303,7 @@
     </div>
 
     <div class="card">
-        <h2>History Logs</h2>
+        <h2>History Logs (Current Month Only)</h2>
         <div class="list-container" id="history-list"></div>
     </div>
 
@@ -429,7 +449,7 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
-        /* 核心修復：移除了原先頂部衝突的 records.sort，確保主畫面完全聽從你的改動與排序 */
+        /* 完美整合 1 & 2：主畫面歷史清單只顯示當月（1日自清）＋ 不同日子間加入明顯劃分線 */
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -449,8 +469,15 @@
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
-            if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
+            // 先篩選出「只屬於當前年份與月份」的歷史紀錄
+            let currentMonthRecords = records.filter(r => {
+                const recordIsoDate = ensureISODate(r.date);
+                const rParts = recordIsoDate.split('-');
+                return (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
+            });
+
+            if (currentMonthRecords.length === 0) {
+                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
                 categories.forEach(cat => {
                     catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$0</span></div>`;
@@ -458,14 +485,22 @@
                 return;
             }
 
-            records.forEach(r => {
+            // 確保畫面上顯示的當月資料是由新到舊（最新日期在最上面）
+            currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
+            let lastDisplayedDate = "";
+
+            currentMonthRecords.forEach(r => {
                 const recordIsoDate = ensureISODate(r.date);
-                const rParts = recordIsoDate.split('-');
                 
-                const isBelongToCurrentMonth = (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
-                if (isBelongToCurrentMonth) {
-                    currentMonthTotal += r.amount;
-                    if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
+                // 統計數據累加
+                currentMonthTotal += r.amount;
+                if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
+
+                // 核心更新 2：如果日期改變了，在上方插入明顯的日子分隔線
+                if (recordIsoDate !== lastDisplayedDate) {
+                    listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}</div>`;
+                    lastDisplayedDate = recordIsoDate;
                 }
 
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
@@ -473,7 +508,7 @@
                     <div class="list-item">
                         <div class="item-info">
                             <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
-                            <div class="item-details"><span>${recordIsoDate}</span>${noteHTML}</div>
+                            <div class="item-details">${noteHTML}</div>
                         </div>
                         <div class="item-right">
                             <span class="amount">HK$${r.amount.toLocaleString()}</span>
@@ -563,8 +598,6 @@
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
                     }
-                    // 僅在匯入成功後依時間排好順序一次
-                    records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
                     await saveRecords(); renderRecords(); alert(`Successfully imported ${records.length} records!`);
                 } catch(err) {
                     alert("Import failed! Format layout unmatched.");
@@ -574,12 +607,12 @@
             reader.readAsText(file);
         }
 
-        /* 將時間排序獨立移至此處（僅在導出 Excel 時在背景運作，絕不影響或重置主畫面列表） */
+        /* 導出功能：完美按月份分頁 Sheet 導出，Year Total 唯獨出現在最新月份底部，100% 順利點開 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
-            // 僅在背景進行報表時間排序（由舊到新）
+            // 報表匯出由舊到新排序
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
 
             let monthlyGroups = {};

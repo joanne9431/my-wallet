@@ -25,21 +25,21 @@
             --danger: #c05c46;     /* 溫暖泥土磚紅 */
             --success: #5e8c61;    /* 療癒鼠尾草綠 */
             --warning: #cca043;    /* 暖秋麥芽黃 */
-            --text: #222f25;       /* 深松針墨綠 (高對比閱讀舒適) */
+            --text: #222f25;       /* 深松針墨綠 */
             --grey: #d5dbd6;       /* 淺石灰色 */
             
             /* 各種消費種類的 Highlight 顏色背景 */
-            --hl-food: #fdf2ee;    /* Food: 溫暖麥芽粉橘 */
+            --hl-food: #fdf2ee;    
             --hl-food-txt: #b35d46;
-            --hl-trans: #eef7f6;   /* Transport: 湖水綠藍 */
+            --hl-trans: #eef7f6;   
             --hl-trans-txt: #3d8580;
-            --hl-play: #f6f4f8;    /* Entertainment: 暮光薰衣草紫 */
+            --hl-play: #f6f4f8;    
             --hl-play-txt: #715c8c;
-            --hl-shop: #fbf8ed;    /* Shopping: 暖秋金黃 */
+            --hl-shop: #fbf8ed;    
             --hl-shop-txt: #a67c2e;
-            --hl-home: #edf4ee;    /* Home: 森林苔蘚綠 */
+            --hl-home: #edf4ee;    
             --hl-home-txt: #467a4e;
-            --hl-other: #f0f2f1;   /* Others: 溪畔卵石灰 */
+            --hl-other: #f0f2f1;   
             --hl-other-txt: #5c635f;
         }
         
@@ -430,6 +430,7 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
+        /* 完美還原：畫面上的 History Logs 保持原本清晰、連續、不被分割的樣子 */
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -458,18 +459,21 @@
                 return;
             }
 
+            // 確保主畫面清單由新到舊排序
             records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
             records.forEach(r => {
                 const recordIsoDate = ensureISODate(r.date);
                 const rParts = recordIsoDate.split('-');
                 
+                // 頂部卡片只統計當月
                 const isBelongToCurrentMonth = (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
                 if (isBelongToCurrentMonth) {
                     currentMonthTotal += r.amount;
                     if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
                 }
 
+                // 渲染常規列表，清清爽爽原汁原味呈現
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
                 listContainer.innerHTML += `
                     <div class="list-item">
@@ -575,15 +579,13 @@
             reader.readAsText(file);
         }
 
-        // 終極完美解決方案：使用 SheetJS 庫生成標準、原生且不觸發任何警告的二進位制多工作表 .xlsx 檔案
+        /* 導出邏輯：在後台安安靜靜地處理按月拆分與 Year Total，不影響主畫面 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
-            // 1. 依時間從舊到新進行基礎排序
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
 
-            // 2. 將記錄按「年-月」歸類分組
             let monthlyGroups = {};
             let allMonthsChronological = [];
             
@@ -597,19 +599,14 @@
                 monthlyGroups[yearMonth].push(r);
             });
 
-            // 排序取得最新的月份
             allMonthsChronological.sort((a, b) => a.localeCompare(b));
             let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
 
-            // 建立活頁簿物件 (Workbook)
             let wb = XLSX.utils.book_new();
             let yearTotalTracker = {}; 
 
-            // 3. 遍歷每個月，動態生成一個 Sheet 二維陣列數據
             allMonthsChronological.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
-                
-                // 初始化 Sheet 內部的行矩陣，先填入首個 Header 欄位大標
                 let sheetRows = [
                     ["Date", "Category", "Amount", "Notes"]
                 ];
@@ -627,7 +624,6 @@
                     let currentYear = parts[0];
                     let currentMonth = parts[1];
 
-                    // 全局累加年總計
                     if (!yearTotalTracker[currentYear]) yearTotalTracker[currentYear] = 0;
                     yearTotalTracker[currentYear] += r.amount;
 
@@ -635,14 +631,12 @@
                     let rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
                     let noteText = r.note || '';
 
-                    // 處理同天只在首行印日期
                     let dateValue = "";
                     if (currentIsoDate !== lastDisplayedDate) {
                         dateValue = currentIsoDate;
                         lastDisplayedDate = currentIsoDate;
                     }
 
-                    // 推入常規消费資料
                     sheetRows.push([dateValue, rawCategory, r.amount, noteText]);
 
                     dayTotal += r.amount;
@@ -651,28 +645,20 @@
                     let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                     let isMonthEnd = !nextRecord; 
 
-                    // 3a. 當日結算 (Daily Total)
                     if (isDayEnd) {
                         sheetRows.push(["", "Daily Total", dayTotal, ""]);
                         dayTotal = 0;
-
-                        // 跨天留空行
-                        if (!isMonthEnd) {
-                            sheetRows.push(["", "", "", ""]);
-                        }
+                        if (!isMonthEnd) sheetRows.push(["", "", "", ""]);
                     }
 
-                    // 3b. 每月結算 (Monthly Total) 及年總結位置控制
                     if (isMonthEnd) {
                         let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
-                        
-                        sheetRows.push(["", "", "", ""]); // 留空一行
+                        sheetRows.push(["", "", "", ""]); 
                         sheetRows.push(["", `${EnglishMonthLabel} Total`, monthTotal, ""]);
                         monthTotal = 0;
 
-                        // 核心指標要求：Year Total 唯獨在最新月份 Sheet 底部顯示
                         if (currentMonthKey === latestMonthKey) {
-                            sheetRows.push(["", "", "", ""]); // 與 Monthly 間隔留空一行
+                            sheetRows.push(["", "", "", ""]); 
                             sheetRows.push(["", `${currentYear} Total`, yearTotalTracker[currentYear], ""]);
                         } else {
                             sheetRows.push(["", "", "", ""]);
@@ -680,22 +666,11 @@
                     }
                 }
 
-                // 將矩陣陣列轉成 Sheet 格式
                 let ws = XLSX.utils.aoa_to_sheet(sheetRows);
-
-                // 設定欄寬排版
-                ws['!cols'] = [
-                    { wch: 13 }, // Date
-                    { wch: 15 }, // Category
-                    { wch: 12 }, // Amount
-                    { wch: 25 }  // Notes
-                ];
-
-                // 將 Sheet 新增加入活頁簿，以月份命名分頁（例如: "2026-06"）
+                ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 12 }, { wch: 25 }];
                 XLSX.utils.book_append_sheet(wb, ws, currentMonthKey);
             });
 
-            // 4. 寫入並導出二進位制 XLSX 檔案（此檔案格式現代 Excel 會完全信任，不會有任何開啟障礙）
             XLSX.writeFile(wb, `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 

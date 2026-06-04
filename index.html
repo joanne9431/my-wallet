@@ -606,18 +606,24 @@
             reader.readAsText(file);
         }
 
-        /* 修正 3：對抗 Excel 安全防護，並將分頁順序更改為「最新月份為第一 Page (最左邊)」 */
+        /* 修正 3：對抗 Excel 安全防護，將分頁順序更改為「最新月份為第一 Page」，且校正為「新日期在上」 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
-            // 報表基礎內部排序（由舊到新，以便計算 Daily / Monthly 總和）
-            let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+            // 1. 預先計算好每年的累積總金額（維持全年度加總邏輯）
+            let yearTotalTracker = {}; 
+            records.forEach(r => {
+                let currentYear = ensureISODate(r.date).split('-')[0];
+                if (!yearTotalTracker[currentYear]) yearTotalTracker[currentYear] = 0;
+                yearTotalTracker[currentYear] += r.amount;
+            });
 
+            // 2. 將所有紀錄依照月份分組
             let monthlyGroups = {};
             let allMonthsChronological = [];
             
-            sortedRecords.forEach(r => {
+            records.forEach(r => {
                 let isoDate = ensureISODate(r.date);
                 let yearMonth = isoDate.substring(0, 7); 
                 if (!monthlyGroups[yearMonth]) {
@@ -627,26 +633,20 @@
                 monthlyGroups[yearMonth].push(r);
             });
 
-            // 取得時間由舊到新的排序數組
+            // 3. 取得時間由舊到新的排序，並反轉讓最新的月份排在最前面（第一分頁）
             allMonthsChronological.sort((a, b) => a.localeCompare(b));
             let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
-
-            // 修正 3：建立新的分頁順序——將數組反轉，讓最新的月份排在陣列最前面，成為第一分頁！
             let sheetsOrder = [...allMonthsChronological].reverse();
 
             let wb = XLSX.utils.book_new();
-            let yearTotalTracker = {}; 
 
-            // 預先計算好每年的累積總金額，以便在最新月份（Latest Month）的底部精確打印 Year Total
-            sortedRecords.forEach(r => {
-                let currentYear = ensureISODate(r.date).split('-')[0];
-                if (!yearTotalTracker[currentYear]) yearTotalTracker[currentYear] = 0;
-                yearTotalTracker[currentYear] += r.amount;
-            });
-
-            // 依照全新排序（最新月份在最前面）生成分頁
+            // 4. 依照分頁順序生成各個月份的報表
             sheetsOrder.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
+                
+                // 【關鍵修改】將月份內的紀錄改為「由新到舊」排序（日期新的在上面）
+                monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
                 let sheetRows = [
                     ["Date", "Category", "Amount", "Notes"]
                 ];
@@ -655,12 +655,15 @@
                 let monthTotal = 0;
                 let lastDisplayedDate = "";
 
+                // 先計算該月份的總金額
+                monthRecords.forEach(r => monthTotal += r.amount);
+
                 for (let i = 0; i < monthRecords.length; i++) {
                     let r = monthRecords[i];
                     let nextRecord = monthRecords[i + 1];
 
                     let currentIsoDate = ensureISODate(r.date);
-                    let parts = currentIsoDate.split('-');
+                    let parts = currentMonthKey.split('-');
                     let currentYear = parts[0];
                     let currentMonth = parts[1];
 
@@ -668,6 +671,7 @@
                     let rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
                     let noteText = r.note || '';
 
+                    // 控制日期欄位：同一個日期的連續紀錄中，只在第一筆顯示日期
                     let dateValue = "";
                     if (currentIsoDate !== lastDisplayedDate) {
                         dateValue = currentIsoDate;
@@ -675,24 +679,27 @@
                     }
 
                     sheetRows.push([dateValue, rawCategory, r.amount, noteText]);
-
                     dayTotal += r.amount;
-                    monthTotal += r.amount;
 
+                    // 當下一筆紀錄是更舊的一天，或者已經到了本月最後一筆紀錄時，結算該日總和
                     let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
-                    let isMonthEnd = !nextRecord; 
+                    let isMonthEnd = !nextRecord;
 
                     if (isDayEnd) {
                         sheetRows.push(["", "Daily Total", dayTotal, ""]);
-                        dayTotal = 0;
-                        if (!isMonthEnd) sheetRows.push(["", "", "", ""]);
+                        dayTotal = 0; // 重置每日統計
+                        
+                        // 如果這天結束了但還沒到月底，空一行隔開不同日期的消費
+                        if (!isMonthEnd) {
+                            sheetRows.push(["", "", "", ""]);
+                        }
                     }
 
+                    // 當整個月的資料都跑完時，在最底部打印月總和與年總和
                     if (isMonthEnd) {
                         let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
                         sheetRows.push(["", "", "", ""]); 
                         sheetRows.push(["", `${EnglishMonthLabel} Total`, monthTotal, ""]);
-                        monthTotal = 0;
 
                         // Year Total 只打印在全年度最新月份的頁面上
                         if (currentMonthKey === latestMonthKey) {

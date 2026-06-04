@@ -227,7 +227,33 @@
             text-align: center;
         }
         
-        .list-container { max-height: 280px; overflow-y: auto; }
+        /* 歷史記錄容器優化 */
+        .list-container { max-height: 340px; overflow-y: auto; padding-right: 2px; }
+        
+        /* 新增：按日期分組的卡片樣式 */
+        .date-group {
+            background: #fafcfb;
+            border: 1px solid rgba(58, 95, 67, 0.08);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 14px; /* 讓不同日子之間有明顯的外部間距 */
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+        }
+        .date-group:last-child { margin-bottom: 0; }
+        
+        /* 新增：分組內的日期大標題 */
+        .date-group-title {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+            padding-bottom: 4px;
+            border-bottom: 1.5px dashed rgba(58, 95, 67, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
@@ -393,7 +419,6 @@
                 records.unshift({ id: Date.now(), amount: amount, category: selectedCategory, note: note, date: chosenDate });
             }
             
-            // 強制按日期最新（日期越近越高）排序
             records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
             
             await saveRecords();     
@@ -434,7 +459,7 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
-        // 修改後的渲染邏輯：頂部統計與歷史日誌「皆只顯示當前月份」，過期自動隱藏
+        // 核心修改：將當月資料依「日期」打包分組渲染，讓不同日子有極為明顯的界線
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -443,7 +468,6 @@
             
             listContainer.innerHTML = ''; catTotalsContainer.innerHTML = '';
             
-            // 獲取當前的系統真實年分與月份 (格式如 "2026-06")
             const sysDate = new Date();
             const sysYearStr = String(sysDate.getFullYear());
             const sysMonthStr = String(sysDate.getMonth() + 1).padStart(2, '0');
@@ -455,10 +479,10 @@
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
-            // 篩選出僅屬於當前月份的紀錄
+            // 1. 篩選出當月資料
             const currentMonthRecords = records.filter(r => {
                 const recordIsoDate = ensureISODate(r.date);
-                const rParts = recordIsoDate.split('-'); // [ "2026", "06", "01" ]
+                const rParts = recordIsoDate.split('-');
                 return (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
             });
 
@@ -471,35 +495,63 @@
                 return;
             }
 
-            // 確保順序，日期越近越在最高處
+            // 2. 排序（由新到舊）
             currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
+            // 3. 執行高級重構：將資料按日期歸類進物件中（Group By Date）
+            const groupedRecords = {};
             currentMonthRecords.forEach(r => {
-                const recordIsoDate = ensureISODate(r.date);
+                const dateKey = ensureISODate(r.date);
+                if (!groupedRecords[dateKey]) {
+                    groupedRecords[dateKey] = [];
+                }
+                groupedRecords[dateKey].push(r);
                 
-                // 累加當月總計與分類總計
+                // 同步計算加總
                 currentMonthTotal += r.amount;
                 if (catSums[r.category] !== undefined) {
                     catSums[r.category] += r.amount;
                 }
+            });
 
-                // 僅渲染當月紀錄至 History Logs 區塊中
-                const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
-                listContainer.innerHTML += `
-                    <div class="list-item">
-                        <div class="item-info">
-                            <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
-                            <div class="item-details"><span>${recordIsoDate}</span>${noteHTML}</div>
+            // 4. 開始依據日期群組渲染 HTML 結構
+            Object.keys(groupedRecords).forEach(dateStr => {
+                const dayRecords = groupedRecords[dateStr];
+                
+                // 創建屬於這一天的獨立分組卡片 (date-group)
+                let groupHTML = `
+                    <div class="date-group">
+                        <div class="date-group-title">📅 ${dateStr}</div>
+                        <div class="date-items-inner">
+                `;
+                
+                // 塞入該日期的所有消費項目
+                dayRecords.forEach(r => {
+                    const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+                    groupHTML += `
+                        <div class="list-item">
+                            <div class="item-info">
+                                <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
+                                <div class="item-details">${noteHTML}</div>
+                            </div>
+                            <div class="item-right">
+                                <span class="amount">HK$${r.amount.toLocaleString()}</span>
+                                <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
+                                <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
+                            </div>
+                        </div>`;
+                });
+                
+                groupHTML += `
                         </div>
-                        <div class="item-right">
-                            <span class="amount">HK$${r.amount.toLocaleString()}</span>
-                            <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
-                            <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
-                        </div>
-                    </div>`;
+                    </div>
+                `;
+                
+                // 將這一天的區塊丟進容器中
+                listContainer.innerHTML += groupHTML;
             });
             
-            // 更新頂部卡片的數值 (反映本月數據)
+            // 更新頂部面板數據
             totalContainer.innerText = currentMonthTotal.toLocaleString();
             Object.keys(catSums).forEach(cat => {
                 catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$${catSums[cat].toLocaleString()}</span></div>`;

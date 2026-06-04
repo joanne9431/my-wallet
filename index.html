@@ -148,7 +148,6 @@
             box-shadow: 0 0 0 3px rgba(58, 95, 67, 0.1);
         } 
         
-        /* 讓下拉選單在 iOS 上有好看的箭頭（選填） */
         select {
             background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%236e7c71' d='M0 0l5 5 5-5z'/></svg>");
             background-repeat: no-repeat;
@@ -339,8 +338,8 @@
 
     <div style="padding: 0 2px;">
         <button class="btn-backup" onclick="exportToExcelXLSX()">Export Excel File</button>
-        <input type="file" id="import-file-input" accept=".json,.csv" style="display: none;" onchange="handleFileImport(this)">
-        <button class="btn-import" onclick="document.getElementById('import-file-input').click()">Import Data (JSON/CSV)</button>
+        <input type="file" id="import-file-input" accept=".json,.csv,.xlsx,.xls" style="display: none;" onchange="handleFileImport(this)">
+        <button class="btn-import" onclick="document.getElementById('import-file-input').click()">Import Data (JSON/Excel/CSV)</button>
     </div>
 
     <script>
@@ -356,7 +355,7 @@
             resetDateInputToToday();
             await loadRecords();     
             renderCategories();   
-            updateMonthFilterOptions(); // 初始化下拉選單的月份列表
+            updateMonthFilterOptions();
             renderRecords();      
         }
 
@@ -410,14 +409,13 @@
             btn.classList.add('active'); 
         }
 
-        // 動態更新下拉選單中的月份選項（包含當月以及所有存在紀錄的歷史月份）
         function updateMonthFilterOptions() {
             const dropdown = document.getElementById('month-filter-dropdown');
             const sysDate = new Date();
             const currentMonthKey = `${sysDate.getFullYear()}-${String(sysDate.getMonth() + 1).padStart(2, '0')}`;
             
             let monthsSet = new Set();
-            monthsSet.add(currentMonthKey); // 確保當前月份一定存在
+            monthsSet.add(currentMonthKey);
             
             records.forEach(r => {
                 if(r.date) {
@@ -425,9 +423,7 @@
                 }
             });
             
-            let sortedMonths = Array.from(monthsSet).sort((a, b) => b.localeCompare(a)); // 新月份排在最上面
-            
-            // 保留使用者原本選擇的月份（如果還存在的話）
+            let sortedMonths = Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
             const prevSelected = dropdown.value;
             dropdown.innerHTML = '';
             
@@ -442,7 +438,7 @@
             if (prevSelected && sortedMonths.includes(prevSelected)) {
                 dropdown.value = prevSelected;
             } else {
-                dropdown.value = currentMonthKey; // 預設顯示當月
+                dropdown.value = currentMonthKey;
             }
         }
 
@@ -481,8 +477,6 @@
             await saveRecords();     
             amountInput.value = ''; noteInput.value = ''; 
             resetDateInputToToday();
-            
-            // 儲存後重新整理選單（避免使用者新增了全新的月份紀錄）與清單
             updateMonthFilterOptions();
             renderRecords();         
         }
@@ -530,7 +524,6 @@
             
             listContainer.innerHTML = ''; catTotalsContainer.innerHTML = '';
             
-            // 讀取目前使用者在下拉選單選中的月份金鑰 (例如: "2026-06")
             const selectedMonthKey = dropdown.value || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
             const parts = selectedMonthKey.split('-');
             const viewYear = parts[0];
@@ -542,7 +535,6 @@
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
-            // 依照下拉選單選定的「年份與月份」進行資料篩選
             let currentMonthRecords = records.filter(r => {
                 const recordIsoDate = ensureISODate(r.date);
                 return recordIsoDate.startsWith(selectedMonthKey);
@@ -557,7 +549,6 @@
                 return;
             }
 
-            // 資料排序：新日期在上
             currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
             let lastDisplayedDate = "";
@@ -596,7 +587,7 @@
 
         function ensureISODate(dateStr) {
             if (!dateStr) return "2026-06-01";
-            let clean = dateStr.trim();
+            let clean = String(dateStr).trim();
             if (clean.includes('-') && clean.split('-').length === 3) return clean;
             
             if (clean.includes('/')) {
@@ -619,27 +610,91 @@
             }
         }
 
+        /* 重大升級：支援直接讀取並拆解多分頁（Multi-sheet）的 Excel (.xlsx / .xls) 檔案 */
         function handleFileImport(input) {
             const file = input.files[0];
             if (!file) return;
+            
             const reader = new FileReader();
-            reader.onload = async function(e) {
-                const text = e.target.result;
-                try {
-                    if (file.name.endsWith('.json')) {
-                        const parsed = JSON.parse(text);
-                        if (Array.isArray(parsed)) records = parsed;
-                        else throw new Error("Invalid format");
-                    } else if (file.name.endsWith('.csv')) {
-                        const lines = text.split('\n');
-                        const importedRecords = [];
-                        let lastValidDate = ""; 
+            const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
 
+            reader.onload = async function(e) {
+                try {
+                    let importedRecords = [];
+
+                    if (isExcel) {
+                        // 使用 SheetJS 以二進位方式讀取 Excel 活頁簿
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        let recordCounter = 0;
+
+                        // 遍歷 Excel 裡面的每一個分頁（每一個分頁代表一個月份，如 2026-06）
+                        workbook.SheetNames.forEach(sheetName => {
+                            const worksheet = workbook.Sheets[sheetName];
+                            // 將當前分頁轉換為二維陣列 [ [欄1, 欄2...], [欄1, 欄2...] ]
+                            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            
+                            let lastValidDate = "";
+
+                            // 從第二行開始讀取數據（跳過第一行表頭 [Date, Category, Amount, Notes]）
+                            for (let i = 1; i < rows.length; i++) {
+                                const row = rows[i];
+                                if (!row || row.length === 0) continue;
+
+                                let dateStr = row[0] ? String(row[0]).trim() : "";
+                                let catLabel = row[1] ? String(row[1]).trim() : "";
+                                let amtStr = row[2] ? String(row[2]).trim() : "";
+                                let noteStr = row[3] ? String(row[3]).trim() : "";
+
+                                // 過濾機制：跳過統計行（如 Daily Total, Total）、空行、或重複的表頭
+                                if (!catLabel || catLabel.includes('Total') || catLabel === 'Category' || (dateStr === "" && catLabel === "")) {
+                                    continue;
+                                }
+
+                                // 補齊日期：如果欄位為空，自動沿用同區塊上方最近的有效日期
+                                if (dateStr === "") {
+                                    dateStr = lastValidDate;
+                                } else {
+                                    dateStr = ensureISODate(dateStr);
+                                    lastValidDate = dateStr;
+                                }
+                                if (!dateStr) continue;
+
+                                // 清理金額：移除可能夾帶的貨幣符號
+                                amtStr = amtStr.replace('HK$', '').replace(/,/g, '').replace(/"/g, '');
+                                const amount = parseFloat(amtStr);
+                                if (isNaN(amount)) continue;
+
+                                // 種類配對：比對網頁中對應的消費分類
+                                let finalCategory = categories.find(c => c.includes(catLabel)) || "📦 Others";
+                                
+                                recordCounter++;
+                                importedRecords.push({
+                                    id: Date.now() + recordCounter,
+                                    amount: amount,
+                                    category: finalCategory,
+                                    note: noteStr,
+                                    date: dateStr
+                                });
+                            }
+                        });
+
+                        if (importedRecords.length === 0) throw new Error("No valid data rows found in Excel file.");
+                        records = importedRecords;
+
+                    } else if (file.name.endsWith('.json')) {
+                        const parsed = JSON.parse(e.target.result);
+                        if (Array.isArray(parsed)) records = parsed;
+                        else throw new Error("Invalid JSON format");
+
+                    } else if (file.name.endsWith('.csv')) {
+                        // 傳統單一 CSV 檔案解析邏輯
+                        const lines = e.target.result.split('\n');
+                        let lastValidDate = ""; 
                         for (let i = 1; i < lines.length; i++) {
                             let line = lines[i].trim();
                             if (!line) continue;
                             if (line.startsWith('\uFEFF')) line = line.replace('\uFEFF', '');
-                            
                             const cols = line.split(',');
                             if (cols.length < 3) continue;
                             
@@ -658,7 +713,7 @@
                             }
                             if (!dateStr) continue;
                             
-                            amtStr = amtStr.replace('HK$', '').replace(/"/g, '');
+                            amtStr = amtStr.replace('HK$', '').replace(/,/g, '').replace(/"/g, '');
                             const amount = parseFloat(amtStr);
                             if (isNaN(amount)) continue;
                             
@@ -668,16 +723,24 @@
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
                     }
+
+                    // 存入瀏覽器資料庫並重新渲染
                     await saveRecords(); 
                     updateMonthFilterOptions();
                     renderRecords(); 
-                    alert(`Successfully imported ${records.length} records!`);
+                    alert(`Successfully imported ${records.length} records from all sheets!`);
                 } catch(err) {
-                    alert("Import failed! Format layout unmatched.");
+                    alert("Import failed! " + err.message);
                 }
                 input.value = ''; 
             };
-            reader.readAsText(file);
+
+            // 如果是 Excel 檔案，採用陣列緩衝區（ArrayBuffer）讀取；如果是文字檔（JSON/CSV）則用普通文字讀取
+            if (isExcel) {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file);
+            }
         }
 
         function exportToExcelXLSX() {
@@ -713,7 +776,6 @@
             sheetsOrder.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
                 
-                // 確保匯出的 Excel 內容也是新日期在上
                 monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
                 let sheetRows = [

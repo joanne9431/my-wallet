@@ -282,7 +282,7 @@
     </div>
 
     <div class="card">
-        <h2>History Logs</h2>
+        <h2>History Logs (Current Month Only)</h2>
         <div class="list-container" id="history-list"></div>
     </div>
 
@@ -434,7 +434,7 @@
             return "background-color: var(--hl-other); color: var(--hl-other-txt);";
         }
 
-        // 核心邏輯重構：頂部方塊只統計當前真實月份，且清單嚴格日期由新到舊
+        // 修改後的渲染邏輯：頂部統計與歷史日誌「皆只顯示當前月份」，過期自動隱藏
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
@@ -455,8 +455,15 @@
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
-            if (records.length === 0) {
-                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
+            // 篩選出僅屬於當前月份的紀錄
+            const currentMonthRecords = records.filter(r => {
+                const recordIsoDate = ensureISODate(r.date);
+                const rParts = recordIsoDate.split('-'); // [ "2026", "06", "01" ]
+                return (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
+            });
+
+            if (currentMonthRecords.length === 0) {
+                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
                 categories.forEach(cat => {
                     catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$0</span></div>`;
@@ -464,24 +471,19 @@
                 return;
             }
 
-            // 【規則2】：確保 History Logs 順序，日期越近越在最高處
-            records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+            // 確保順序，日期越近越在最高處
+            currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
-            records.forEach(r => {
+            currentMonthRecords.forEach(r => {
                 const recordIsoDate = ensureISODate(r.date);
-                const rParts = recordIsoDate.split('-'); // [ "2026", "06", "01" ]
                 
-                // 【規則1】：只統計實際到期日符合「本月」的支出，跨月的（如6月付7月的門票）在本月一律不計入
-                const isBelongToCurrentMonth = (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
-                
-                if (isBelongToCurrentMonth) {
-                    currentMonthTotal += r.amount;
-                    if (catSums[r.category] !== undefined) {
-                        catSums[r.category] += r.amount;
-                    }
+                // 累加當月總計與分類總計
+                currentMonthTotal += r.amount;
+                if (catSums[r.category] !== undefined) {
+                    catSums[r.category] += r.amount;
                 }
 
-                // 歷史清單無論是不是本月都正常印出，依時間遠近排序
+                // 僅渲染當月紀錄至 History Logs 區塊中
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
                 listContainer.innerHTML += `
                     <div class="list-item">
@@ -497,7 +499,7 @@
                     </div>`;
             });
             
-            // 更新頂部卡片的數值 (只反映本月數據)
+            // 更新頂部卡片的數值 (反映本月數據)
             totalContainer.innerText = currentMonthTotal.toLocaleString();
             Object.keys(catSums).forEach(cat => {
                 catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$${catSums[cat].toLocaleString()}</span></div>`;
@@ -589,11 +591,9 @@
             reader.readAsText(file);
         }
 
-        // CSV 導出排版演算法（完美實現同一日首項顯示日期、Daily 和 Monthly 間精確空一行）
         function exportToCSV() {
             if (records.length === 0) return alert("There is no data to export yet!");
             
-            // 匯出報表：依時間由舊到新排列（方便 Excel 清爽閱讀）
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
             let csvContent = "\uFEFFDate,Category,Amount,Notes\n"; 
             
@@ -624,7 +624,6 @@
                 const category = rawCategory.includes(',') ? `"${rawCategory}"` : rawCategory;
                 const note = r.note && r.note.includes(',') ? `"${r.note}"` : (r.note || '');
                 
-                // 同一日的 data 只在第一項顯示日期
                 let dateFieldToPrint = "";
                 if (currentIsoDate !== lastDisplayedDate) {
                     dateFieldToPrint = currentIsoDate;
@@ -643,36 +642,26 @@
                 const isMonthEnd = !nextRecord || nextYear !== currentYear || nextMonth !== currentMonth;
                 const isYearEnd = !nextRecord || nextYear !== currentYear;
 
-                // 1. 當日結算 (Daily Total)
                 if (isDayEnd) {
                     csvContent += `,Daily Total,HK$${dayTotal},\n`;
                     dayTotal = 0; 
-                    
-                    // 如果僅僅是普通跨天（還未到月尾），在 Daily Total 後補常規空行
                     if (!isMonthEnd && nextRecord) {
                         csvContent += ",,,\n";
                     }
                 }
 
-                // 2. 每月結算 (Monthly Total)
                 if (isMonthEnd) {
-                    // 滿足要求：Daily Total 和 Monthly Total 之間精確空白一行!!!
                     csvContent += ",,,\n"; 
-                    
                     csvContent += `,${EnglishMonthLabel} Total,HK$${monthTotal},\n`;
                     monthTotal = 0; 
-                    
-                    // Monthly Total 輸出後，與隔天新紀錄隔開一行
                     if (nextRecord || isYearEnd) {
                         csvContent += ",,,\n"; 
                     }
                 }
 
-                // 3. 年度總結 (Year Total)
                 if (isYearEnd) {
                     csvContent += `,${currentYear} Total,HK$${yearTotal},\n`;
                     yearTotal = 0; 
-                    
                     if (nextRecord) {
                         csvContent += ",,,\n";
                     }

@@ -13,6 +13,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <style>
         /* 全域變數（森林系 / 大地色主題） */
         :root {
@@ -23,21 +25,21 @@
             --danger: #c05c46;     /* 溫暖泥土磚紅 */
             --success: #5e8c61;    /* 療癒鼠尾草綠 */
             --warning: #cca043;    /* 暖秋麥芽黃 */
-            --text: #222f25;       /* 深松針墨綠 */
+            --text: #222f25;       /* 深松針墨綠 (高對比閱讀舒適) */
             --grey: #d5dbd6;       /* 淺石灰色 */
             
             /* 各種消費種類的 Highlight 顏色背景 */
-            --hl-food: #fdf2ee;    
+            --hl-food: #fdf2ee;    /* Food: 溫暖麥芽粉橘 */
             --hl-food-txt: #b35d46;
-            --hl-trans: #eef7f6;   
+            --hl-trans: #eef7f6;   /* Transport: 湖水綠藍 */
             --hl-trans-txt: #3d8580;
-            --hl-play: #f6f4f8;    
+            --hl-play: #f6f4f8;    /* Entertainment: 暮光薰衣草紫 */
             --hl-play-txt: #715c8c;
-            --hl-shop: #fbf8ed;    
+            --hl-shop: #fbf8ed;    /* Shopping: 暖秋金黃 */
             --hl-shop-txt: #a67c2e;
-            --hl-home: #edf4ee;    
+            --hl-home: #edf4ee;    /* Home: 森林苔蘚綠 */
             --hl-home-txt: #467a4e;
-            --hl-other: #f0f2f1;   
+            --hl-other: #f0f2f1;   /* Others: 溪畔卵石灰 */
             --hl-other-txt: #5c635f;
         }
         
@@ -226,30 +228,7 @@
             text-align: center;
         }
         
-        .list-container { max-height: 340px; overflow-y: auto; padding-right: 2px; }
-        
-        .date-group {
-            background: #fafcfb;
-            border: 1px solid rgba(58, 95, 67, 0.08);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 14px; 
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
-        }
-        .date-group:last-child { margin-bottom: 0; }
-        
-        .date-group-title {
-            font-size: 0.8rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin-bottom: 10px;
-            padding-bottom: 4px;
-            border-bottom: 1.5px dashed rgba(58, 95, 67, 0.15);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
+        .list-container { max-height: 280px; overflow-y: auto; }
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
         .list-item:last-child { border-bottom: none; }
         .item-info { display: flex; flex-direction: column; }
@@ -304,12 +283,12 @@
     </div>
 
     <div class="card">
-        <h2>History Logs (Current Month Only)</h2>
+        <h2>History Logs</h2>
         <div class="list-container" id="history-list"></div>
     </div>
 
     <div style="padding: 0 2px;">
-        <button class="btn-backup" onclick="exportToExcelMultiSheet()">Backup Data (Export Excel Multi-Sheets)</button>
+        <button class="btn-backup" onclick="exportToExcelXLSX()">Backup Data (Export Excel Multi-Sheets)</button>
         <input type="file" id="import-file-input" accept=".json,.csv" style="display: none;" onchange="handleFileImport(this)">
         <button class="btn-import" onclick="document.getElementById('import-file-input').click()">Import Data (JSON/CSV)</button>
     </div>
@@ -470,14 +449,8 @@
             let catSums = {};
             categories.forEach(cat => { catSums[cat] = 0; });
 
-            const currentMonthRecords = records.filter(r => {
-                const recordIsoDate = ensureISODate(r.date);
-                const rParts = recordIsoDate.split('-');
-                return (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
-            });
-
-            if (currentMonthRecords.length === 0) {
-                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
+            if (records.length === 0) {
+                listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions yet.</div>`;
                 totalContainer.innerText = '0';
                 categories.forEach(cat => {
                     catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$0</span></div>`;
@@ -485,44 +458,31 @@
                 return;
             }
 
-            currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+            records.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
-            const groupedRecords = {};
-            currentMonthRecords.forEach(r => {
-                const dateKey = ensureISODate(r.date);
-                if (!groupedRecords[dateKey]) groupedRecords[dateKey] = [];
-                groupedRecords[dateKey].push(r);
+            records.forEach(r => {
+                const recordIsoDate = ensureISODate(r.date);
+                const rParts = recordIsoDate.split('-');
                 
-                currentMonthTotal += r.amount;
-                if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
-            });
+                const isBelongToCurrentMonth = (rParts[0] === sysYearStr && rParts[1] === sysMonthStr);
+                if (isBelongToCurrentMonth) {
+                    currentMonthTotal += r.amount;
+                    if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
+                }
 
-            Object.keys(groupedRecords).forEach(dateStr => {
-                const dayRecords = groupedRecords[dateStr];
-                let groupHTML = `
-                    <div class="date-group">
-                        <div class="date-group-title">📅 ${dateStr}</div>
-                        <div class="date-items-inner">
-                `;
-                
-                dayRecords.forEach(r => {
-                    const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
-                    groupHTML += `
-                        <div class="list-item">
-                            <div class="item-info">
-                                <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
-                                <div class="item-details">${noteHTML}</div>
-                            </div>
-                            <div class="item-right">
-                                <span class="amount">HK$${r.amount.toLocaleString()}</span>
-                                <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
-                                <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
-                            </div>
-                        </div>`;
-                });
-                
-                groupHTML += `</div></div>`;
-                listContainer.innerHTML += groupHTML;
+                const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+                listContainer.innerHTML += `
+                    <div class="list-item">
+                        <div class="item-info">
+                            <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
+                            <div class="item-details"><span>${recordIsoDate}</span>${noteHTML}</div>
+                        </div>
+                        <div class="item-right">
+                            <span class="amount">HK$${r.amount.toLocaleString()}</span>
+                            <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
+                            <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
+                        </div>
+                    </div>`;
             });
             
             totalContainer.innerText = currentMonthTotal.toLocaleString();
@@ -615,14 +575,15 @@
             reader.readAsText(file);
         }
 
-        // 升級優化版：採用 HTML Excel 互通架構，確保多工作表（Multi-Sheets）能被 Excel 完美相容並順利雙擊開啟
-        function exportToExcelMultiSheet() {
+        // 終極完美解決方案：使用 SheetJS 庫生成標準、原生且不觸發任何警告的二進位制多工作表 .xlsx 檔案
+        function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
+            if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
-            // 1. 按時間從舊到新排序
+            // 1. 依時間從舊到新進行基礎排序
             let sortedRecords = [...records].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
 
-            // 2. 將記錄按「年-月」分組
+            // 2. 將記錄按「年-月」歸類分組
             let monthlyGroups = {};
             let allMonthsChronological = [];
             
@@ -636,26 +597,22 @@
                 monthlyGroups[yearMonth].push(r);
             });
 
+            // 排序取得最新的月份
             allMonthsChronological.sort((a, b) => a.localeCompare(b));
             let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
 
-            // 3. 建立標準 Excel 複合 HTML 工作簿包裝頭部
-            let htmlWorkbook = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">\n<head>\n<meta http-equiv="Content-type" content="text/html;charset=UTF-8" />\n\n<style>\n  .num { mso-number-format:"\\#,\\#\\#0"; text-align: right; }\n  .header { font-weight: bold; background-color: #E2EFDA; text-align: center; }\n  .total { font-weight: bold; }\n</style>\n</head>\n<body>\n`;
+            // 建立活頁簿物件 (Workbook)
+            let wb = XLSX.utils.book_new();
+            let yearTotalTracker = {}; 
 
-            let yearTotalTracker = {};
-
-            // 4. 依序產生每個 Sheet 實際的資料表格
-            allMonthsChronological.forEach((currentMonthKey, index) => {
+            // 3. 遍歷每個月，動態生成一個 Sheet 二維陣列數據
+            allMonthsChronological.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
                 
-                // 每一個分頁用 table 作為載體，並綁定對應的 Href ID
-                htmlWorkbook += `<table id="sheet_${index}" border="1" style="border-collapse:collapse; display:none;">\n`;
-                htmlWorkbook += `  <tr class="header">` +
-                                `<td>Date</td>` +
-                                `<td>Category</td>` +
-                                `<td>Amount</td>` +
-                                `<td>Notes</td>` +
-                                `</tr>\n`;
+                // 初始化 Sheet 內部的行矩陣，先填入首個 Header 欄位大標
+                let sheetRows = [
+                    ["Date", "Category", "Amount", "Notes"]
+                ];
 
                 let dayTotal = 0;
                 let monthTotal = 0;
@@ -670,6 +627,7 @@
                     let currentYear = parts[0];
                     let currentMonth = parts[1];
 
+                    // 全局累加年總計
                     if (!yearTotalTracker[currentYear]) yearTotalTracker[currentYear] = 0;
                     yearTotalTracker[currentYear] += r.amount;
 
@@ -677,19 +635,15 @@
                     let rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
                     let noteText = r.note || '';
 
+                    // 處理同天只在首行印日期
                     let dateValue = "";
                     if (currentIsoDate !== lastDisplayedDate) {
                         dateValue = currentIsoDate;
                         lastDisplayedDate = currentIsoDate;
                     }
 
-                    // 輸出一般行
-                    htmlWorkbook += `  <tr>\n` +
-                                    `    <td>&nbsp;${dateValue}</td>\n` +
-                                    `    <td>${rawCategory}</td>\n` +
-                                    `    <td class="num">${r.amount}</td>\n` +
-                                    `    <td>${noteText}</td>\n` +
-                                    `  </tr>\n`;
+                    // 推入常規消费資料
+                    sheetRows.push([dateValue, rawCategory, r.amount, noteText]);
 
                     dayTotal += r.amount;
                     monthTotal += r.amount;
@@ -697,63 +651,52 @@
                     let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                     let isMonthEnd = !nextRecord; 
 
-                    // 4a. 輸出 Daily Total (當日結算)
+                    // 3a. 當日結算 (Daily Total)
                     if (isDayEnd) {
-                        htmlWorkbook += `  <tr class="total">\n` +
-                                        `    <td></td>\n` +
-                                        `    <td>Daily Total</td>\n` +
-                                        `    <td class="num">${dayTotal}</td>\n` +
-                                        `    <td></td>\n` +
-                                        `  </tr>\n`;
+                        sheetRows.push(["", "Daily Total", dayTotal, ""]);
                         dayTotal = 0;
 
+                        // 跨天留空行
                         if (!isMonthEnd) {
-                            htmlWorkbook += `  <tr><td colspan="4"></td></tr>\n`; // 精確留空一行
+                            sheetRows.push(["", "", "", ""]);
                         }
                     }
 
-                    // 4b. 輸出 Monthly Total 並且限制 Year Total 只出現在最新月份的底端
+                    // 3b. 每月結算 (Monthly Total) 及年總結位置控制
                     if (isMonthEnd) {
                         let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
                         
-                        htmlWorkbook += `  <tr><td colspan="4"></td></tr>\n`; // 空白一行
-                        htmlWorkbook += `  <tr class="total">\n` +
-                                        `    <td></td>\n` +
-                                        `    <td>${EnglishMonthLabel} Total</td>\n` +
-                                        `    <td class="num">${monthTotal}</td>\n` +
-                                        `    <td></td>\n` +
-                                        `  </tr>\n`;
+                        sheetRows.push(["", "", "", ""]); // 留空一行
+                        sheetRows.push(["", `${EnglishMonthLabel} Total`, monthTotal, ""]);
                         monthTotal = 0;
 
-                        // 【核心邏輯】：年 Total 僅在全體最新的月份分頁底下顯示
+                        // 核心指標要求：Year Total 唯獨在最新月份 Sheet 底部顯示
                         if (currentMonthKey === latestMonthKey) {
-                            htmlWorkbook += `  <tr><td colspan="4"></td></tr>\n`; // 再間隔空一行
-                            htmlWorkbook += `  <tr class="total">\n` +
-                                            `    <td></td>\n` +
-                                            `    <td>${currentYear} Total</td>\n` +
-                                            `    <td class="num">${yearTotalTracker[currentYear]}</td>\n` +
-                                            `    <td></td>\n` +
-                                            `  </tr>\n`;
+                            sheetRows.push(["", "", "", ""]); // 與 Monthly 間隔留空一行
+                            sheetRows.push(["", `${currentYear} Total`, yearTotalTracker[currentYear], ""]);
                         } else {
-                            htmlWorkbook += `  <tr><td colspan="4"></td></tr>\n`;
+                            sheetRows.push(["", "", "", ""]);
                         }
                     }
                 }
 
-                htmlWorkbook += `</table>\n`;
+                // 將矩陣陣列轉成 Sheet 格式
+                let ws = XLSX.utils.aoa_to_sheet(sheetRows);
+
+                // 設定欄寬排版
+                ws['!cols'] = [
+                    { wch: 13 }, // Date
+                    { wch: 15 }, // Category
+                    { wch: 12 }, // Amount
+                    { wch: 25 }  // Notes
+                ];
+
+                // 將 Sheet 新增加入活頁簿，以月份命名分頁（例如: "2026-06"）
+                XLSX.utils.book_append_sheet(wb, ws, currentMonthKey);
             });
 
-            htmlWorkbook += `</body>\n</html>\n`;
-
-            // 5. 下載輸出
-            let blob = new Blob([htmlWorkbook], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-            let url = URL.createObjectURL(blob);
-            let link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.xls`);
-            document.body.appendChild(link); 
-            link.click(); 
-            document.body.removeChild(link);
+            // 4. 寫入並導出二進位制 XLSX 檔案（此檔案格式現代 Excel 會完全信任，不會有任何開啟障礙）
+            XLSX.writeFile(wb, `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
         init();

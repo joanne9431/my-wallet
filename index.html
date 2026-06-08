@@ -92,10 +92,9 @@
             flex: 1;
             padding-left: 10px; 
             text-align: left;
-            overflow: hidden; /* 防止溢出 */
+            overflow: hidden;
         }
         .total-amount { 
-            /* 修正：主總額數字進一步縮小臨界點，且絕對不換行 */
             font-size: clamp(1.1rem, 5.5vw, 1.8rem); 
             font-weight: 800; 
             color: var(--primary); 
@@ -136,7 +135,7 @@
             font-weight: 700;
             color: var(--text);
             display: inline-block;
-            /* 修正：進一步縮小灰色儀表區字體，並強制 white-space: nowrap 絕不換行 */
+            /* 核心修改：縮小灰色區字體，並強制 white-space: nowrap 絕不換行 */
             font-size: clamp(0.55rem, 2vw, 0.75rem);
             white-space: nowrap; 
             overflow: hidden;
@@ -748,6 +747,7 @@
         }
 
         /* 終極核心修正：利用隱藏 HTML 轉載並強制輸出 Excel 字型家族與編碼（英文使用 Arial，中文自動回退使用微軟正黑體） */
+        fontStyle = 'style="font-family: Arial, \'Microsoft JhengHei\', sans-serif;"';
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");

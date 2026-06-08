@@ -95,8 +95,8 @@
             overflow: hidden;
         }
         .total-amount { 
-            /* 核心修改：移除 ellipsis，改用純 vw 單位讓 Month Total 總金額強迫無限縮小以適應版面 */
-            font-size: 5.2vw; 
+            /* 使用 clamp 設定安全範圍，寬度不換行，不顯示省略號 */
+            font-size: clamp(1.1rem, 5.5vw, 1.9rem); 
             font-weight: 800; 
             color: var(--primary); 
             margin-top: 2px;
@@ -134,9 +134,8 @@
         .cat-total-item .cat-num {
             font-weight: 700;
             color: var(--text);
-            display: inline-block;
-            /* 核心修改：不顯示省略號，利用純 vw 單位讓分類金額強迫縮小，維持絕對不換行 */
-            font-size: 2.8vw;
+            /* 灰格子分類金額自適應縮小，絕不換行，不顯示省略號 */
+            font-size: clamp(0.68rem, 3.2vw, 0.85rem);
             white-space: nowrap;
             overflow: hidden;
             line-height: 1.1;
@@ -307,7 +306,7 @@
         }
         .day-separator:not(:empty)::before { margin-right: .5em; }
         .day-separator:not(:empty)::after { margin-left: .5em; }
-        .day-dot { display: inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+        .day-dot { inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
@@ -318,7 +317,7 @@
         <div class="dashboard-layout">
             <div class="total-box">
                 <h2 id="current-month-heading">Current Month Total</h2>
-                <div class="total-amount">HK$<span id="total">0</span></div>
+                <div class="total-amount">$<span id="total">0</span></div>
             </div>
             <div class="category-totals-box" id="category-totals-container"></div>
         </div>
@@ -557,10 +556,10 @@
             if (currentMonthRecords.length === 0) {
                 listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
-                // 當總額為0時重置 Month Total 字體大小
-                document.querySelector('.total-amount').style.fontSize = "5.2vw";
+                // 重置總金額字體大小
+                document.querySelector('.total-amount').style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
                 categories.forEach(cat => {
-                    catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$0</span></div>`;
+                    catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$0</span></div>`;
                 });
                 return;
             }
@@ -588,30 +587,41 @@
                             <div class="item-details">${noteHTML}</div>
                         </div>
                         <div class="item-right">
-                            <span class="amount">HK$${r.amount.toLocaleString()}</span>
+                            <span class="amount">$${r.amount.toLocaleString()}</span>
                             <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
                             <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
                         </div>
                     </div>`;
             });
             
-            totalContainer.innerText = currentMonthTotal.toLocaleString();
+            const formattedTotalStr = currentMonthTotal.toLocaleString();
+            totalContainer.innerText = formattedTotalStr;
             
-            // 雙重保障：Month Total 如果字數超過一定長度，動態追加行內微縮縮放，完全防止被省略或折行
-            const fullTotalStr = "HK$" + currentMonthTotal.toLocaleString();
+            // 核心功能：Month Total 金額長度「自適應動態調控」（字數多則縮小，字數少則變大）
             let mainTotalElement = document.querySelector('.total-amount');
-            if (fullTotalStr.length > 9) mainTotalElement.style.fontSize = "4.2vw";
-            if (fullTotalStr.length > 12) mainTotalElement.style.fontSize = "3.5vw";
-            if (fullTotalStr.length <= 9) mainTotalElement.style.fontSize = "5.2vw";
+            if (formattedTotalStr.length > 12) {
+                mainTotalElement.style.fontSize = "3.4vw";
+            } else if (formattedTotalStr.length > 9) {
+                mainTotalElement.style.fontSize = "4.2vw";
+            } else if (formattedTotalStr.length > 6) {
+                mainTotalElement.style.fontSize = "5.0vw";
+            } else {
+                // 字數少時恢復寬裕的大字體
+                mainTotalElement.style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
+            }
 
             Object.keys(catSums).forEach(cat => {
-                // 自動估算分類金額字體縮小級別，如果位數過長，則動態追加行內微縮縮放，雙重保障不破壞排版
-                const rawAmtStr = "HK$" + catSums[cat].toLocaleString();
+                const rawAmtStr = catSums[cat].toLocaleString();
                 let extraStyle = "";
-                if(rawAmtStr.length > 9) extraStyle = "style='font-size: 2.2vw;'";
-                if(rawAmtStr.length > 12) extraStyle = "style='font-size: 1.8vw;'";
+                // 灰格子分類金額自適應：長度過長時動態施加更小的行內等級，防止溢出或被裁切
+                if(rawAmtStr.length > 12) {
+                    extraStyle = "style='font-size: 1.8vw;'";
+                } else if(rawAmtStr.length > 9) {
+                    extraStyle = "style='font-size: 2.3vw;'";
+                }
                 
-                catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num" ${extraStyle}>HK$${catSums[cat].toLocaleString()}</span></div>`;
+                // 已修正：此處分類金額精確保留 $ 符號
+                catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num" ${extraStyle}>$${rawAmtStr}</span></div>`;
             });
         }
 
@@ -640,7 +650,7 @@
             }
         }
 
-        /* 重大升級：支援直接讀取並拆解多分頁（Multi-sheet）的 Excel (.xlsx / .xls) 檔案 */
+        /* 支援讀取多分頁（Multi-sheet）的 Excel 檔案 */
         function handleFileImport(input) {
             const file = input.files[0];
             if (!file) return;
@@ -653,20 +663,16 @@
                     let importedRecords = [];
 
                     if (isExcel) {
-                        // 使用 SheetJS 以二進位方式讀取 Excel 活頁簿
                         const data = new Uint8Array(e.target.result);
                         const workbook = XLSX.read(data, { type: 'array' });
                         let recordCounter = 0;
 
-                        // 遍歷 Excel 裡面的每一個分頁（每一個分頁代表一個月份，如 2026-06）
                         workbook.SheetNames.forEach(sheetName => {
                             const worksheet = workbook.Sheets[sheetName];
-                            // 將當前分頁轉換為二維陣列 [ [欄1, 欄2...], [欄1, 欄2...] ]
                             const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
                             
                             let lastValidDate = "";
 
-                            // 從第二行開始讀取數據（跳過第一行表頭 [Date, Category, Amount, Notes]）
                             for (let i = 1; i < rows.length; i++) {
                                 const row = rows[i];
                                 if (!row || row.length === 0) continue;
@@ -676,12 +682,10 @@
                                 let amtStr = row[2] ? String(row[2]).trim() : "";
                                 let noteStr = row[3] ? String(row[3]).trim() : "";
 
-                                // 過濾機制：跳過統計行（如 Daily Total, Total）、空行、或重複的表頭
                                 if (!catLabel || catLabel.includes('Total') || catLabel === 'Category' || (dateStr === "" && catLabel === "")) {
                                     continue;
                                 }
 
-                                // 補齊日期：如果欄位為空，自動沿用同區塊上方最近的有效日期
                                 if (dateStr === "") {
                                     dateStr = lastValidDate;
                                 } else {
@@ -690,12 +694,11 @@
                                 }
                                 if (!dateStr) continue;
 
-                                // 清理金額：移除可能夾帶的貨幣符號
-                                amtStr = amtStr.replace('HK$', '').replace(/,/g, '').replace(/"/g, '');
+                                // 清理可能夾帶的貨幣符號
+                                amtStr = amtStr.replace('HK$', '').replace('$', '').replace(/,/g, '').replace(/"/g, '');
                                 const amount = parseFloat(amtStr);
                                 if (isNaN(amount)) continue;
 
-                                // 種類配對：比對網頁中對應的消費分類
                                 let finalCategory = categories.find(c => c.includes(catLabel)) || "📦 Others";
                                 
                                 recordCounter++;
@@ -718,7 +721,6 @@
                         else throw new Error("Invalid JSON format");
 
                     } else if (file.name.endsWith('.csv')) {
-                        // 傳統單一 CSV 檔案解析邏輯
                         const lines = e.target.result.split('\n');
                         let lastValidDate = ""; 
                         for (let i = 1; i < lines.length; i++) {
@@ -743,7 +745,7 @@
                             }
                             if (!dateStr) continue;
                             
-                            amtStr = amtStr.replace('HK$', '').replace(/,/g, '').replace(/"/g, '');
+                            amtStr = amtStr.replace('HK$', '').replace('$', '').replace(/,/g, '').replace(/"/g, '');
                             const amount = parseFloat(amtStr);
                             if (isNaN(amount)) continue;
                             
@@ -754,7 +756,6 @@
                         records = importedRecords;
                     }
 
-                    // 存入瀏覽器資料庫並重新渲染
                     await saveRecords(); 
                     updateMonthFilterOptions();
                     renderRecords(); 
@@ -765,7 +766,6 @@
                 input.value = ''; 
             };
 
-            // 如果是 Excel 檔案，採用陣列緩衝區（ArrayBuffer）讀取；如果是文字檔（JSON/CSV）則用普通文字讀取
             if (isExcel) {
                 reader.readAsArrayBuffer(file);
             } else {

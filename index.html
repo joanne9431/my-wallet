@@ -124,9 +124,16 @@
             font-weight: 600;
         }
         .cat-total-item .cat-num {
-            font-weight: 700;
-            color: var(--text);
-        }
+    font-weight: 700;
+    color: var(--text);
+    /* 核心修改：使用 clamp 限制最大與最小字型，並允許隨螢幕寬度與字數動態微調 */
+    font-size: clamp(0.68rem, 2.5vw, 0.85rem); 
+    /* 防止大數字撐破區塊，滿了會自動換行或收縮 */
+    word-break: break-all;
+    /* 縮減行高，讓換行時依然美觀 */
+    line-height: 1.2;
+    margin-top: 1px;
+}
         
         input[type="number"], input[type="text"], input[type="date"], select {
             width: 100%;

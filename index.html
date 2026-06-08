@@ -420,36 +420,50 @@
             btn.classList.add('active'); 
         }
 
+/* 優化：動態生成最近半年的月份選單，維持介面精簡 */
         function updateMonthFilterOptions() {
             const dropdown = document.getElementById('month-filter-dropdown');
-            const sysDate = new Date();
-            const currentMonthKey = `${sysDate.getFullYear()}-${String(sysDate.getMonth() + 1).padStart(2, '0')}`;
+            const prevSelected = dropdown.value; // 保留使用者原本選取的月份
             
-            let monthsSet = new Set();
-            monthsSet.add(currentMonthKey);
-            
-            records.forEach(r => {
-                if(r.date) {
-                    monthsSet.add(ensureISODate(r.date).substring(0, 7));
-                }
-            });
-            
-            let sortedMonths = Array.from(monthsSet).sort((a, b) => b.localeCompare(a));
-            const prevSelected = dropdown.value;
             dropdown.innerHTML = '';
             
-            sortedMonths.forEach(m => {
+            // 1. 自動推算包含當月在內的「最近 6 個月」
+            let today = new Date();
+            let year = today.getFullYear();
+            let month = today.getMonth(); // 0 = 1月, 11 = 12月
+            
+            let lastSixMonths = [];
+            for (let i = 0; i < 6; i++) {
+                let displayYear = year;
+                let displayMonth = month - i;
+                
+                // 如果跨年了，向前借位
+                if (displayMonth < 0) {
+                    displayMonth += 12;
+                    displayYear -= 1;
+                }
+                
+                // 組裝成 YYYY-MM 格式 (例如 2026-06)
+                let monthStr = String(displayMonth + 1).padStart(2, '0');
+                let monthKey = `${displayYear}-${monthStr}`;
+                lastSixMonths.push(monthKey);
+            }
+
+            // 2. 渲染至下拉選單
+            lastSixMonths.forEach(m => {
                 const parts = m.split('-');
-                const year = parts[0];
+                const y = parts[0];
                 const monthIndex = parseInt(parts[1], 10) - 1;
-                const label = `${monthNames[monthIndex]} ${year}`;
+                const label = `${monthNames[monthIndex]} ${y}`;
                 dropdown.innerHTML += `<option value="${m}">${label}</option>`;
             });
             
-            if (prevSelected && sortedMonths.includes(prevSelected)) {
+            // 3. 智慧還原選取狀態
+            // 如果使用者之前選的月份還在最近半年內，就幫他留著；不在的話，預設切回最新這個月
+            if (prevSelected && lastSixMonths.includes(prevSelected)) {
                 dropdown.value = prevSelected;
             } else {
-                dropdown.value = currentMonthKey;
+                dropdown.value = lastSixMonths[0]; // 最新的月份（當月）
             }
         }
 

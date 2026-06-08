@@ -763,22 +763,59 @@
             }
         }
 
-        /* 升級智慧排序：不論是否有未來月份，一律自動鎖定「當前系統實際月份」為第一頁 */
+        /* 升級智慧排序與年份切分：自適應以年分流，彈出式輸入年份，一併保留極簡介面 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
-            let yearTotalTracker = {}; 
+            // 1. 搜集目前所有資料包含的年份
+            let availableYears = new Set();
             records.forEach(r => {
-                let currentYear = ensureISODate(r.date).split('-')[0];
-                if (!yearTotalTracker[currentYear]) yearTotalTracker[currentYear] = 0;
-                yearTotalTracker[currentYear] += r.amount;
+                let year = ensureISODate(r.date).split('-')[0];
+                availableYears.add(year);
             });
+            let sortedYears = Array.from(availableYears).sort((a, b) => b - a); // 由新到舊
 
+            // 2. 決定導出年份
+            const sysDate = new Date();
+            const currentSystemYear = String(sysDate.getFullYear());
+            let selectedYear = currentSystemYear;
+
+            // 只有在存在多個年份時，才會以極簡 Prompt 詢問使用者，避免打擾單年用戶
+            if (sortedYears.length > 1) {
+                let yearPrompt = prompt(
+                    `Detected data across multiple years.\nAvailable years: ${sortedYears.join(', ')}\n\nPlease enter the year you want to export:`, 
+                    currentSystemYear
+                );
+                
+                if (yearPrompt === null) return; // 使用者點選取消
+                yearPrompt = yearPrompt.trim();
+                
+                if (!sortedYears.includes(yearPrompt)) {
+                    return alert(`Invalid year choice! Please run export again and type one of: ${sortedYears.join(', ')}`);
+                }
+                selectedYear = yearPrompt;
+            } else if (sortedYears.length === 1) {
+                // 如果只存在單年份資料，直接選取它，不跳彈窗
+                selectedYear = sortedYears[0];
+            }
+
+            // 3. 過濾出該指定年份的所有數據 (一月一日至十二月三十一日)
+            let filteredRecords = records.filter(r => ensureISODate(r.date).startsWith(selectedYear));
+            
+            if (filteredRecords.length === 0) {
+                return alert(`No data found for the year ${selectedYear}.`);
+            }
+
+            // 4. 計算該年份的年度總花費
+            let yearTotal = 0;
+            filteredRecords.forEach(r => yearTotal += r.amount);
+
+            // 5. 按月份將其編組分流
             let monthlyGroups = {};
             let allMonthsChronological = [];
             
-            records.forEach(r => {
+            filteredRecords.forEach(r => {
                 let isoDate = ensureISODate(r.date);
                 let yearMonth = isoDate.substring(0, 7); 
                 if (!monthlyGroups[yearMonth]) {
@@ -788,22 +825,17 @@
                 monthlyGroups[yearMonth].push(r);
             });
 
-            // 基本排序：由舊到新排列 ["2026-01", ..., "2026-05", "2026-06", "2026-07"]
+            // 排序月份：舊到新
             allMonthsChronological.sort((a, b) => a.localeCompare(b));
             let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
             
-            // 基礎倒序排列（最新在最前）：["2026-07", "2026-06", "2026-05", ...]
+            // 預設 Excel 頁籤排序（倒序，最新在最前）
             let sheetsOrder = [...allMonthsChronological].reverse();
 
-            // 🌟 【核心智慧判斷】：獲取當下系統的真實年月（例如此時此刻是 2026-06）
-            const sysDate = new Date();
+            // 如果匯出的是當前系統年份，且目前月份在其中，強制將它釘在第一頁首頁
             const currentSystemMonthKey = `${sysDate.getFullYear()}-${String(sysDate.getMonth() + 1).padStart(2, '0')}`;
-
-            // 如果目前倒序清單中含有當前系統月份，且它不是排在第一個（例如被 7 月擋在後面了）
             if (sheetsOrder.includes(currentSystemMonthKey) && sheetsOrder[0] !== currentSystemMonthKey) {
-                // 將當前月份從原本的位置移除
                 sheetsOrder = sheetsOrder.filter(m => m !== currentSystemMonthKey);
-                // 強制插入到最前面（Index 0），使其雷打不動地成為第一頁首頁！
                 sheetsOrder.unshift(currentSystemMonthKey);
             }
 
@@ -812,7 +844,7 @@
             sheetsOrder.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
                 
-                // 同一天內以「新到舊」排序
+                // 同一天內按「新到舊」排序
                 monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
                 let sheetRows = [
@@ -831,7 +863,6 @@
 
                     let currentIsoDate = ensureISODate(r.date);
                     let parts = currentMonthKey.split('-');
-                    let currentYear = parts[0];
                     let currentMonth = parts[1];
 
                     let nextIsoDate = nextRecord ? ensureISODate(nextRecord.date) : null;
@@ -863,10 +894,10 @@
                         sheetRows.push(["", "", "", ""]); 
                         sheetRows.push(["", `${EnglishMonthLabel} Total`, `HK$${monthTotal.toLocaleString()}`, ""]);
 
-                        // 年度總結僅放在資料最新（如7月）的那一頁，或者可依習慣自由保留
+                        // 年度總計精準結算在該年份最新月份的分頁中
                         if (currentMonthKey === latestMonthKey) {
                             sheetRows.push(["", "", "", ""]); 
-                            sheetRows.push(["", `${currentYear} Total`, `HK$${yearTotalTracker[currentYear].toLocaleString()}`, ""]);
+                            sheetRows.push(["", `${selectedYear} Annual Total`, `HK$${yearTotal.toLocaleString()}`, ""]);
                         } else {
                             sheetRows.push(["", "", "", ""]);
                         }
@@ -878,7 +909,7 @@
                 XLSX.utils.book_append_sheet(wb, ws, currentMonthKey);
             });
 
-            XLSX.writeFile(wb, `Local_Budget_Report_${new Date().toISOString().slice(0,10)}.xlsx`);
+            XLSX.writeFile(wb, `Budget_Report_${selectedYear}_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
         init();

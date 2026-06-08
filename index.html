@@ -306,7 +306,7 @@
         }
         .day-separator:not(:empty)::before { margin-right: .5em; }
         .day-separator:not(:empty)::after { margin-left: .5em; }
-        .day-dot { inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+        .day-dot { display: inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
@@ -606,21 +606,19 @@
             } else if (formattedTotalStr.length > 6) {
                 mainTotalElement.style.fontSize = "5.0vw";
             } else {
-                // 字數少時恢復寬裕的大字體
                 mainTotalElement.style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
             }
 
             Object.keys(catSums).forEach(cat => {
                 const rawAmtStr = catSums[cat].toLocaleString();
                 let extraStyle = "";
-                // 灰格子分類金額自適應：長度過長時動態施加更小的行內等級，防止溢出或被裁切
                 if(rawAmtStr.length > 12) {
                     extraStyle = "style='font-size: 1.8vw;'";
                 } else if(rawAmtStr.length > 9) {
                     extraStyle = "style='font-size: 2.3vw;'";
                 }
                 
-                // 已修正：此處分類金額精確保留 $ 符號
+                // 網頁畫面精確修正：此處分類金額只保留 $ 符號
                 catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num" ${extraStyle}>$${rawAmtStr}</span></div>`;
             });
         }
@@ -694,7 +692,7 @@
                                 }
                                 if (!dateStr) continue;
 
-                                // 清理可能夾帶的貨幣符號
+                                // 清理機制：同時相容 HK$、與純 $ 符號，解析成純數字
                                 amtStr = amtStr.replace('HK$', '').replace('$', '').replace(/,/g, '').replace(/"/g, '');
                                 const amount = parseFloat(amtStr);
                                 if (isNaN(amount)) continue;
@@ -773,6 +771,7 @@
             }
         }
 
+        /* 核心升級：網頁畫面上雖然是 $，但匯出的 Excel 檔案中全部改為並保留「HK$」 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
@@ -837,14 +836,16 @@
                         lastDisplayedDate = currentIsoDate;
                     }
 
-                    sheetRows.push([dateValue, rawCategory, r.amount, noteText]);
+                    // 1. 每筆交易金額欄：加上 HK$ 符號
+                    sheetRows.push([dateValue, rawCategory, `HK$${r.amount.toLocaleString()}`, noteText]);
                     dayTotal += r.amount;
 
                     let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                     let isMonthEnd = !nextRecord;
 
                     if (isDayEnd) {
-                        sheetRows.push(["", "Daily Total", dayTotal, ""]);
+                        // 2. 每日小計金額：加上 HK$ 符號
+                        sheetRows.push(["", "Daily Total", `HK$${dayTotal.toLocaleString()}`, ""]);
                         dayTotal = 0; 
                         if (!isMonthEnd) {
                             sheetRows.push(["", "", "", ""]);
@@ -854,11 +855,13 @@
                     if (isMonthEnd) {
                         let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
                         sheetRows.push(["", "", "", ""]); 
-                        sheetRows.push(["", `${EnglishMonthLabel} Total`, monthTotal, ""]);
+                        // 3. 每月總計金額：加上 HK$ 符號
+                        sheetRows.push(["", `${EnglishMonthLabel} Total`, `HK$${monthTotal.toLocaleString()}`, ""]);
 
                         if (currentMonthKey === latestMonthKey) {
                             sheetRows.push(["", "", "", ""]); 
-                            sheetRows.push(["", `${currentYear} Total`, yearTotalTracker[currentYear], ""]);
+                            // 4. 年度總計金額：加上 HK$ 符號
+                            sheetRows.push(["", `${currentYear} Total`, `HK$${yearTotalTracker[currentYear].toLocaleString()}`, ""]);
                         } else {
                             sheetRows.push(["", "", "", ""]);
                         }
@@ -866,7 +869,7 @@
                 }
 
                 let ws = XLSX.utils.aoa_to_sheet(sheetRows);
-                ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 12 }, { wch: 25 }];
+                ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 15 }, { wch: 25 }]; // 稍微拉寬金額欄 wch 寬度以容納符號
                 XLSX.utils.book_append_sheet(wb, ws, currentMonthKey);
             });
 

@@ -95,7 +95,6 @@
             overflow: hidden;
         }
         .total-amount { 
-            /* 使用 clamp 設定安全範圍，寬度不換行，不顯示省略號 */
             font-size: clamp(1.1rem, 5.5vw, 1.9rem); 
             font-weight: 800; 
             color: var(--primary); 
@@ -134,7 +133,6 @@
         .cat-total-item .cat-num {
             font-weight: 700;
             color: var(--text);
-            /* 灰格子分類金額自適應縮小，絕不換行，不顯示省略號 */
             font-size: clamp(0.68rem, 3.2vw, 0.85rem);
             white-space: nowrap;
             overflow: hidden;
@@ -556,7 +554,6 @@
             if (currentMonthRecords.length === 0) {
                 listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
-                // 重置總金額字體大小
                 document.querySelector('.total-amount').style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
                 categories.forEach(cat => {
                     catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$0</span></div>`;
@@ -597,7 +594,6 @@
             const formattedTotalStr = currentMonthTotal.toLocaleString();
             totalContainer.innerText = formattedTotalStr;
             
-            // 核心功能：Month Total 金額長度「自適應動態調控」（字數多則縮小，字數少則變大）
             let mainTotalElement = document.querySelector('.total-amount');
             if (formattedTotalStr.length > 12) {
                 mainTotalElement.style.fontSize = "3.4vw";
@@ -617,8 +613,6 @@
                 } else if(rawAmtStr.length > 9) {
                     extraStyle = "style='font-size: 2.3vw;'";
                 }
-                
-                // 網頁畫面精確修正：此處分類金額只保留 $ 符號
                 catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num" ${extraStyle}>$${rawAmtStr}</span></div>`;
             });
         }
@@ -648,7 +642,6 @@
             }
         }
 
-        /* 支援讀取多分頁（Multi-sheet）的 Excel 檔案 */
         function handleFileImport(input) {
             const file = input.files[0];
             if (!file) return;
@@ -692,7 +685,6 @@
                                 }
                                 if (!dateStr) continue;
 
-                                // 清理機制：同時相容 HK$、與純 $ 符號，解析成純數字
                                 amtStr = amtStr.replace('HK$', '').replace('$', '').replace(/,/g, '').replace(/"/g, '');
                                 const amount = parseFloat(amtStr);
                                 if (isNaN(amount)) continue;
@@ -771,7 +763,7 @@
             }
         }
 
-        /* 核心升級：網頁畫面上雖然是 $，但匯出的 Excel 檔案中全部改為並保留「HK$」 */
+        /* 升級智慧排序：不論是否有未來月份，一律自動鎖定「當前系統實際月份」為第一頁 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
@@ -796,15 +788,31 @@
                 monthlyGroups[yearMonth].push(r);
             });
 
+            // 基本排序：由舊到新排列 ["2026-01", ..., "2026-05", "2026-06", "2026-07"]
             allMonthsChronological.sort((a, b) => a.localeCompare(b));
             let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
+            
+            // 基礎倒序排列（最新在最前）：["2026-07", "2026-06", "2026-05", ...]
             let sheetsOrder = [...allMonthsChronological].reverse();
+
+            // 🌟 【核心智慧判斷】：獲取當下系統的真實年月（例如此時此刻是 2026-06）
+            const sysDate = new Date();
+            const currentSystemMonthKey = `${sysDate.getFullYear()}-${String(sysDate.getMonth() + 1).padStart(2, '0')}`;
+
+            // 如果目前倒序清單中含有當前系統月份，且它不是排在第一個（例如被 7 月擋在後面了）
+            if (sheetsOrder.includes(currentSystemMonthKey) && sheetsOrder[0] !== currentSystemMonthKey) {
+                // 將當前月份從原本的位置移除
+                sheetsOrder = sheetsOrder.filter(m => m !== currentSystemMonthKey);
+                // 強制插入到最前面（Index 0），使其雷打不動地成為第一頁首頁！
+                sheetsOrder.unshift(currentSystemMonthKey);
+            }
 
             let wb = XLSX.utils.book_new();
 
             sheetsOrder.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
                 
+                // 同一天內以「新到舊」排序
                 monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
                 let sheetRows = [
@@ -836,7 +844,6 @@
                         lastDisplayedDate = currentIsoDate;
                     }
 
-                    // 1. 每筆交易金額欄：加上 HK$ 符號
                     sheetRows.push([dateValue, rawCategory, `HK$${r.amount.toLocaleString()}`, noteText]);
                     dayTotal += r.amount;
 
@@ -844,7 +851,6 @@
                     let isMonthEnd = !nextRecord;
 
                     if (isDayEnd) {
-                        // 2. 每日小計金額：加上 HK$ 符號
                         sheetRows.push(["", "Daily Total", `HK$${dayTotal.toLocaleString()}`, ""]);
                         dayTotal = 0; 
                         if (!isMonthEnd) {
@@ -855,12 +861,11 @@
                     if (isMonthEnd) {
                         let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
                         sheetRows.push(["", "", "", ""]); 
-                        // 3. 每月總計金額：加上 HK$ 符號
                         sheetRows.push(["", `${EnglishMonthLabel} Total`, `HK$${monthTotal.toLocaleString()}`, ""]);
 
+                        // 年度總結僅放在資料最新（如7月）的那一頁，或者可依習慣自由保留
                         if (currentMonthKey === latestMonthKey) {
                             sheetRows.push(["", "", "", ""]); 
-                            // 4. 年度總計金額：加上 HK$ 符號
                             sheetRows.push(["", `${currentYear} Total`, `HK$${yearTotalTracker[currentYear].toLocaleString()}`, ""]);
                         } else {
                             sheetRows.push(["", "", "", ""]);
@@ -869,7 +874,7 @@
                 }
 
                 let ws = XLSX.utils.aoa_to_sheet(sheetRows);
-                ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 15 }, { wch: 25 }]; // 稍微拉寬金額欄 wch 寬度以容納符號
+                ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 15 }, { wch: 25 }]; 
                 XLSX.utils.book_append_sheet(wb, ws, currentMonthKey);
             });
 

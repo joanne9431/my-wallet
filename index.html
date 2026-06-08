@@ -135,11 +135,10 @@
             font-weight: 700;
             color: var(--text);
             display: inline-block;
-            /* 核心修改：縮小灰色區字體，並強制 white-space: nowrap 絕不換行 */
-            font-size: clamp(0.55rem, 2vw, 0.75rem);
+            /* 核心修改：不顯示省略號，利用純 vw 單位強迫字體無限縮小以適應版面，並維持絕對不換行 */
+            font-size: 2.8vw;
             white-space: nowrap; 
             overflow: hidden;
-            text-overflow: ellipsis;
             line-height: 1.1;
         }
         
@@ -308,7 +307,7 @@
         }
         .day-separator:not(:empty)::before { margin-right: .5em; }
         .day-separator:not(:empty)::after { margin-left: .5em; }
-        .day-dot { display: inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+        .day-dot { inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
@@ -319,7 +318,7 @@
         <div class="dashboard-layout">
             <div class="total-box">
                 <h2 id="current-month-heading">Current Month Total</h2>
-                <div class="total-amount">$<span id="total">0</span></div>
+                <div class="total-amount">HK$<span id="total">0</span></div>
             </div>
             <div class="category-totals-box" id="category-totals-container"></div>
         </div>
@@ -559,12 +558,12 @@
                 listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
                 categories.forEach(cat => {
-                    catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$0</span></div>`;
+                    catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">HK$0</span></div>`;
                 });
                 return;
             }
 
-            currentMonthRecords.sort((a, b) => b.localeCompare(a.date) || b.id - a.id);
+            currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
             let lastDisplayedDate = "";
 
@@ -587,7 +586,7 @@
                             <div class="item-details">${noteHTML}</div>
                         </div>
                         <div class="item-right">
-                            <span class="amount">$${r.amount.toLocaleString()}</span>
+                            <span class="amount">HK$${r.amount.toLocaleString()}</span>
                             <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
                             <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
                         </div>
@@ -596,7 +595,13 @@
             
             totalContainer.innerText = currentMonthTotal.toLocaleString();
             Object.keys(catSums).forEach(cat => {
-                catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$${catSums[cat].toLocaleString()}</span></div>`;
+                // 自動估算字體縮小級別，如果金額位數過長，則動態追加行內微縮縮放，雙重保障不破壞排版
+                const rawAmtStr = "HK$" + catSums[cat].toLocaleString();
+                let extraStyle = "";
+                if(rawAmtStr.length > 9) extraStyle = "style='font-size: 2.2vw;'";
+                if(rawAmtStr.length > 12) extraStyle = "style='font-size: 1.8vw;'";
+                
+                catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num" ${extraStyle}>HK$${catSums[cat].toLocaleString()}</span></div>`;
             });
         }
 
@@ -746,8 +751,6 @@
             }
         }
 
-        /* 終極核心修正：利用隱藏 HTML 轉載並強制輸出 Excel 字型家族與編碼（英文使用 Arial，中文自動回退使用微軟正黑體） */
-        fontStyle = 'style="font-family: Arial, \'Microsoft JhengHei\', sans-serif;"';
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");

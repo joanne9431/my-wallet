@@ -94,7 +94,6 @@
             text-align: left;
         }
         .total-amount { 
-            /* 修正：允許主總額數字過長時自動縮小字體 */
             font-size: clamp(1.3rem, 6vw, 1.8rem); 
             font-weight: 800; 
             color: var(--primary); 
@@ -105,7 +104,7 @@
         }
         
         .category-totals-box {
-            flex: 1.3; /* 保持格子比例不變 */
+            flex: 1.3; 
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
@@ -129,7 +128,6 @@
         .cat-total-item .cat-num {
             font-weight: 700;
             color: var(--text);
-            /* 修正：灰色儀表區數字過長時自動縮小字體 */
             display: inline-block;
             font-size: clamp(0.6rem, 2.2vw, 0.8rem);
             word-break: break-all; 
@@ -552,7 +550,6 @@
                 listContainer.innerHTML = `<div style="color: #829285; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
                 categories.forEach(cat => {
-                    /* 修正：去除 HK */
                     catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$0</span></div>`;
                 });
                 return;
@@ -574,7 +571,6 @@
                 }
 
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
-                /* 修正：去除 HK */
                 listContainer.innerHTML += `
                     <div class="list-item">
                         <div class="item-info">
@@ -591,7 +587,6 @@
             
             totalContainer.innerText = currentMonthTotal.toLocaleString();
             Object.keys(catSums).forEach(cat => {
-                /* 修正：去除 HK */
                 catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$${catSums[cat].toLocaleString()}</span></div>`;
             });
         }
@@ -742,7 +737,7 @@
             }
         }
 
-        /* 修正：Excel 導出邏輯維持 HK$，並特別設定英文使用 Arial，中文自動回退使用微軟正黑體 */
+        /* 終極核心修正：利用隱藏 HTML 渲染出帶有 CSS Inline style 的表格，強迫免費版 SheetJS 輸出 Arial 與微軟正黑體字型 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
@@ -775,12 +770,13 @@
 
             sheetsOrder.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
-                
                 monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
-                let sheetRows = [
-                    ["Date", "Category", "Amount", "Notes"]
-                ];
+                // 建立一個臨時的隱藏 HTML <table> 元素來強塞字型樣式
+                let tempTable = document.createElement('table');
+                let fontStyle = 'style="font-family: Arial, \'Microsoft JhengHei\', sans-serif;"';
+
+                let htmlString = `<thead><tr><th ${fontStyle}>Date</th><th ${fontStyle}>Category</th><th ${fontStyle}>Amount</th><th ${fontStyle}>Notes</th></tr></thead><tbody>`;
 
                 let dayTotal = 0;
                 let monthTotal = 0;
@@ -807,47 +803,40 @@
                         lastDisplayedDate = currentIsoDate;
                     }
 
-                    // 這裡刻意附加 "HK$" 標記以保持原本 Excel 要求，數值字串格式化交給 Excel 處理
-                    sheetRows.push([dateValue, rawCategory, `HK$${r.amount.toLocaleString()}`, noteText]);
+                    htmlString += `<tr><td ${fontStyle}>${dateValue}</td><td ${fontStyle}>${rawCategory}</td><td ${fontStyle}>HK$${r.amount.toLocaleString()}</td><td ${fontStyle}>${noteText}</td></tr>`;
                     dayTotal += r.amount;
 
                     let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
                     let isMonthEnd = !nextRecord;
 
                     if (isDayEnd) {
-                        sheetRows.push(["", "Daily Total", `HK$${dayTotal.toLocaleString()}`, ""]);
+                        htmlString += `<tr><td></td><td ${fontStyle}>Daily Total</td><td ${fontStyle}>HK$${dayTotal.toLocaleString()}</td><td></td></tr>`;
                         dayTotal = 0; 
                         if (!isMonthEnd) {
-                            sheetRows.push(["", "", "", ""]);
+                            htmlString += `<tr><td></td><td></td><td></td><td></td></tr>`;
                         }
                     }
 
                     if (isMonthEnd) {
                         let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
-                        sheetRows.push(["", "", "", ""]); 
-                        sheetRows.push(["", `${EnglishMonthLabel} Total`, `HK$${monthTotal.toLocaleString()}`, ""]);
+                        htmlString += `<tr><td></td><td></td><td></td><td></td></tr>`; 
+                        htmlString += `<tr><td></td><td ${fontStyle}>${EnglishMonthLabel} Total</td><td ${fontStyle}>HK$${monthTotal.toLocaleString()}</td><td></td></tr>`;
 
                         if (currentMonthKey === latestMonthKey) {
-                            sheetRows.push(["", "", "", ""]); 
-                            sheetRows.push(["", `${currentYear} Total`, `HK$${yearTotalTracker[currentYear].toLocaleString()}`, ""]);
+                            htmlString += `<tr><td></td><td></td><td></td><td></td></tr>`; 
+                            htmlString += `<tr><td></td><td ${fontStyle}>${currentYear} Total</td><td ${fontStyle}>HK$${yearTotalTracker[currentYear].toLocaleString()}</td><td></td></tr>`;
                         } else {
-                            sheetRows.push(["", "", "", ""]);
+                            htmlString += `<tr><td></td><td></td><td></td><td></td></tr>`;
                         }
                     }
                 }
 
-                let ws = XLSX.utils.aoa_to_sheet(sheetRows);
+                htmlString += '</tbody>';
+                tempTable.innerHTML = htmlString;
+
+                // 利用 SheetJS 讀取剛才建立、寫滿 CSS 字型的 Table
+                let ws = XLSX.utils.table_to_sheet(tempTable);
                 ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 12 }, { wch: 25 }];
-                
-                // 核心字型指定：為 Sheet 套用 Arial 預設配置，並指定繁中語系 (136)，讓 Excel 能完美將英數字顯示為 Arial，中文顯示為微軟正黑體
-                if(!ws['!styles']) ws['!styles'] = {};
-                ws['!theme'] = {
-                    font: {
-                        name: 'Arial',
-                        charset: 136, 
-                        family: 2
-                    }
-                };
 
                 XLSX.utils.book_append_sheet(wb, ws, currentMonthKey);
             });

@@ -92,14 +92,18 @@
             flex: 1;
             padding-left: 10px; 
             text-align: left;
+            overflow: hidden; /* 防止溢出 */
         }
         .total-amount { 
-            font-size: clamp(1.3rem, 6vw, 1.8rem); 
+            /* 修正：主總額數字進一步縮小臨界點，且絕對不換行 */
+            font-size: clamp(1.1rem, 5.5vw, 1.8rem); 
             font-weight: 800; 
             color: var(--primary); 
             margin-top: 2px;
             letter-spacing: -0.5px;
-            word-break: break-all;
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
             line-height: 1.1;
         }
         
@@ -112,6 +116,7 @@
             padding: 10px;
             border-radius: 12px;
             border: 1px solid rgba(58, 95, 67, 0.05);
+            overflow: hidden;
         }
         
         .cat-total-item {
@@ -119,18 +124,23 @@
             flex-direction: column;
             font-size: 0.75rem;
             color: var(--text);
+            overflow: hidden;
         }
         .cat-total-item .cat-name {
             color: #7d8c80;
             font-size: 0.68rem;
             font-weight: 600;
+            white-space: nowrap;
         }
         .cat-total-item .cat-num {
             font-weight: 700;
             color: var(--text);
             display: inline-block;
-            font-size: clamp(0.6rem, 2.2vw, 0.8rem);
-            word-break: break-all; 
+            /* 修正：進一步縮小灰色儀表區字體，並強制 white-space: nowrap 絕不換行 */
+            font-size: clamp(0.55rem, 2vw, 0.75rem);
+            white-space: nowrap; 
+            overflow: hidden;
+            text-overflow: ellipsis;
             line-height: 1.1;
         }
         
@@ -555,7 +565,7 @@
                 return;
             }
 
-            currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+            currentMonthRecords.sort((a, b) => b.localeCompare(a.date) || b.id - a.id);
 
             let lastDisplayedDate = "";
 
@@ -737,7 +747,7 @@
             }
         }
 
-        /* 終極核心修正：利用隱藏 HTML 渲染出帶有 CSS Inline style 的表格，強迫免費版 SheetJS 輸出 Arial 與微軟正黑體字型 */
+        /* 終極核心修正：利用隱藏 HTML 轉載並強制輸出 Excel 字型家族與編碼（英文使用 Arial，中文自動回退使用微軟正黑體） */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
@@ -772,7 +782,6 @@
                 let monthRecords = monthlyGroups[currentMonthKey];
                 monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
-                // 建立一個臨時的隱藏 HTML <table> 元素來強塞字型樣式
                 let tempTable = document.createElement('table');
                 let fontStyle = 'style="font-family: Arial, \'Microsoft JhengHei\', sans-serif;"';
 
@@ -834,7 +843,6 @@
                 htmlString += '</tbody>';
                 tempTable.innerHTML = htmlString;
 
-                // 利用 SheetJS 讀取剛才建立、寫滿 CSS 字型的 Table
                 let ws = XLSX.utils.table_to_sheet(tempTable);
                 ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 12 }, { wch: 25 }];
 

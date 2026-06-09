@@ -420,36 +420,31 @@
             btn.classList.add('active'); 
         }
 
-/* 優化：動態生成最近半年的月份選單，維持介面精簡 */
         function updateMonthFilterOptions() {
             const dropdown = document.getElementById('month-filter-dropdown');
-            const prevSelected = dropdown.value; // 保留使用者原本選取的月份
+            const prevSelected = dropdown.value; 
             
             dropdown.innerHTML = '';
             
-            // 1. 自動推算包含當月在內的「最近 6 個月」
             let today = new Date();
             let year = today.getFullYear();
-            let month = today.getMonth(); // 0 = 1月, 11 = 12月
+            let month = today.getMonth(); 
             
             let lastSixMonths = [];
             for (let i = 0; i < 6; i++) {
                 let displayYear = year;
                 let displayMonth = month - i;
                 
-                // 如果跨年了，向前借位
                 if (displayMonth < 0) {
                     displayMonth += 12;
                     displayYear -= 1;
                 }
                 
-                // 組裝成 YYYY-MM 格式 (例如 2026-06)
                 let monthStr = String(displayMonth + 1).padStart(2, '0');
                 let monthKey = `${displayYear}-${monthStr}`;
                 lastSixMonths.push(monthKey);
             }
 
-            // 2. 渲染至下拉選單
             lastSixMonths.forEach(m => {
                 const parts = m.split('-');
                 const y = parts[0];
@@ -458,12 +453,10 @@
                 dropdown.innerHTML += `<option value="${m}">${label}</option>`;
             });
             
-            // 3. 智慧還原選取狀態
-            // 如果使用者之前選的月份還在最近半年內，就幫他留著；不在的話，預設切回最新這個月
             if (prevSelected && lastSixMonths.includes(prevSelected)) {
                 dropdown.value = prevSelected;
             } else {
-                dropdown.value = lastSixMonths[0]; // 最新的月份（當月）
+                dropdown.value = lastSixMonths[0]; 
             }
         }
 
@@ -666,6 +659,7 @@
             reader.onload = async function(e) {
                 try {
                     let importedRecords = [];
+                    let baseTimestamp = Date.now(); 
 
                     if (isExcel) {
                         const data = new Uint8Array(e.target.result);
@@ -707,7 +701,7 @@
                                 
                                 recordCounter++;
                                 importedRecords.push({
-                                    id: Date.now() + recordCounter,
+                                    id: baseTimestamp - recordCounter,
                                     amount: amount,
                                     category: finalCategory,
                                     note: noteStr,
@@ -727,6 +721,7 @@
                     } else if (file.name.endsWith('.csv')) {
                         const lines = e.target.result.split('\n');
                         let lastValidDate = ""; 
+                        let recordCounter = 0;
                         for (let i = 1; i < lines.length; i++) {
                             let line = lines[i].trim();
                             if (!line) continue;
@@ -754,7 +749,14 @@
                             if (isNaN(amount)) continue;
                             
                             let finalCategory = categories.find(c => c.includes(catLabel)) || "📦 Others";
-                            importedRecords.push({ id: Date.now() + i, amount: amount, category: finalCategory, note: noteStr, date: dateStr });
+                            recordCounter++;
+                            importedRecords.push({ 
+                                id: baseTimestamp - recordCounter, 
+                                amount: amount, 
+                                category: finalCategory, 
+                                note: noteStr, 
+                                date: dateStr 
+                            });
                         }
                         if (importedRecords.length === 0) return alert("No valid records found in CSV!");
                         records = importedRecords;
@@ -763,7 +765,7 @@
                     await saveRecords(); 
                     updateMonthFilterOptions();
                     renderRecords(); 
-                    alert(`Successfully imported ${records.length} records from all sheets!`);
+                    alert(`Successfully imported ${records.length} records in Excel order!`);
                 } catch(err) {
                     alert("Import failed! " + err.message);
                 }
@@ -777,32 +779,28 @@
             }
         }
 
-        /* 升級智慧排序與年份切分：自適應以年分流，彈出式輸入年份，一併保留極簡介面 */
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
 
-            // 1. 搜集目前所有資料包含的年份
             let availableYears = new Set();
             records.forEach(r => {
                 let year = ensureISODate(r.date).split('-')[0];
                 availableYears.add(year);
             });
-            let sortedYears = Array.from(availableYears).sort((a, b) => b - a); // 由新到舊
+            let sortedYears = Array.from(availableYears).sort((a, b) => b - a); 
 
-            // 2. 決定導出年份
             const sysDate = new Date();
             const currentSystemYear = String(sysDate.getFullYear());
             let selectedYear = currentSystemYear;
 
-            // 只有在存在多個年份時，才會以極簡 Prompt 詢問使用者，避免打擾單年用戶
             if (sortedYears.length > 1) {
                 let yearPrompt = prompt(
                     `Detected data across multiple years.\nAvailable years: ${sortedYears.join(', ')}\n\nPlease enter the year you want to export:`, 
                     currentSystemYear
                 );
                 
-                if (yearPrompt === null) return; // 使用者點選取消
+                if (yearPrompt === null) return; 
                 yearPrompt = yearPrompt.trim();
                 
                 if (!sortedYears.includes(yearPrompt)) {
@@ -810,22 +808,18 @@
                 }
                 selectedYear = yearPrompt;
             } else if (sortedYears.length === 1) {
-                // 如果只存在單年份資料，直接選取它，不跳彈窗
                 selectedYear = sortedYears[0];
             }
 
-            // 3. 過濾出該指定年份的所有數據 (一月一日至十二月三十一日)
             let filteredRecords = records.filter(r => ensureISODate(r.date).startsWith(selectedYear));
             
             if (filteredRecords.length === 0) {
                 return alert(`No data found for the year ${selectedYear}.`);
             }
 
-            // 4. 計算該年份的年度總花費
             let yearTotal = 0;
             filteredRecords.forEach(r => yearTotal += r.amount);
 
-            // 5. 按月份將其編組分流
             let monthlyGroups = {};
             let allMonthsChronological = [];
             
@@ -839,14 +833,11 @@
                 monthlyGroups[yearMonth].push(r);
             });
 
-            // 排序月份：舊到新
             allMonthsChronological.sort((a, b) => a.localeCompare(b));
             let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
             
-            // 預設 Excel 頁籤排序（倒序，最新在最前）
             let sheetsOrder = [...allMonthsChronological].reverse();
 
-            // 如果匯出的是當前系統年份，且目前月份在其中，強制將它釘在第一頁首頁
             const currentSystemMonthKey = `${sysDate.getFullYear()}-${String(sysDate.getMonth() + 1).padStart(2, '0')}`;
             if (sheetsOrder.includes(currentSystemMonthKey) && sheetsOrder[0] !== currentSystemMonthKey) {
                 sheetsOrder = sheetsOrder.filter(m => m !== currentSystemMonthKey);
@@ -858,7 +849,6 @@
             sheetsOrder.forEach(currentMonthKey => {
                 let monthRecords = monthlyGroups[currentMonthKey];
                 
-                // 同一天內按「新到舊」排序
                 monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
 
                 let sheetRows = [
@@ -908,7 +898,6 @@
                         sheetRows.push(["", "", "", ""]); 
                         sheetRows.push(["", `${EnglishMonthLabel} Total`, `HK$${monthTotal.toLocaleString()}`, ""]);
 
-                        // 年度總計精準結算在該年份最新月份的分頁中
                         if (currentMonthKey === latestMonthKey) {
                             sheetRows.push(["", "", "", ""]); 
                             sheetRows.push(["", `${selectedYear} Annual Total`, `HK$${yearTotal.toLocaleString()}`, ""]);

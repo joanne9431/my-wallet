@@ -266,9 +266,9 @@
             color: var(--primary);
         }
 
-        .list-container { max-height: 320px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
-        .list-item:last-child { border-bottom: none; }
+        /* 修改後的程式碼：移除項目間的底線，改用適當的上下間距 */
+.list-container { max-height: 320px; overflow-y: auto; }
+.list-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
         .item-info { display: flex; flex-direction: column; }
         
         .tag { 

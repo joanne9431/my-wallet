@@ -431,7 +431,6 @@
             let year = today.getFullYear();
             let month = today.getMonth(); 
             
-            // 1. 先建立固定包含過去 6 個月（含當月）的 Set 集合
             let filterMonthsSet = new Set();
             for (let i = 0; i < 6; i++) {
                 let displayYear = year;
@@ -447,21 +446,18 @@
                 filterMonthsSet.add(monthKey);
             }
 
-            // 2. 檢查現有的記帳紀錄，如果含有更未來的月份，也一併塞入 Set
             const currentMonthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
             records.forEach(r => {
                 const recordIsoDate = ensureISODate(r.date);
-                const recordMonthKey = recordIsoDate.substring(0, 7); // 擷取 "YYYY-MM"
+                const recordMonthKey = recordIsoDate.substring(0, 7); 
                 
                 if (recordMonthKey > currentMonthKey) {
                     filterMonthsSet.add(recordMonthKey);
                 }
             });
 
-            // 3. 將所有集合內的月份依字串降冪排序（最新/最遠的未來排在最上面）
             let sortedMonths = Array.from(filterMonthsSet).sort((a, b) => b.localeCompare(a));
 
-            // 4. 渲染至下拉選單
             sortedMonths.forEach(m => {
                 const parts = m.split('-');
                 const y = parts[0];
@@ -470,7 +466,6 @@
                 dropdown.innerHTML += `<option value="${m}">${label}</option>`;
             });
             
-            // 5. 回復先前的選擇，若沒選擇過，則預設鎖定為當月（若當月不在列表中，則預設選最新的未來月份）
             if (prevSelected && sortedMonths.includes(prevSelected)) {
                 dropdown.value = prevSelected;
             } else {
@@ -730,13 +725,20 @@
                             }
                         });
 
-                        if (importedRecords.length === 0) throw new Error("No valid data rows found in Excel file.");
-                        records = importedRecords;
+                        if (importedRecords.length === 0) {
+                            throw new Error("Excel 檔案中找不到任何有效的記帳欄位或資料列。");
+                        }
 
                     } else if (file.name.endsWith('.json')) {
                         const parsed = JSON.parse(e.target.result);
-                        if (Array.isArray(parsed)) records = parsed;
-                        else throw new Error("Invalid JSON format");
+                        if (Array.isArray(parsed)) {
+                            // 檢查 JSON 陣列中的基礎格式是否正確
+                            const isValid = parsed.every(item => item && item.amount !== undefined && item.category !== undefined && item.date !== undefined);
+                            if (!isValid) throw new Error("JSON 格式不符，缺少必要的記帳欄位 (amount, category, date)。");
+                            importedRecords = parsed;
+                        } else {
+                            throw new Error("JSON 檔案格式錯誤，結構應為紀錄陣列 []。");
+                        }
 
                     } else if (file.name.endsWith('.csv')) {
                         const lines = e.target.result.split('\n');
@@ -778,16 +780,23 @@
                                 date: dateStr 
                             });
                         }
-                        if (importedRecords.length === 0) return alert("No valid records found in CSV!");
-                        records = importedRecords;
+                        if (importedRecords.length === 0) {
+                            throw new Error("CSV 檔案中找不到符合規格的記帳資料列。");
+                        }
+                    } else {
+                        throw new Error("不支援的檔案副檔名。請使用 JSON, CSV 或 Excel (xlsx/xls) 檔。");
                     }
 
+                    // 關鍵安全修復：確認安全解析出資料後，才正式改寫全域紀錄變數
+                    records = importedRecords;
                     await saveRecords(); 
                     updateMonthFilterOptions();
                     renderRecords(); 
-                    alert(`Successfully imported ${records.length} records in Excel order!`);
+                    alert(`成功匯入 ${records.length} 筆資料！`);
+
                 } catch(err) {
-                    alert("Import failed! " + err.message);
+                    // 格式錯誤或解析異常時， records 保持原本狀態不變
+                    alert("匯入失敗！錯誤原因: " + err.message + "\n原本的舊紀錄已受到保護，未被修改。");
                 }
                 input.value = ''; 
             };

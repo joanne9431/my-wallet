@@ -431,7 +431,8 @@
             let year = today.getFullYear();
             let month = today.getMonth(); 
             
-            let lastSixMonths = [];
+            // 1. 先建立固定包含過去 6 個月（含當月）的 Set 集合
+            let filterMonthsSet = new Set();
             for (let i = 0; i < 6; i++) {
                 let displayYear = year;
                 let displayMonth = month - i;
@@ -443,10 +444,25 @@
                 
                 let monthStr = String(displayMonth + 1).padStart(2, '0');
                 let monthKey = `${displayYear}-${monthStr}`;
-                lastSixMonths.push(monthKey);
+                filterMonthsSet.add(monthKey);
             }
 
-            lastSixMonths.forEach(m => {
+            // 2. 檢查現有的記帳紀錄，如果含有更未來的月份，也一併塞入 Set
+            const currentMonthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+            records.forEach(r => {
+                const recordIsoDate = ensureISODate(r.date);
+                const recordMonthKey = recordIsoDate.substring(0, 7); // 擷取 "YYYY-MM"
+                
+                if (recordMonthKey > currentMonthKey) {
+                    filterMonthsSet.add(recordMonthKey);
+                }
+            });
+
+            // 3. 將所有集合內的月份依字串降冪排序（最新/最遠的未來排在最上面）
+            let sortedMonths = Array.from(filterMonthsSet).sort((a, b) => b.localeCompare(a));
+
+            // 4. 渲染至下拉選單
+            sortedMonths.forEach(m => {
                 const parts = m.split('-');
                 const y = parts[0];
                 const monthIndex = parseInt(parts[1], 10) - 1;
@@ -454,10 +470,11 @@
                 dropdown.innerHTML += `<option value="${m}">${label}</option>`;
             });
             
-            if (prevSelected && lastSixMonths.includes(prevSelected)) {
+            // 5. 回復先前的選擇，若沒選擇過，則預設鎖定為當月（若當月不在列表中，則預設選最新的未來月份）
+            if (prevSelected && sortedMonths.includes(prevSelected)) {
                 dropdown.value = prevSelected;
             } else {
-                dropdown.value = lastSixMonths[0]; 
+                dropdown.value = sortedMonths.includes(currentMonthKey) ? currentMonthKey : sortedMonths[0]; 
             }
         }
 

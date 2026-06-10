@@ -581,7 +581,7 @@
 
                 if (recordIsoDate !== lastDisplayedDate) {
                     const dateObj = new Date(recordIsoDate);
-                    const dayOfWeek = isNaN(dateObj.getTime()) ? "" : ` (${dayNames[dateObj.getDay()]})`;
+                    const dayOfWeek = isNaN(dateObj.getTime()) ? "" : ` ${dayNames[dateObj.getDay()]}`;
                     listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}${dayOfWeek}</div>`;
                     lastDisplayedDate = recordIsoDate;
                 }

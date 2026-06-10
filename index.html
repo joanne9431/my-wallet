@@ -360,6 +360,7 @@
         let selectedCategory = "";  
         let editingRecordId = null; 
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
         async function init() {
             if(categories.length > 0) selectedCategory = categories[0];
@@ -579,7 +580,9 @@
                 if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
 
                 if (recordIsoDate !== lastDisplayedDate) {
-                    listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}</div>`;
+                    const dateObj = new Date(recordIsoDate);
+                    const dayOfWeek = isNaN(dateObj.getTime()) ? "" : ` (${dayNames[dateObj.getDay()]})`;
+                    listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}${dayOfWeek}</div>`;
                     lastDisplayedDate = recordIsoDate;
                 }
 

@@ -274,10 +274,10 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 12px 0; /* 微調點：將上下間距從 10px 提高到 12px，舒緩壓迫感 */
+            padding: 10px 0; /* 保持原本緊湊的 10px 上下間距，不拓寬 */
         }
         
-        /* 修改點：利用背景漸層製作「高度疏鬆、呼吸感、3/4置中」的優雅點點線 */
+        /* 修改點：利用微型渐变，在不改變間距的情況下，製作「極致細微、低調淡雅」的 3/4 置中點點線 */
         .list-item::after {
             content: '';
             position: absolute;
@@ -285,9 +285,9 @@
             left: 12.5%; 
             width: 75%;
             height: 1px;
-            /* 建立 1px 寬、間隔 5px 的超稀疏淡色點點 */
-            background-image: linear-gradient(to right, rgba(58, 95, 67, 0.18) 1px, transparent 1px);
-            background-size: 6px 1px; 
+            /* 調整點：點點寬度縮減為 0.8px，並且將顏色透明度降到非常低（0.12），達到完全不刺眼的視覺解壓效果 */
+            background-image: linear-gradient(to right, rgba(58, 95, 67, 0.12) 0.8px, transparent 0.8px);
+            background-size: 4px 1px; 
             background-repeat: repeat-x;
         }
         
@@ -321,7 +321,7 @@
             color: var(--primary);
             font-size: 0.75rem;
             font-weight: 700;
-            margin: 14px 0 6px 0;
+            margin: 12px 0 6px 0;
             letter-spacing: 0.5px;
         }
         .day-separator::before, .day-separator::after {
@@ -625,7 +625,7 @@
                     lastDisplayedDate = recordIsoDate;
                 }
 
-                // 判斷是否為當天最後一筆顯示（即當天時間軸最早的一筆消費）
+                // 判斷是否為當天最後一筆顯示
                 let isLastOfDay = false;
                 if (index === currentMonthRecords.length - 1 || ensureISODate(currentMonthRecords[index + 1].date) !== recordIsoDate) {
                     isLastOfDay = true;

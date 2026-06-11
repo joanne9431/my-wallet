@@ -274,20 +274,24 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            padding: 10px 0; 
+            padding: 12px 0; /* 微調點：將上下間距從 10px 提高到 12px，舒緩壓迫感 */
         }
         
-        /* 修改點：利用偽元素製作 3/4 長度 (75%) 且居中的淡色 "....." 點點虛線隔線 */
+        /* 修改點：利用背景漸層製作「高度疏鬆、呼吸感、3/4置中」的優雅點點線 */
         .list-item::after {
             content: '';
             position: absolute;
             bottom: 0;
-            left: 12.5%; /* 左右各留 12.5% 空白以達到 75% 長度置中 */
+            left: 12.5%; 
             width: 75%;
-            border-bottom: 1px dotted rgba(58, 95, 67, 0.25); /* 淡色點點樣式 */
+            height: 1px;
+            /* 建立 1px 寬、間隔 5px 的超稀疏淡色點點 */
+            background-image: linear-gradient(to right, rgba(58, 95, 67, 0.18) 1px, transparent 1px);
+            background-size: 6px 1px; 
+            background-repeat: repeat-x;
         }
         
-        /* 修改點：當天第一筆消費（顯示在最下方者）移除該點點隔線 */
+        /* 當天第一筆消費（顯示在最下方者）完全不顯示點點線 */
         .list-item.last-of-day::after { 
             display: none; 
         }
@@ -317,13 +321,13 @@
             color: var(--primary);
             font-size: 0.75rem;
             font-weight: 700;
-            margin: 12px 0 6px 0;
+            margin: 14px 0 6px 0;
             letter-spacing: 0.5px;
         }
         .day-separator::before, .day-separator::after {
             content: '';
             flex: 1;
-            border-bottom: 1px dashed rgba(58, 95, 67, 0.25);
+            border-bottom: 1px dashed rgba(58, 95, 67, 0.2);
         }
         .day-separator:not(:empty)::before { margin-right: .5em; }
         .day-separator:not(:empty)::after { margin-left: .5em; }
@@ -621,7 +625,7 @@
                     lastDisplayedDate = recordIsoDate;
                 }
 
-                // 判斷是否為「每天顯示的最後一筆」（亦即當天第一筆消費）
+                // 判斷是否為當天最後一筆顯示（即當天時間軸最早的一筆消費）
                 let isLastOfDay = false;
                 if (index === currentMonthRecords.length - 1 || ensureISODate(currentMonthRecords[index + 1].date) !== recordIsoDate) {
                     isLastOfDay = true;
@@ -825,7 +829,6 @@
             }
         }
 
-        // SheetJS Excel 導出邏輯不變
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");

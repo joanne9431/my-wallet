@@ -16,31 +16,33 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
-        /* 全域變數（森林系 / 深色模式主題） */
+        /* 全域變數（森林系啡黃 / 深色模式主題） */
         :root {
-            --bg-color: #141a16;   /* 深夜墨綠黑 */
-            --card-bg: #1c261f;    /* 深碳綠卡片背景 */
-            --primary: #4e7c57;    /* 茂盛林葉綠 */
-            --primary-light: #629c6d; /* 較亮的翠綠 */
-            --danger: #d96a52;     /* 溫暖泥土磚紅（略微提亮） */
-            --success: #6ba16f;    /* 療癒鼠尾草綠 */
-            --warning: #e0b353;    /* 暖秋麥芽黃 */
-            --text: #e4eae5;       /* 淺石灰白（主文字） */
-            --grey: #36463a;       /* 深石灰色（邊框線條） */
+            --bg-color: #141715;   /* 深夜針葉黑 */
+            --card-bg: #1c201d;    /* 深碳綠卡片背景 */
             
-            /* 深色模式專用：消費種類高亮背景與文字（低飽和暗色調） */
-            --hl-food: #362521;    
-            --hl-food-txt: #ff9e85;
-            --hl-trans: #1e2f30;   
-            --hl-trans-txt: #7be0da;
-            --hl-play: #282130;    
-            --hl-play-txt: #cbaff0;
-            --hl-shop: #332d1d;    
-            --hl-shop-txt: #fada8c;
-            --hl-home: #213024;    
-            --hl-home-txt: #8ade93;
-            --hl-other: #242b27;   
-            --hl-other-txt: #a3b0a7;
+            /* 森系啡黃核心主色 */
+            --primary: #b58d43;    /* 核心：溫暖橡木啡黃 */
+            --primary-light: #cfa75c; /* 亮色：暖秋麥芽黃 */
+            --danger: #cc6652;     /* 溫暖泥土磚紅 */
+            --success: #5c8f62;    /* 療癒松針綠 */
+            --warning: #d9a038;    /* 亮眼琥珀黃 */
+            --text: #e1e6e2;       /* 淺石灰白 */
+            --grey: #383d39;       /* 炭灰綠邊框 */
+            
+            /* 分類按鈕與項目標籤專用：森系低飽和度啡黃、大地色系調 */
+            --hl-food: #3b2c20;    /* 炭燒咖啡棕 */
+            --hl-food-txt: #f7b785;
+            --hl-trans: #1e2e28;   
+            --hl-trans-txt: #8be0bc;
+            --hl-play: #33232f;    
+            --hl-play-txt: #e2b3f7;
+            --hl-shop: #3d341f;    /* 復古落葉黃棕 */
+            --hl-shop-txt: #fcd486;
+            --hl-home: #202d24;    
+            --hl-home-txt: #9adea4;
+            --hl-other: #292d2b;   
+            --hl-other-txt: #b5c2b9;
         }
         
         body {
@@ -67,14 +69,14 @@
             margin-right: -10px;
             margin-bottom: 12px;
             padding: 18px 14px;
-            background: linear-gradient(135deg, #1c261f 0%, #17201a 100%);
+            background: linear-gradient(135deg, #1c201d 0%, #151816 100%);
             border-bottom: 1px solid rgba(255,255,255,0.02);
         }
         
         h2 { 
             margin-top: 0; 
             font-size: 0.85rem; 
-            color: #8ba091; /* 霧面灰綠次要文字 */
+            color: #8fa194; 
             font-weight: 700; 
             text-transform: uppercase; 
             letter-spacing: 0.8px; 
@@ -125,7 +127,7 @@
             overflow: hidden;
         }
         .cat-total-item .cat-name {
-            color: #8ba091;
+            color: #8fa194;
             font-size: 0.68rem;
             font-weight: 600;
             white-space: nowrap;
@@ -147,7 +149,7 @@
             border: 1px solid var(--grey);
             box-sizing: border-box;
             font-size: 0.95rem;
-            background-color: #161e19;
+            background-color: #151916;
             color: var(--text);
             transition: all 0.2s;
             -webkit-appearance: none; 
@@ -155,13 +157,12 @@
         input:focus, select:focus { 
             outline: none; 
             border-color: var(--primary); 
-            background-color: #1c261f;
-            box-shadow: 0 0 0 3px rgba(78, 124, 87, 0.2);
+            background-color: #1c201d;
+            box-shadow: 0 0 0 3px rgba(181, 141, 67, 0.15);
         } 
         
         select {
-            /* 換上適合深色底的箭頭顏色 */
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%238ba091' d='M0 0l5 5 5-5z'/></svg>");
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%238fa194' d='M0 0l5 5 5-5z'/></svg>");
             background-repeat: no-repeat;
             background-position: right 14px center;
             background-size: 12px;
@@ -170,7 +171,7 @@
         
         .edit-date-wrapper {
             display: block; 
-            background: #161e19;
+            background: #151916;
             padding: 8px 12px;
             border-radius: 10px;
             border: 1px solid var(--grey);
@@ -198,11 +199,11 @@
         }
         button:active { opacity: 0.85; transform: scale(0.99); } 
         
-        .btn-save { background-color: var(--primary); color: white; margin-top: 8px; }
+        .btn-save { background-color: var(--primary); color: #141715; margin-top: 8px; }
         .btn-save:hover { background-color: var(--primary-light); }
         .btn-backup { background-color: var(--success); color: white; margin-top: 8px; }
         .btn-backup:hover { opacity: 0.95; }
-        .btn-import { background-color: #414f46; color: #e4eae5; margin-top: 6px; }
+        .btn-import { background-color: #383e3a; color: #e1e6e2; margin-top: 6px; }
         .btn-import:hover { opacity: 0.95; }
         
         .category-picker {
@@ -212,11 +213,12 @@
             margin: 10px 0;
         }
         
+        /* 修改點：未激活按鈕採用內斂的大地低飽和灰啡色，文字與邊框相互呼應 */
         .category-btn {
             flex: 1 1 calc(33.33% - 6px); 
-            background-color: var(--card-bg);
-            color: var(--text);
-            border: 1.5px solid var(--grey);
+            background-color: #1f2421;
+            color: #aebfb3;
+            border: 1.5px solid #333a35;
             border-radius: 12px;
             padding: 10px 2px; 
             display: flex;
@@ -229,11 +231,12 @@
         .category-btn .icon-label { font-size: 1.2rem; } 
         .category-btn .label { font-size: 0.75rem; font-weight: 700; } 
         
+        /* 修改點：點選激活後，呈現飽滿溫暖的森系橡木啡黃背景，搭配深黑色文字，對比清晰好看 */
         .category-btn.active {
             background-color: var(--primary);
             border-color: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(78, 124, 87, 0.3);
+            color: #141715;
+            box-shadow: 0 4px 12px rgba(181, 141, 67, 0.25);
         }
         
         .edit-mode-indicator {
@@ -268,8 +271,33 @@
         }
 
         .list-container { max-height: 320px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #26332a; }
-        .list-item:last-child { border-bottom: none; }
+        
+        /* 歷史項目基本外觀與間距 */
+        .list-item { 
+            position: relative;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 8px 0; 
+        }
+        
+        /* 歷史紀錄項目底部的點點虛線（顏色與日期分隔虛線完全同步） */
+        .list-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 12.5%; 
+            width: 75%;
+            height: 1px;
+            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.12) 0.8px, transparent 0.8px);
+            background-size: 6px 1px; 
+            background-repeat: repeat-x;
+        }
+        
+        .list-item.last-of-day::after { 
+            display: none; 
+        }
+        
         .item-info { display: flex; flex-direction: column; }
         
         .tag { 
@@ -280,8 +308,8 @@
             align-self: flex-start; 
         }
         
-        .item-details { color: #8ba091; font-size: 0.72rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
-        .note-text { color: var(--text); font-weight: 600; background: #2b251a; padding: 1px 6px; border-radius: 4px; border: 1px solid #54442b; } 
+        .item-details { color: #8fa194; font-size: 0.72rem; margin-top: 4px; display: flex; gap: 8px; align-items: center; }
+        .note-text { color: var(--text); font-weight: 600; background: #2e281b; padding: 1px 6px; border-radius: 4px; border: 1px solid #594a2b; } 
 
         .item-right { display: flex; align-items: center; gap: 8px; }
         .amount { font-weight: 700; font-size: 1.05rem; margin-right: 2px; color: var(--text); }
@@ -295,7 +323,7 @@
             color: var(--primary-light);
             font-size: 0.75rem;
             font-weight: 700;
-            margin: 12px 0 6px 0;
+            margin: 12px 0 4px 0;
             letter-spacing: 0.5px;
         }
         .day-separator::before, .day-separator::after {
@@ -305,7 +333,7 @@
         }
         .day-separator:not(:empty)::before { margin-right: .5em; }
         .day-separator:not(:empty)::after { margin-left: .5em; }
-        .day-dot { display: inline-block; width: 5px; height: 5px; background-color: var(--success); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+        .day-dot { display: inline-block; width: 5px; height: 5px; background-color: var(--primary); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
         @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
@@ -573,7 +601,7 @@
             });
 
             if (currentMonthRecords.length === 0) {
-                listContainer.innerHTML = `<div style="color: #8ba091; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
+                listContainer.innerHTML = `<div style="color: #8fa194; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
                 document.querySelector('.total-amount').style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
                 categories.forEach(cat => {
@@ -586,7 +614,7 @@
 
             let lastDisplayedDate = "";
 
-            currentMonthRecords.forEach(r => {
+            currentMonthRecords.forEach((r, index) => {
                 const recordIsoDate = ensureISODate(r.date);
                 
                 currentMonthTotal += r.amount;
@@ -599,9 +627,16 @@
                     lastDisplayedDate = recordIsoDate;
                 }
 
+                let isLastOfDay = false;
+                if (index === currentMonthRecords.length - 1 || ensureISODate(currentMonthRecords[index + 1].date) !== recordIsoDate) {
+                    isLastOfDay = true;
+                }
+
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+                const itemClass = isLastOfDay ? "list-item last-of-day" : "list-item";
+
                 listContainer.innerHTML += `
-                    <div class="list-item">
+                    <div class="${itemClass}">
                         <div class="item-info">
                             <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
                             <div class="item-details">${noteHTML}</div>

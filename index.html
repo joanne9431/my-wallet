@@ -267,8 +267,21 @@
         }
 
         .list-container { max-height: 320px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eef1ee; }
-        .list-item:last-child { border-bottom: none; }
+        
+        .list-item { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 10px 0; 
+            border-bottom: 1px dashed rgba(58, 95, 67, 0.1); 
+        }
+        .list-item.first-of-day { 
+            border-bottom: none; 
+        }
+        .list-item:last-child { 
+            border-bottom: none; 
+        }
+        
         .item-info { display: flex; flex-direction: column; }
         
         .tag { 
@@ -596,16 +609,22 @@
                 currentMonthTotal += r.amount;
                 if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
 
+                // 判斷是否為每天的第一筆
+                let isFirstOfDay = false;
                 if (recordIsoDate !== lastDisplayedDate) {
                     const dateObj = new Date(recordIsoDate);
                     const dayOfWeek = isNaN(dateObj.getTime()) ? "" : ` ${dayNames[dateObj.getDay()]}`;
                     listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}${dayOfWeek}</div>`;
                     lastDisplayedDate = recordIsoDate;
+                    isFirstOfDay = true; // 標記為第一筆
                 }
 
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+                // 根據判斷結果，決定是否加上 first-of-day 的 class
+                const itemClass = isFirstOfDay ? "list-item first-of-day" : "list-item";
+
                 listContainer.innerHTML += `
-                    <div class="list-item">
+                    <div class="${itemClass}">
                         <div class="item-info">
                             <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
                             <div class="item-details">${noteHTML}</div>

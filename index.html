@@ -270,17 +270,26 @@
         
         /* 歷史項目基本外觀 */
         .list-item { 
+            position: relative;
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             padding: 10px 0; 
-            /* 修改點：改用較淡且細緻的實線隔線，維持質感且不消失 */
-            border-bottom: 1px solid rgba(58, 95, 67, 0.12); 
         }
         
-        /* 修改點：每天最後顯示的一筆（即當天第一筆消費）不顯示底線 */
-        .list-item.last-of-day { 
-            border-bottom: none; 
+        /* 修改點：利用偽元素製作 3/4 長度 (75%) 且居中的淡色 "....." 點點虛線隔線 */
+        .list-item::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 12.5%; /* 左右各留 12.5% 空白以達到 75% 長度置中 */
+            width: 75%;
+            border-bottom: 1px dotted rgba(58, 95, 67, 0.25); /* 淡色點點樣式 */
+        }
+        
+        /* 修改點：當天第一筆消費（顯示在最下方者）移除該點點隔線 */
+        .list-item.last-of-day::after { 
+            display: none; 
         }
         
         .item-info { display: flex; flex-direction: column; }
@@ -612,14 +621,13 @@
                     lastDisplayedDate = recordIsoDate;
                 }
 
-                // 修改點：判斷是否為「每天顯示的最後一筆」（亦即當天時間軸上的第一筆消費）
+                // 判斷是否為「每天顯示的最後一筆」（亦即當天第一筆消費）
                 let isLastOfDay = false;
                 if (index === currentMonthRecords.length - 1 || ensureISODate(currentMonthRecords[index + 1].date) !== recordIsoDate) {
                     isLastOfDay = true;
                 }
 
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
-                // 修改點：若是每天的最下方項目，掛上 "last-of-day" 的 class 來移除底線
                 const itemClass = isLastOfDay ? "list-item last-of-day" : "list-item";
 
                 listContainer.innerHTML += `
@@ -817,6 +825,7 @@
             }
         }
 
+        // SheetJS Excel 導出邏輯不變
         function exportToExcelXLSX() {
             if (records.length === 0) return alert("There is no data to export yet!");
             if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");

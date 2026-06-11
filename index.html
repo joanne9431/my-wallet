@@ -268,17 +268,18 @@
 
         .list-container { max-height: 320px; overflow-y: auto; }
         
+        /* 歷史項目基本外觀 */
         .list-item { 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
             padding: 10px 0; 
-            border-bottom: 1px dashed rgba(58, 95, 67, 0.1); 
+            /* 修改點：改用較淡且細緻的實線隔線，維持質感且不消失 */
+            border-bottom: 1px solid rgba(58, 95, 67, 0.12); 
         }
-        .list-item.first-of-day { 
-            border-bottom: none; 
-        }
-        .list-item:last-child { 
+        
+        /* 修改點：每天最後顯示的一筆（即當天第一筆消費）不顯示底線 */
+        .list-item.last-of-day { 
             border-bottom: none; 
         }
         
@@ -444,7 +445,6 @@
             let year = today.getFullYear();
             let month = today.getMonth(); 
             
-            // 1. 先建立固定包含過去 6 個月（含當月）的 Set 集合
             let filterMonthsSet = new Set();
             for (let i = 0; i < 6; i++) {
                 let displayYear = year;
@@ -460,21 +460,18 @@
                 filterMonthsSet.add(monthKey);
             }
 
-            // 2. 檢查現有的記帳紀錄，如果含有更未來的月份，也一併塞入 Set
             const currentMonthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
             records.forEach(r => {
                 const recordIsoDate = ensureISODate(r.date);
-                const recordMonthKey = recordIsoDate.substring(0, 7); // 擷取 "YYYY-MM"
+                const recordMonthKey = recordIsoDate.substring(0, 7); 
                 
                 if (recordMonthKey > currentMonthKey) {
                     filterMonthsSet.add(recordMonthKey);
                 }
             });
 
-            // 3. 將所有集合內的月份依字串降冪排序（最新/最遠的未來排在最上面）
             let sortedMonths = Array.from(filterMonthsSet).sort((a, b) => b.localeCompare(a));
 
-            // 4. 渲染至下拉選單
             sortedMonths.forEach(m => {
                 const parts = m.split('-');
                 const y = parts[0];
@@ -483,7 +480,6 @@
                 dropdown.innerHTML += `<option value="${m}">${label}</option>`;
             });
             
-            // 5. 回復先前的選擇，若沒選擇過，則預設鎖定為當月（若當月不在列表中，則預設選最新的未來月份）
             if (prevSelected && sortedMonths.includes(prevSelected)) {
                 dropdown.value = prevSelected;
             } else {
@@ -603,25 +599,28 @@
 
             let lastDisplayedDate = "";
 
-            currentMonthRecords.forEach(r => {
+            currentMonthRecords.forEach((r, index) => {
                 const recordIsoDate = ensureISODate(r.date);
                 
                 currentMonthTotal += r.amount;
                 if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
 
-                // 判斷是否為每天的第一筆
-                let isFirstOfDay = false;
                 if (recordIsoDate !== lastDisplayedDate) {
                     const dateObj = new Date(recordIsoDate);
                     const dayOfWeek = isNaN(dateObj.getTime()) ? "" : ` ${dayNames[dateObj.getDay()]}`;
                     listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}${dayOfWeek}</div>`;
                     lastDisplayedDate = recordIsoDate;
-                    isFirstOfDay = true; // 標記為第一筆
+                }
+
+                // 修改點：判斷是否為「每天顯示的最後一筆」（亦即當天時間軸上的第一筆消費）
+                let isLastOfDay = false;
+                if (index === currentMonthRecords.length - 1 || ensureISODate(currentMonthRecords[index + 1].date) !== recordIsoDate) {
+                    isLastOfDay = true;
                 }
 
                 const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
-                // 根據判斷結果，決定是否加上 first-of-day 的 class
-                const itemClass = isFirstOfDay ? "list-item first-of-day" : "list-item";
+                // 修改點：若是每天的最下方項目，掛上 "last-of-day" 的 class 來移除底線
+                const itemClass = isLastOfDay ? "list-item last-of-day" : "list-item";
 
                 listContainer.innerHTML += `
                     <div class="${itemClass}">

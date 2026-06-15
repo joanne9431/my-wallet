@@ -66,23 +66,21 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            user-select: none;
         }
 
-        /* 金額數字樣式：加上 pointer 手勢與禁止選取文字 */
         .dash-value {
             font-size: 1.4rem; 
             font-weight: 600;
             letter-spacing: -0.3px;
             transition: filter 0.3s ease;
             color: #0f172a;
-            cursor: pointer;
-            display: inline-block;
-            user-select: none;
+            width: fit-content; /* 讓點擊範圍剛好符合文字大小 */
+            cursor: pointer;    /* 滑鼠游標變成手指，提示可點擊 */
         }
 
         .blur-effect {
             filter: blur(8px);
+            user-select: none;
         }
 
         /* Form Card */
@@ -340,12 +338,16 @@
     <div class="dashboard">
         <div class="dash-row">
             <div class="dash-label">Total Principal</div>
-            <div id="totalDeposit" class="dash-value blur-effect" onclick="toggleVisibility(this)">$0.00</div>
+            <div id="totalDeposit" class="dash-value blur-effect" onclick="toggleVisibility('totalDeposit')" title="Click to show/hide">
+                $0.00
+            </div>
         </div>
         
         <div class="dash-row">
             <div class="dash-label"><span id="interestYearLabel">Current Year</span> Matured Interest</div>
-            <div id="totalInterest" class="dash-value" onclick="toggleVisibility(this)">$0.00</div>
+            <div id="totalInterest" class="dash-value" onclick="toggleVisibility('totalInterest')" title="Click to show/hide">
+                $0.00
+            </div>
         </div>
     </div>
 
@@ -368,7 +370,7 @@
             </div>
             <div>
                 <label>Deposit Term</label>
-                <select id="months" onchange="updateMaturityDate()">
+                <select id="months" onchange="onDateParameterChange('term')">
                     <option value="1">1 Month</option>
                     <option value="2">2 Months</option>
                     <option value="3" selected>3 Months</option>
@@ -382,7 +384,7 @@
             </div>
             <div>
                 <label>Maturity Date</label>
-                <input type="date" id="expiryDate">
+                <input type="date" id="expiryDate" onchange="onDateParameterChange('maturity')">
             </div>
         </div>
         
@@ -406,7 +408,8 @@
 <script>
     let deposits = JSON.parse(localStorage.getItem('my_term_deposits'));
     let editingId = null;
-    let userHasManuallyChangedDate = false;
+    let currentCalculatedStartDate = ""; 
+    let userHasManuallyChangedMaturity = false; 
     
     if (!deposits || deposits.length === 0) {
         deposits = [
@@ -417,29 +420,87 @@
     }
 
     window.onload = function() {
-        document.getElementById('expiryDate').addEventListener('input', function() {
-            userHasManuallyChangedDate = true;
-        });
-        updateMaturityDate(); 
+        resetFormDates();
     };
 
-    function updateMaturityDate() {
-        if (editingId !== null || userHasManuallyChangedDate) {
-            renderStatus();
-            return;
+    function calculateShiftedDate(baseDateStr, monthsToShift, isForward = true) {
+        let parts = baseDateStr.split('-');
+        let year = parseInt(parts[0], 10);
+        let month = parseInt(parts[1], 10) - 1; 
+        let day = parseInt(parts[2], 10);
+
+        let tempDate = new Date(year, month, 1);
+        
+        if (isForward) {
+            tempDate.setMonth(tempDate.getMonth() + monthsToShift);
+        } else {
+            tempDate.setMonth(tempDate.getMonth() - monthsToShift);
         }
 
-        const today = new Date();
-        const selectedMonths = parseInt(document.getElementById('months').value);
-        today.setMonth(today.getMonth() + selectedMonths);
+        let targetYear = tempDate.getFullYear();
+        let targetMonth = tempDate.getMonth();
         
-        document.getElementById('expiryDate').value = today.toISOString().split('T')[0];
+        let maxDaysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+        let finalDay = Math.min(day, maxDaysInTargetMonth);
+        
+        let finalMonthStr = String(targetMonth + 1).padStart(2, '0');
+        let finalDayStr = String(finalDay).padStart(2, '0');
+        
+        return `${targetYear}-${finalMonthStr}-${finalDayStr}`;
+    }
+
+    function onDateParameterChange(triggerType) {
+        const monthsSelect = document.getElementById('months');
+        const expiryInput = document.getElementById('expiryDate');
+        const selectedMonths = parseInt(monthsSelect.value);
+
+        if (editingId !== null) {
+            if (triggerType === 'term') {
+                if (currentCalculatedStartDate) {
+                    expiryInput.value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
+                }
+            } else if (triggerType === 'maturity') {
+                if (expiryInput.value) {
+                    currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
+                }
+            }
+        } else {
+            if (triggerType === 'term') {
+                if (!userHasManuallyChangedMaturity) {
+                    const today = new Date();
+                    currentCalculatedStartDate = today.toISOString().split('T')[0];
+                    expiryInput.value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
+                } else {
+                    if (expiryInput.value) {
+                        currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
+                    }
+                }
+            } else if (triggerType === 'maturity') {
+                userHasManuallyChangedMaturity = true;
+                if (expiryInput.value) {
+                    currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
+                }
+            }
+        }
         renderStatus();
     }
 
-    // 改為傳入元素本體，切換點擊對象的模糊類別
-    function toggleVisibility(element) {
-        element.classList.toggle('blur-effect');
+    function resetFormDates() {
+        editingId = null;
+        userHasManuallyChangedMaturity = false;
+        
+        const today = new Date();
+        currentCalculatedStartDate = today.toISOString().split('T')[0];
+        
+        const monthsSelect = document.getElementById('months');
+        const selectedMonths = parseInt(monthsSelect.value);
+        
+        document.getElementById('expiryDate').value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
+        renderStatus();
+    }
+
+    function toggleVisibility(id) {
+        document.getElementById(id).classList.toggle('blur-effect');
     }
 
     function saveToLocalStorage() {
@@ -460,9 +521,7 @@
 
         deposits.forEach(item => {
             if (!item.startDate) {
-                let sObj = new Date(item.expiryDate);
-                sObj.setMonth(sObj.getMonth() - (item.months || 12));
-                item.startDate = sObj.toISOString().split('T')[0];
+                item.startDate = calculateShiftedDate(item.expiryDate, (item.months || 3), false);
             }
 
             const expiry = new Date(item.expiryDate);
@@ -478,7 +537,6 @@
             }
         });
 
-        // 僅更新文字內容，完全保留原來的模糊狀態 (blur-effect 類別)
         document.getElementById('totalDeposit').innerText = `$${totalDeposit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('totalInterest').innerText = `$${totalInterestFull.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
@@ -497,10 +555,7 @@
 
         deposits.forEach(item => {
             const startDateObj = new Date(item.startDate);
-            
-            if (startDateObj < oneYearAgo) {
-                return; 
-            }
+            if (startDateObj < oneYearAgo) return; 
 
             const expiry = new Date(item.expiryDate);
             const isExpired = expiry < today;
@@ -547,21 +602,22 @@
         }
         errorMsg.style.display = 'none';
 
-        const expDateObj = new Date(expiryDate);
-        expDateObj.setMonth(expDateObj.getMonth() - parseInt(months));
-        const calculatedStartDate = expDateObj.toISOString().split('T')[0];
+        let finalStartDate = currentCalculatedStartDate;
+
+        if (!finalStartDate) {
+            finalStartDate = calculateShiftedDate(expiryDate, parseInt(months), false);
+        }
 
         if (editingId !== null) {
             const index = deposits.findIndex(d => d.id === editingId);
             if (index !== -1) {
-                const oldStartDate = deposits[index].startDate || calculatedStartDate;
                 deposits[index] = {
                     id: editingId,
                     bank,
                     amount: parseFloat(amount),
                     rate: parseFloat(rate),
                     months: parseInt(months),
-                    startDate: oldStartDate,
+                    startDate: finalStartDate,
                     expiryDate
                 };
             }
@@ -573,19 +629,18 @@
                 amount: parseFloat(amount),
                 rate: parseFloat(rate),
                 months: parseInt(months),
-                startDate: new Date().toISOString().split('T')[0], 
+                startDate: finalStartDate, 
                 expiryDate
             };
             deposits.push(newDeposit);
         }
 
         saveToLocalStorage();
-        userHasManuallyChangedDate = false; 
         renderStatus();
 
         document.getElementById('amount').value = '';
         document.getElementById('rate').value = '';
-        updateMaturityDate();
+        resetFormDates();
     }
 
     function startEdit(id) {
@@ -593,6 +648,7 @@
         if (!item) return;
 
         editingId = id;
+        currentCalculatedStartDate = item.startDate; 
 
         document.getElementById('bank').value = item.bank;
         document.getElementById('amount').value = item.amount;
@@ -613,8 +669,8 @@
     }
 
     function exitEditMode() {
-        editingId = null;
-        userHasManuallyChangedDate = false;
+        document.getElementById('amount').value = '';
+        document.getElementById('rate').value = '';
 
         const formCard = document.getElementById('formCard');
         const submitBtn = document.getElementById('submitBtn');
@@ -624,11 +680,8 @@
         submitBtn.innerText = "Add Deposit Record";
         submitBtn.classList.remove('update-style');
         cancelBtn.style.display = "none";
-
-        document.getElementById('amount').value = '';
-        document.getElementById('rate').value = '';
         
-        updateMaturityDate();
+        resetFormDates();
     }
 
     function deleteDeposit(id) {

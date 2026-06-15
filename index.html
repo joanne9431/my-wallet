@@ -2,786 +2,948 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fixed Deposit Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Budget</title>
     
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Budget">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
     <style>
+        /* 全域變數（繽紛輕快 / 舒適舒適深色模式主題） */
         :root {
-            --primary-color: #4f46e5;       
-            --success-color: #0d9488;       
-            --warning-color: #f97316;       
-            --bg-color: #f8fafc;            
-            --card-bg: #ffffff;
-            --text-main: #334155;           
-            --text-muted: #94a3b8;          
-            --expired-color: #cbd5e1;       
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px 15px; 
-            -webkit-font-smoothing: antialiased;
-        }
-
-        .container {
-            max-width: 800px; 
-            margin: 0 auto;
-        }
-
-        /* Dashboard Overview */
-        .dashboard {
-            background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%);
-            color: #1e3a8a;
-            padding: 14px 20px; 
-            border-radius: 14px;
-            box-shadow: 0 4px 15px rgba(224, 231, 255, 0.4);
-            margin-bottom: 18px; 
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            --bg-color: #121620;   /* 繽紛夜空深藍黑 */
+            --card-bg: #1a202c;    /* 時尚深藍灰卡片 */
+            --primary: #4ecdc4;    /* 活潑馬卡龍薄荷綠 */
+            --primary-light: #72dfd7; /* 亮薄荷綠 */
+            --danger: #ff6b6b;     /* 繽紛珊瑚西瓜紅 */
+            --success: #6bcb87;    /* 療癒開心果綠 */
+            --warning: #ffe66d;    /* 活力檸檬奶黃 */
+            --text: #f7fff7;       /* 純淨雪白（主文字） */
+            --grey: #2d3748;       /* 質感灰藍邊框線 */
             
-            display: flex;
-            flex-direction: column;
-            gap: 8px; 
+            /* 消費種類高亮背景與文字（低飽和、高質感馬卡龍暗色調） */
+            --hl-food: #3a2227;    
+            --hl-food-txt: #ff8b94; /* 蜜桃粉 */
+            --hl-trans: #1b323d;   
+            --hl-trans-txt: #a8e6cf; /* 湖水綠 */
+            --hl-play: #2d203a;    
+            --hl-play-txt: #dcedc1; /* 夢幻淡黃綠 */
+            --hl-shop: #3a3220;    
+            --hl-shop-txt: #ffd3b6; /* 杏粉橘 */
+            --hl-home: #1d3129;    
+            --hl-home-txt: #b8e994; /* 嫩葉綠 */
+            --hl-other: #252b36;   
+            --hl-other-txt: #cbd5e0; /* 迷霧灰藍 */
         }
 
-        .dash-row {
-            padding-bottom: 2px;
+        /* 將儀表板卡片內的標題文字改成您喜歡的顏色 (例如白色) */
+.top-sticky-card h2 {
+    color: #a0aec0 !important; 
+}
+        
+        body {
+            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 10px; 
+            padding-top: 0; 
         }
-
-        .dash-row:first-child {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-            padding-bottom: 8px;
-        }
-
-        .dash-label {
-            font-size: 0.75rem;
-            color: #475569;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .dash-value {
-            font-size: 1.4rem; 
-            font-weight: 600;
-            letter-spacing: -0.3px;
-            transition: filter 0.3s ease;
-            color: #0f172a;
-            width: fit-content; /* 讓點擊範圍剛好符合文字大小 */
-            cursor: pointer;    /* 滑鼠游標變成手指，提示可點擊 */
-        }
-
-        .blur-effect {
-            filter: blur(8px);
-            user-select: none;
-        }
-
-        /* Form Card */
-        .form-card {
+        
+        .card {
             background: var(--card-bg);
-            padding: 16px 20px; 
-            border-radius: 14px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);
-            margin-bottom: 22px; 
-            transition: all 0.3s ease;
-            border: 1px solid #f1f5f9;
+            border-radius: 16px;
+            padding: 16px; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25); 
+            margin-bottom: 10px;
         }
-
-        .form-card.editing-mode {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 15px rgba(79, 70, 229, 0.08);
+        
+        .top-sticky-card {
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            margin-left: -10px;
+            margin-right: -10px;
+            margin-bottom: 12px;
+            padding: 18px 14px;
+            background: linear-gradient(135deg, #1a202c 0%, #131924 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
         }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
-            gap: 12px; 
-            margin-bottom: 14px;
+        
+        h2 { 
+            margin-top: 0; 
+            font-size: 0.85rem; 
+            color: #a8e6cf; /* 霧面輕調次要文字 */
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            margin-bottom: 8px; 
         }
-
-        label {
-            display: block;
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        input, select {
-            width: 100%;
-            padding: 8px 12px; 
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 0.85rem;
-            background-color: #f8fafc;
-            color: var(--text-main);
-            transition: all 0.2s;
-        }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            background-color: #fff;
-        }
-
-        .btn-container {
-            display: flex;
-            gap: 10px;
-        }
-
-        button.add-btn {
-            flex: 2;
-            background-color: var(--success-color);
-            color: white;
-            border: none;
-            padding: 9px; 
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        button.add-btn.update-style {
-            background-color: var(--primary-color);
-        }
-
-        button.cancel-btn {
-            flex: 1;
-            background-color: #e2e8f0;
-            color: #475569;
-            border: none;
-            padding: 9px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: none;
-        }
-
-        .error-msg {
-            color: #ef4444;
-            font-size: 0.8rem;
-            margin-top: 8px;
-            display: none;
-            text-align: center;
-        }
-
-        /* Deposit List */
-        .list-title {
-            font-size: 1rem;
-            margin-bottom: 10px; 
-            font-weight: 600;
-            color: #475569;
-            letter-spacing: 0.5px;
-        }
-
-        #depositList {
-            display: flex;
-            flex-direction: column;
-            gap: 8px; 
-            margin-bottom: 15px; 
-        }
-
-        .deposit-card {
-            background: var(--card-bg);
-            padding: 12px 18px; 
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+        
+        .dashboard-layout {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start; 
-            transition: all 0.3s ease;
-            border: 1px solid #f1f5f9;
-            position: relative;
-        }
-
-        /* 左側主要資訊區 */
-        .card-main {
-            display: flex;
-            flex-direction: column;
-            gap: 4px; 
-            flex-grow: 1;
-        }
-
-        .bank-tag {
-            background: #f0fdf4;
-            color: #166534;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            width: fit-content;
-            margin-bottom: 1px;
-        }
-
-        .card-details {
-            font-size: 1.05rem; 
-            font-weight: 600;
-            color: #1e293b;
-        }
-
-        /* 分行顯示的副資訊樣式 */
-        .card-sub-line {
-            font-size: 0.8rem; 
-            color: #64748b;
-            line-height: 1.3;
-        }
-        
-        .card-sub-line strong {
-            color: #475569;
-        }
-
-        /* 右側資訊群組 */
-        .card-right {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end; 
-            gap: 12px; 
-            flex-shrink: 0;
-            margin-left: 15px;
-            min-width: 100px; 
-        }
-
-        .countdown {
-            font-weight: 600;
-            color: #b91c1c;
-            font-size: 0.8rem;
-            text-align: right;
-            white-space: nowrap; 
-        }
-
-        /* 按鈕群組 */
-        .action-group {
-            display: flex;
-            gap: 10px;
             align-items: center;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: #94a3b8;
-            cursor: pointer;
-            font-size: 0.75rem;
-            text-decoration: none;
-            padding: 0px 2px;
-            transition: color 0.2s;
-        }
-
-        .action-btn:hover {
-            color: #ef4444;
-        }
-
-        .action-btn.edit-btn-text {
-            color: #94a3b8;
-        }
-
-        .action-btn.edit-btn-text:hover {
-            color: var(--primary-color);
-        }
-
-        /* 導出按鈕樣式 */
-        .btn-backup { 
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            font-size: 0.9rem;
-            font-weight: 600;
-            cursor: pointer;
-            background-color: #fef3c7; 
-            color: #92400e; 
-            transition: all 0.2s;
-        }
-        .btn-backup:hover { 
-            background-color: #fde68a; 
-        }
-        .btn-backup:active { 
-            transform: scale(0.99); 
-            opacity: 0.9;
-        }
-
-        /* Expired Item Styling */
-        .deposit-card.expired {
-            background-color: #f8fafc;
-            color: var(--expired-color);
-            opacity: 0.55;
-            box-shadow: none;
+            gap: 12px;
         }
         
-        .deposit-card.expired .bank-tag {
-            background: #f1f5f9;
-            color: #94a3b8;
+        .total-box {
+            flex: 1;
+            padding-left: 10px; 
+            text-align: left;
+            overflow: hidden;
+        }
+        .total-amount { 
+            font-size: clamp(1.1rem, 5.5vw, 1.9rem); 
+            font-weight: 800; 
+            color: var(--text); 
+            margin-top: 2px;
+            letter-spacing: -0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            line-height: 1.1;
+        }
+        
+        .category-totals-box {
+            flex: 1.3;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            overflow: hidden;
+        }
+        
+        .cat-total-item {
+            display: flex;
+            flex-direction: column;
+            font-size: 0.75rem;
+            color: var(--text);
+            overflow: hidden;
+        }
+        .cat-total-item .cat-name {
+            color: #a0aec0;
+            font-size: 0.68rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .cat-total-item .cat-num {
+            font-weight: 700;
+            color: var(--text);
+            font-size: clamp(0.68rem, 3.2vw, 0.85rem);
+            white-space: nowrap;
+            overflow: hidden;
+            line-height: 1.1;
+        }
+        
+        input[type="number"], input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 12px 14px; 
+            margin: 6px 0;      
+            border-radius: 10px;
+            border: 1px solid var(--grey);
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            background-color: #131822;
+            color: var(--text);
+            transition: all 0.2s;
+            -webkit-appearance: none; 
+        }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: var(--primary); 
+            background-color: #1a202c;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.25);
+        } 
+        
+        select {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%23a0aec0' d='M0 0l5 5 5-5z'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 12px;
+            padding-right: 35px;
+        }
+        
+        .edit-date-wrapper {
+            display: block; 
+            background: #131822;
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--grey);
+            margin: 6px 0;
+        }
+        .edit-date-wrapper label {
+            font-size: 0.75rem;
+            color: var(--primary-light);
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 6px 0;
+            border-radius: 10px;
+            border: none;
+            font-size: 0.95rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+        button:active { opacity: 0.85; transform: scale(0.99); } 
+        
+        .btn-save { background-color: #86b09e; 
+                    color: #121620; 
+                    margin-top: 8px; }
+        .btn-save:hover { background-color: var(--primary-light); }
+        .btn-backup { background-color: #c9dea2;
+                     color: #121620;
+                     margin-top: 8px; }
+        .btn-backup:hover { opacity: 0.95; }
+        .btn-import { background-color: #9baec7;
+                     color: #121620;
+                     margin-top: 6px; }
+        .btn-import:hover { opacity: 0.95; }
+        
+        .category-picker {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 6px;       
+            margin: 10px 0;
+        }
+        
+        .category-btn {
+            flex: 1 1 calc(33.33% - 6px); 
+            background-color: var(--card-bg);
+            color: var(--text);
+            border: 1.5px solid var(--grey);
+            border-radius: 12px;
+            padding: 10px 2px; 
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            gap: 4px;
+            margin: 0;
+            font-family: inherit;
+        }
+        .category-btn .icon-label { font-size: 1.2rem; } 
+        .category-btn .label { font-size: 0.75rem; font-weight: 700; } 
+        
+        .category-btn.active {
+            background-color: (--primary);
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
+        }
+        
+        .edit-mode-indicator {
+            display: none; 
+            background-color: var(--warning);
+            color: #2d2005;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .list-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .month-selector-inline {
+            width: 130px;
+            padding: 6px 10px;
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border-radius: 8px;
+            height: auto;
+            background-color: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--grey);
+            color: var(--text);
         }
 
-        .deposit-card.expired .card-details {
-            color: #94a3b8;
-            text-decoration: line-through;
+        .list-container { max-height: 320px; overflow-y: auto; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #232c3f; }
+        .list-item:last-child { border-bottom: none; }
+        .item-info { display: flex; flex-direction: column; }
+        
+        .tag { 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 0.75rem; 
+            font-weight: 700; 
+            align-self: flex-start; 
         }
+        
+        .item-details { color: #a0aec0; font-size: 0.72rem; margin-top: 5px; display: flex; gap: 8px; align-items: center; }
+        .note-text { color: var(--text); font-weight: 600; background: #2c2535; padding: 1px 6px; border-radius: 4px; border: 1px solid #4a375a; } 
 
-        .deposit-card.expired .countdown {
-            color: #94a3b8;
+        .item-right { display: flex; align-items: center; gap: 8px; }
+        .amount { font-weight: 700; font-size: 1.05rem; margin-right: 2px; color: var(--text); }
+        .btn-action { background: none; padding: 6px; margin: 0; width: auto; font-size: 0.95rem; display: inline-block; cursor: pointer; }
+        .btn-action:active { transform: scale(0.9); }
+        
+        .day-separator {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--primary-light);
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin: 12px 0 6px 0;
+            letter-spacing: 0.5px;
         }
+        .day-separator::before, .day-separator::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.12);
+        }
+        .day-separator:not(:empty)::before { margin-right: .5em; }
+        .day-separator:not(:empty)::after { margin-left: .5em; }
+        .day-dot { display: inline-block; width: 5px; height: 5px; background-color: var(--primary); border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+
+        @media (min-width: 400px) { .category-btn { flex: 1 1 calc(25% - 6px); } }
     </style>
 </head>
 <body>
 
-<div class="container">
-
-    <div class="dashboard">
-        <div class="dash-row">
-            <div class="dash-label">Total Principal</div>
-            <div id="totalDeposit" class="dash-value blur-effect" onclick="toggleVisibility('totalDeposit')" title="Click to show/hide">
-                $0.00
+    <div class="card top-sticky-card">
+        <div class="dashboard-layout">
+            <div class="total-box">
+                <h2 id="current-month-heading">Current Month Total</h2>
+                <div class="total-amount">$<span id="total">0</span></div>
             </div>
-        </div>
-        
-        <div class="dash-row">
-            <div class="dash-label"><span id="interestYearLabel">Current Year</span> Matured Interest</div>
-            <div id="totalInterest" class="dash-value" onclick="toggleVisibility('totalInterest')" title="Click to show/hide">
-                $0.00
-            </div>
+            <div class="category-totals-box" id="category-totals-container"></div>
         </div>
     </div>
 
-    <div id="formCard" class="form-card">
-        <div class="form-grid">
-            <div>
-                <label>Bank Name</label>
-               <select id="bank">
-                    <option value="HSBC">HSBC</option>
-                    <option value="Livi">Livi</option>
-                    <option value="BOCHK">BOCHK</option>
-                    <option value="MOX">MOX</option>
-                    <option value="MOX (USD)">MOX (USD)</option>
-                    <option value="Other Bank">Other Bank</option>
-                </select>
-            </div>
-            <div>
-                <label>Deposit Amount ($)</label>
-                <input type="number" id="amount" placeholder="e.g., 100000">
-            </div>
-            <div>
-                <label>Deposit Term</label>
-                <select id="months" onchange="onDateParameterChange('term')">
-                    <option value="1">1 Month</option>
-                    <option value="2">2 Months</option>
-                    <option value="3" selected>3 Months</option>
-                    <option value="6">6 Months</option>
-                    <option value="12">12 Months</option>
-                </select>
-            </div>
-            <div>
-                <label>Interest Rate (% p.a.)</label>
-                <input type="number" id="rate" placeholder="e.g., 3.8" step="0.01">
-            </div>
-            <div>
-                <label>Maturity Date</label>
-                <input type="date" id="expiryDate" onchange="onDateParameterChange('maturity')">
-            </div>
+    <div class="card">
+        <h2 id="form-title">Add Transaction</h2>
+        
+        <div id="edit-indicator" class="edit-mode-indicator">✏️ Editing record... (will overwrite on save)</div>
+        
+        <input type="number" id="amount" placeholder="Enter amount" inputmode="decimal">
+        <input type="text" id="note" placeholder="Enter notes">
+        
+        <div class="edit-date-wrapper" id="date-field-block">
+            <label for="edit-date">Transaction Date:</label>
+            <input type="date" id="edit-date">
         </div>
         
-        <div class="btn-container">
-            <button id="submitBtn" class="add-btn" onclick="handleFormSubmit()">Add Deposit Record</button>
-            <button id="cancelBtn" class="cancel-btn" onclick="exitEditMode()">Cancel</button>
-        </div>
+        <div class="category-picker" id="category-picker"></div>
         
-        <div id="errorMsg" class="error-msg">Please fill out all fields correctly.</div>
+        <button class="btn-save" id="btn-save-main" onclick="handleSubmit()">Save Record</button>
     </div>
 
-    <div class="list-title">Active & Matured Records</div>
-    <div id="depositList"></div>
+    <div class="card">
+        <div class="list-header-flex">
+            <h2>History Logs</h2>
+            <select id="month-filter-dropdown" class="month-selector-inline" onchange="renderRecords()"></select>
+        </div>
+        <div class="list-container" id="history-list"></div>
+    </div>
 
     <div style="padding: 0 2px;">
         <button class="btn-backup" onclick="exportToExcelXLSX()">Export Excel File</button>
+        <input type="file" id="import-file-input" accept=".json,.csv,.xlsx,.xls" style="display: none;" onchange="handleFileImport(this)">
+        <button class="btn-import" onclick="document.getElementById('import-file-input').click()">Import Data (JSON/Excel/CSV)</button>
     </div>
 
-</div>
+    <script>
+        const DATA_FILE = "accounting_records_v5.json"; 
+        let categories = ["🍔 Food", "🚗 Transport", "🎬 Entertainment", "🛍️ Shopping", "🏠 Home", "📦 Others"];
+        let records = [];           
+        let selectedCategory = "";  
+        let editingRecordId = null; 
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-<script>
-    let deposits = JSON.parse(localStorage.getItem('my_term_deposits'));
-    let editingId = null;
-    let currentCalculatedStartDate = ""; 
-    let userHasManuallyChangedMaturity = false; 
-    
-    if (!deposits || deposits.length === 0) {
-        deposits = [
-            { id: 1, bank: "HSBC", amount: 200000, rate: 4.1, months: 6, startDate: "2026-01-15", expiryDate: "2026-07-15" },
-            { id: 2, bank: "ZA Bank", amount: 50000, rate: 3.8, months: 12, startDate: "2025-11-01", expiryDate: "2026-11-01" }
-        ];
-        saveToLocalStorage();
-    }
-
-    window.onload = function() {
-        resetFormDates();
-    };
-
-    function calculateShiftedDate(baseDateStr, monthsToShift, isForward = true) {
-        let parts = baseDateStr.split('-');
-        let year = parseInt(parts[0], 10);
-        let month = parseInt(parts[1], 10) - 1; 
-        let day = parseInt(parts[2], 10);
-
-        let tempDate = new Date(year, month, 1);
-        
-        if (isForward) {
-            tempDate.setMonth(tempDate.getMonth() + monthsToShift);
-        } else {
-            tempDate.setMonth(tempDate.getMonth() - monthsToShift);
+        async function init() {
+            if(categories.length > 0) selectedCategory = categories[0];
+            resetDateInputToToday();
+            await loadRecords();     
+            renderCategories();   
+            updateMonthFilterOptions();
+            renderRecords();      
         }
 
-        let targetYear = tempDate.getFullYear();
-        let targetMonth = tempDate.getMonth();
-        
-        let maxDaysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-        let finalDay = Math.min(day, maxDaysInTargetMonth);
-        
-        let finalMonthStr = String(targetMonth + 1).padStart(2, '0');
-        let finalDayStr = String(finalDay).padStart(2, '0');
-        
-        return `${targetYear}-${finalMonthStr}-${finalDayStr}`;
-    }
+        function resetDateInputToToday() {
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            document.getElementById('edit-date').value = `${yyyy}-${mm}-${dd}`;
+        }
 
-    function onDateParameterChange(triggerType) {
-        const monthsSelect = document.getElementById('months');
-        const expiryInput = document.getElementById('expiryDate');
-        const selectedMonths = parseInt(monthsSelect.value);
+        async function loadRecords() {
+            try {
+                const root = await navigator.storage.getDirectory(); 
+                const fileHandle = await root.getFileHandle(DATA_FILE, { create: true });
+                const file = await fileHandle.getFile();
+                const text = await file.text();
+                records = text ? JSON.parse(text) : [];
+            } catch (e) {
+                records = JSON.parse(localStorage.getItem('acc_rec_v5')) || [];
+            }
+        }
 
-        if (editingId !== null) {
-            if (triggerType === 'term') {
-                if (currentCalculatedStartDate) {
-                    expiryInput.value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
+        async function saveRecords() {
+            try {
+                const root = await navigator.storage.getDirectory();
+                const fileHandle = await root.getFileHandle(DATA_FILE, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(JSON.stringify(records));
+                await writable.close();
+            } catch (e) {
+                localStorage.setItem('acc_rec_v5', JSON.stringify(records));
+            }
+        }
+
+        function renderCategories() {
+            const picker = document.getElementById('category-picker');
+            picker.innerHTML = ''; 
+            categories.forEach(cat => {
+                const isActive = (cat === selectedCategory) ? 'active' : '';
+                const parts = cat.split(' ');
+                const icon = parts.length > 1 ? parts[0] : '📝';
+                const label = parts.length > 1 ? parts.slice(1).join(' ') : cat;
+                picker.innerHTML += `<button type="button" class="category-btn ${isActive}" onclick="selectCategory('${cat}', this)"><span class="icon-label">${icon}</span><span class="label">${label}</span></button>`;
+            });
+        }
+
+        function selectCategory(cat, btn) {
+            selectedCategory = cat; 
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active')); 
+            btn.classList.add('active'); 
+        }
+
+        function updateMonthFilterOptions() {
+            const dropdown = document.getElementById('month-filter-dropdown');
+            const prevSelected = dropdown.value; 
+            
+            dropdown.innerHTML = '';
+            
+            let today = new Date();
+            let year = today.getFullYear();
+            let month = today.getMonth(); 
+            
+            let filterMonthsSet = new Set();
+            for (let i = 0; i < 6; i++) {
+                let displayYear = year;
+                let displayMonth = month - i;
+                
+                if (displayMonth < 0) {
+                    displayMonth += 12;
+                    displayYear -= 1;
                 }
-            } else if (triggerType === 'maturity') {
-                if (expiryInput.value) {
-                    currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
+                
+                let monthStr = String(displayMonth + 1).padStart(2, '0');
+                let monthKey = `${displayYear}-${monthStr}`;
+                filterMonthsSet.add(monthKey);
+            }
+
+            const currentMonthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+            records.forEach(r => {
+                const recordIsoDate = ensureISODate(r.date);
+                const recordMonthKey = recordIsoDate.substring(0, 7); 
+                
+                if (recordMonthKey > currentMonthKey) {
+                    filterMonthsSet.add(recordMonthKey);
+                }
+            });
+
+            let sortedMonths = Array.from(filterMonthsSet).sort((a, b) => b.localeCompare(a));
+
+            sortedMonths.forEach(m => {
+                const parts = m.split('-');
+                const y = parts[0];
+                const monthIndex = parseInt(parts[1], 10) - 1;
+                const label = `${monthNames[monthIndex]} ${y}`;
+                dropdown.innerHTML += `<option value="${m}">${label}</option>`;
+            });
+            
+            if (prevSelected && sortedMonths.includes(prevSelected)) {
+                dropdown.value = prevSelected;
+            } else {
+                dropdown.value = sortedMonths.includes(currentMonthKey) ? currentMonthKey : sortedMonths[0]; 
+            }
+        }
+
+        async function handleSubmit() {
+            const amountInput = document.getElementById('amount');
+            const noteInput = document.getElementById('note'); 
+            const dateInput = document.getElementById('edit-date');
+            const amount = parseFloat(amountInput.value);
+            const note = noteInput.value.trim(); 
+
+            if (isNaN(amount) || amount <= 0) return alert('Please enter a valid amount!');
+            
+            let chosenDate = dateInput.value;
+            if(!chosenDate) {
+                const now = new Date();
+                chosenDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            }
+
+            if (editingRecordId !== null) {
+                const recordIndex = records.findIndex(r => r.id === editingRecordId);
+                if(recordIndex !== -1) {
+                    records[recordIndex].amount = amount;
+                    records[recordIndex].category = selectedCategory;
+                    records[recordIndex].note = note; 
+                    records[recordIndex].date = chosenDate;
+                }
+                editingRecordId = null;
+                document.getElementById('form-title').innerText = "Add Transaction";
+                document.getElementById('btn-save-main').innerText = "Save Record";
+                document.getElementById('btn-save-main').style.backgroundColor = "var(--primary)";
+                document.getElementById('btn-save-main').style.color = "#121620";
+                document.getElementById('edit-indicator').style.display = "none"; 
+            } else {
+                records.unshift({ id: Date.now(), amount: amount, category: selectedCategory, note: note, date: chosenDate });
+            }
+            
+            await saveRecords();     
+            amountInput.value = ''; noteInput.value = ''; 
+            resetDateInputToToday();
+            updateMonthFilterOptions();
+            renderRecords();         
+        }
+
+        function startEdit(id) {
+            const record = records.find(r => r.id === id);
+            if(!record) return;
+            editingRecordId = id; 
+            document.getElementById('amount').value = record.amount;
+            document.getElementById('note').value = record.note || ''; 
+            document.getElementById('edit-date').value = ensureISODate(record.date); 
+            selectedCategory = record.category;
+            document.getElementById('form-title').innerText = "Edit History Record";
+            document.getElementById('btn-save-main').innerText = "Update Record";
+            document.getElementById('btn-save-main').style.backgroundColor = "var(--warning)";
+            document.getElementById('btn-save-main').style.color = "#2d2005";
+            document.getElementById('edit-indicator').style.display = "block";
+            renderCategories(); window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deleteRecord(id) {
+            if (confirm("Are you sure you want to delete this record?")) {
+                records = records.filter(r => r.id !== id);
+                await saveRecords(); 
+                updateMonthFilterOptions();
+                renderRecords();     
+            }
+        }
+
+        function getHighlightStyle(category) {
+            const catStr = String(category);
+            if (catStr.includes("Food")) return "background-color: var(--hl-food); color: var(--hl-food-txt);";
+            if (catStr.includes("Transport")) return "background-color: var(--hl-trans); color: var(--hl-trans-txt);";
+            if (catStr.includes("Entertainment")) return "background-color: var(--hl-play); color: var(--hl-play-txt);";
+            if (catStr.includes("Shopping")) return "background-color: var(--hl-shop); color: var(--hl-shop-txt);";
+            if (catStr.includes("Home")) return "background-color: var(--hl-home); color: var(--hl-home-txt);";
+            return "background-color: var(--hl-other); color: var(--hl-other-txt);";
+        }
+
+        function renderRecords() {
+            const listContainer = document.getElementById('history-list');
+            const totalContainer = document.getElementById('total');
+            const catTotalsContainer = document.getElementById('category-totals-container');
+            const headingContainer = document.getElementById('current-month-heading');
+            const dropdown = document.getElementById('month-filter-dropdown');
+            
+            listContainer.innerHTML = ''; catTotalsContainer.innerHTML = '';
+            
+            const selectedMonthKey = dropdown.value || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+            const parts = selectedMonthKey.split('-');
+            const viewYear = parts[0];
+            const viewMonthIndex = parseInt(parts[1], 10) - 1;
+            
+            headingContainer.innerText = `${monthNames[viewMonthIndex]} Total (${viewYear})`;
+
+            let currentMonthTotal = 0; 
+            let catSums = {};
+            categories.forEach(cat => { catSums[cat] = 0; });
+
+            let currentMonthRecords = records.filter(r => {
+                const recordIsoDate = ensureISODate(r.date);
+                return recordIsoDate.startsWith(selectedMonthKey);
+            });
+
+            if (currentMonthRecords.length === 0) {
+                listContainer.innerHTML = `<div style="color: #a0aec0; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
+                totalContainer.innerText = '0';
+                document.querySelector('.total-amount').style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
+                categories.forEach(cat => {
+                    catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$0</span></div>`;
+                });
+                return;
+            }
+
+            currentMonthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
+            let lastDisplayedDate = "";
+
+            currentMonthRecords.forEach(r => {
+                const recordIsoDate = ensureISODate(r.date);
+                
+                currentMonthTotal += r.amount;
+                if (catSums[r.category] !== undefined) catSums[r.category] += r.amount;
+
+                if (recordIsoDate !== lastDisplayedDate) {
+                    const dateObj = new Date(recordIsoDate);
+                    const dayOfWeek = isNaN(dateObj.getTime()) ? "" : ` ${dayNames[dateObj.getDay()]}`;
+                    listContainer.innerHTML += `<div class="day-separator"><span class="day-dot"></span>${recordIsoDate}${dayOfWeek}</div>`;
+                    lastDisplayedDate = recordIsoDate;
+                }
+
+                const noteHTML = r.note ? `<span class="note-text">${r.note}</span>` : '';
+                listContainer.innerHTML += `
+                    <div class="list-item">
+                        <div class="item-info">
+                            <span class="tag" style="${getHighlightStyle(r.category)}">${r.category.split(' ').slice(1).join(' ') || r.category}</span>
+                            <div class="item-details">${noteHTML}</div>
+                        </div>
+                        <div class="item-right">
+                            <span class="amount">$${r.amount.toLocaleString()}</span>
+                            <button class="btn-action" onclick="startEdit(${r.id})">✏️</button>
+                            <button class="btn-action" onclick="deleteRecord(${r.id})">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+            
+            const formattedTotalStr = currentMonthTotal.toLocaleString();
+            totalContainer.innerText = formattedTotalStr;
+            
+            let mainTotalElement = document.querySelector('.total-amount');
+            if (formattedTotalStr.length > 12) {
+                mainTotalElement.style.fontSize = "3.4vw";
+            } else if (formattedTotalStr.length > 9) {
+                mainTotalElement.style.fontSize = "4.2vw";
+            } else if (formattedTotalStr.length > 6) {
+                mainTotalElement.style.fontSize = "5.0vw";
+            } else {
+                mainTotalElement.style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
+            }
+
+            Object.keys(catSums).forEach(cat => {
+                const rawAmtStr = catSums[cat].toLocaleString();
+                let extraStyle = "";
+                if(rawAmtStr.length > 12) {
+                    extraStyle = "style='font-size: 1.8vw;'";
+                } else if(rawAmtStr.length > 9) {
+                    extraStyle = "style='font-size: 2.3vw;'";
+                }
+                catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num" ${extraStyle}>$${rawAmtStr}</span></div>`;
+            });
+        }
+
+        function ensureISODate(dateStr) {
+            if (!dateStr) return "2026-06-01";
+            let clean = String(dateStr).trim();
+            if (clean.includes('-') && clean.split('-').length === 3) return clean;
+            
+            if (clean.includes('/')) {
+                const p = clean.split('/');
+                if (p.length === 3) {
+                    if (p[0].length === 4) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
+                    let d = p[0].padStart(2, '0');
+                    let m = p[1].padStart(2, '0');
+                    let y = p[2];
+                    if (y.length === 2) y = "20" + y;
+                    return `${y}-${m}-${d}`;
                 }
             }
-        } else {
-            if (triggerType === 'term') {
-                if (!userHasManuallyChangedMaturity) {
-                    const today = new Date();
-                    currentCalculatedStartDate = today.toISOString().split('T')[0];
-                    expiryInput.value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
-                } else {
-                    if (expiryInput.value) {
-                        currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return "2026-06-01"; 
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            } catch(e) {
+                return "2026-06-01";
+            }
+        }
+
+        function handleFileImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+
+            reader.onload = async function(e) {
+                try {
+                    let importedRecords = [];
+                    let baseTimestamp = Date.now(); 
+
+                    if (isExcel) {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        let recordCounter = 0;
+
+                        workbook.SheetNames.forEach(sheetName => {
+                            const worksheet = workbook.Sheets[sheetName];
+                            const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                            
+                            let lastValidDate = "";
+
+                            for (let i = 1; i < rows.length; i++) {
+                                const row = rows[i];
+                                if (!row || row.length === 0) continue;
+
+                                let dateStr = row[0] ? String(row[0]).trim() : "";
+                                let catLabel = row[1] ? String(row[1]).trim() : "";
+                                let amtStr = row[2] ? String(row[2]).trim() : "";
+                                let noteStr = row[3] ? String(row[3]).trim() : "";
+
+                                if (!catLabel || catLabel.includes('Total') || catLabel === 'Category' || (dateStr === "" && catLabel === "")) {
+                                    continue;
+                                }
+
+                                if (dateStr === "") {
+                                    dateStr = lastValidDate;
+                                } else {
+                                    dateStr = ensureISODate(dateStr);
+                                    lastValidDate = dateStr;
+                                }
+                                if (!dateStr) continue;
+
+                                amtStr = amtStr.replace('HK$', '').replace('$', '').replace(/,/g, '').replace(/"/g, '');
+                                const amount = parseFloat(amtStr);
+                                if (isNaN(amount)) continue;
+
+                                let finalCategory = categories.find(c => c.includes(catLabel)) || "📦 Others";
+                                
+                                recordCounter++;
+                                importedRecords.push({
+                                    id: baseTimestamp - recordCounter,
+                                    amount: amount,
+                                    category: finalCategory,
+                                    note: noteStr,
+                                    date: dateStr
+                                });
+                            }
+                        });
+
+                        if (importedRecords.length === 0) throw new Error("No valid data rows found in Excel file.");
+                        records = importedRecords;
+
+                    } else if (file.name.endsWith('.json')) {
+                        const parsed = JSON.parse(e.target.result);
+                        if (Array.isArray(parsed)) records = parsed;
+                        else throw new Error("Invalid JSON format");
+
+                    } else if (file.name.endsWith('.csv')) {
+                        const lines = e.target.result.split('\n');
+                        let lastValidDate = ""; 
+                        let recordCounter = 0;
+                        for (let i = 1; i < lines.length; i++) {
+                            let line = lines[i].trim();
+                            if (!line) continue;
+                            if (line.startsWith('\uFEFF')) line = line.replace('\uFEFF', '');
+                            const cols = line.split(',');
+                            if (cols.length < 3) continue;
+                            
+                            let dateStr = cols[0].trim();
+                            const catLabel = cols[1].trim();
+                            let amtStr = cols[2].trim();
+                            const noteStr = cols[3] ? cols[3].replace(/"/g, '').trim() : '';
+                            
+                            if (catLabel.includes('Total') || catLabel === 'Date' || (dateStr === "" && catLabel === "")) continue;
+                            
+                            if (dateStr === "") {
+                                dateStr = lastValidDate;
+                            } else {
+                                dateStr = ensureISODate(dateStr);
+                                lastValidDate = dateStr; 
+                            }
+                            if (!dateStr) continue;
+                            
+                            amtStr = amtStr.replace('HK$', '').replace('$', '').replace(/,/g, '').replace(/"/g, '');
+                            const amount = parseFloat(amtStr);
+                            if (isNaN(amount)) continue;
+                            
+                            let finalCategory = categories.find(c => c.includes(catLabel)) || "📦 Others";
+                            recordCounter++;
+                            importedRecords.push({ 
+                                id: baseTimestamp - recordCounter, 
+                                amount: amount, 
+                                category: finalCategory, 
+                                note: noteStr, 
+                                date: dateStr 
+                            });
+                        }
+                        if (importedRecords.length === 0) return alert("No valid records found in CSV!");
+                        records = importedRecords;
+                    }
+
+                    await saveRecords(); 
+                    updateMonthFilterOptions();
+                    renderRecords(); 
+                    alert(`Successfully imported ${records.length} records in Excel order!`);
+                } catch(err) {
+                    alert("Import failed! " + err.message);
+                }
+                input.value = ''; 
+            };
+
+            if (isExcel) {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file);
+            }
+        }
+
+        function exportToExcelXLSX() {
+            if (records.length === 0) return alert("There is no data to export yet!");
+            if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded yet, please check internet connection.");
+
+            let availableYears = new Set();
+            records.forEach(r => {
+                let year = ensureISODate(r.date).split('-')[0];
+                availableYears.add(year);
+            });
+            let sortedYears = Array.from(availableYears).sort((a, b) => b - a); 
+
+            const sysDate = new Date();
+            const currentSystemYear = String(sysDate.getFullYear());
+            let selectedYear = currentSystemYear;
+
+            if (sortedYears.length > 1) {
+                let yearPrompt = prompt(
+                    `Detected data across multiple years.\nAvailable years: ${sortedYears.join(', ')}\n\nPlease enter the year you want to export:`, 
+                    currentSystemYear
+                );
+                
+                if (yearPrompt === null) return; 
+                yearPrompt = yearPrompt.trim();
+                
+                if (!sortedYears.includes(yearPrompt)) {
+                    return alert(`Invalid year choice! Please run export again and type one of: ${sortedYears.join(', ')}`);
+                }
+                selectedYear = yearPrompt;
+            } else if (sortedYears.length === 1) {
+                selectedYear = sortedYears[0];
+            }
+
+            let filteredRecords = records.filter(r => ensureISODate(r.date).startsWith(selectedYear));
+            
+            if (filteredRecords.length === 0) {
+                return alert(`No data found for the year ${selectedYear}.`);
+            }
+
+            let yearTotal = 0;
+            filteredRecords.forEach(r => yearTotal += r.amount);
+
+            let monthlyGroups = {};
+            let allMonthsChronological = [];
+            
+            filteredRecords.forEach(r => {
+                let isoDate = ensureISODate(r.date);
+                let yearMonth = isoDate.substring(0, 7); 
+                if (!monthlyGroups[yearMonth]) {
+                    monthlyGroups[yearMonth] = [];
+                    allMonthsChronological.push(yearMonth);
+                }
+                monthlyGroups[yearMonth].push(r);
+            });
+
+            allMonthsChronological.sort((a, b) => a.localeCompare(b));
+            let latestMonthKey = allMonthsChronological[allMonthsChronological.length - 1];
+            
+            let sheetsOrder = [...allMonthsChronological].reverse();
+
+            const currentSystemMonthKey = `${sysDate.getFullYear()}-${String(sysDate.getMonth() + 1).padStart(2, '0')}`;
+            if (sheetsOrder.includes(currentSystemMonthKey) && sheetsOrder[0] !== currentSystemMonthKey) {
+                sheetsOrder = sheetsOrder.filter(m => m !== currentSystemMonthKey);
+                sheetsOrder.unshift(currentSystemMonthKey);
+            }
+
+            let wb = XLSX.utils.book_new();
+
+            sheetsOrder.forEach(currentMonthKey => {
+                let monthRecords = monthlyGroups[currentMonthKey];
+                
+                monthRecords.sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+
+                let sheetRows = [
+                    ["Date", "Category", "Amount", "Notes"]
+                ];
+
+                let dayTotal = 0;
+                let monthTotal = 0;
+                let lastDisplayedDate = "";
+
+                monthRecords.forEach(r => monthTotal += r.amount);
+
+                for (let i = 0; i < monthRecords.length; i++) {
+                    let r = monthRecords[i];
+                    let nextRecord = monthRecords[i + 1];
+
+                    let currentIsoDate = ensureISODate(r.date);
+                    let parts = currentMonthKey.split('-');
+                    let currentMonth = parts[1];
+
+                    let nextIsoDate = nextRecord ? ensureISODate(nextRecord.date) : null;
+                    let rawCategory = r.category.split(' ').slice(1).join(' ') || r.category;
+                    let noteText = r.note || '';
+
+                    let dateValue = "";
+                    if (currentIsoDate !== lastDisplayedDate) {
+                        dateValue = currentIsoDate;
+                        lastDisplayedDate = currentIsoDate;
+                    }
+
+                    sheetRows.push([dateValue, rawCategory, `HK$${r.amount.toLocaleString()}`, noteText]);
+                    dayTotal += r.amount;
+
+                    let isDayEnd = !nextRecord || nextIsoDate !== currentIsoDate;
+                    let isMonthEnd = !nextRecord;
+
+                    if (isDayEnd) {
+                        sheetRows.push(["", "Daily Total", `HK$${dayTotal.toLocaleString()}`, ""]);
+                        dayTotal = 0; 
+                        if (!isMonthEnd) {
+                            sheetRows.push(["", "", "", ""]);
+                        }
+                    }
+
+                    if (isMonthEnd) {
+                        let EnglishMonthLabel = monthNames[parseInt(currentMonth, 10) - 1] || "Month";
+                        sheetRows.push(["", "", "", ""]); 
+                        sheetRows.push(["", `${EnglishMonthLabel} Total`, `HK$${monthTotal.toLocaleString()}`, ""]);
+
+                        if (currentMonthKey === latestMonthKey) {
+                            sheetRows.push(["", "", "", ""]); 
+                            sheetRows.push(["", `${selectedYear} Annual Total`, `HK$${yearTotal.toLocaleString()}`, ""]);
+                        } else {
+                            sheetRows.push(["", "", "", ""]);
+                        }
                     }
                 }
-            } else if (triggerType === 'maturity') {
-                userHasManuallyChangedMaturity = true;
-                if (expiryInput.value) {
-                    currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
-                }
-            }
-        }
-        renderStatus();
-    }
 
-    function resetFormDates() {
-        editingId = null;
-        userHasManuallyChangedMaturity = false;
-        
-        const today = new Date();
-        currentCalculatedStartDate = today.toISOString().split('T')[0];
-        
-        const monthsSelect = document.getElementById('months');
-        const selectedMonths = parseInt(monthsSelect.value);
-        
-        document.getElementById('expiryDate').value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
-        renderStatus();
-    }
+                let ws = XLSX.utils.aoa_to_sheet(sheetRows);
+                ws['!cols'] = [{ wch: 13 }, { wch: 15 }, { wch: 15 }, { wch: 25 }]; 
+                XLSX.utils.book_append_sheet(wb, ws, currentMonthKey);
+            });
 
-    function toggleVisibility(id) {
-        document.getElementById(id).classList.toggle('blur-effect');
-    }
-
-    function saveToLocalStorage() {
-        localStorage.setItem('my_term_deposits', JSON.stringify(deposits));
-    }
-
-    function renderStatus(targetYearForInterest = null) {
-        const listContainer = document.getElementById('depositList');
-        const today = new Date();
-        today.setHours(0,0,0,0);
-
-        const currentSystemYear = today.getFullYear();
-        const activeYear = targetYearForInterest || currentSystemYear;
-        document.getElementById('interestYearLabel').innerText = `${activeYear}`;
-
-        let totalDeposit = 0;
-        let totalInterestFull = 0;
-
-        deposits.forEach(item => {
-            if (!item.startDate) {
-                item.startDate = calculateShiftedDate(item.expiryDate, (item.months || 3), false);
-            }
-
-            const expiry = new Date(item.expiryDate);
-            const expiryYear = parseInt(item.expiryDate.split('-')[0]);
-            
-            if (expiry >= today) {
-                totalDeposit += parseFloat(item.amount);
-            }
-
-            if (expiry < today && expiryYear === activeYear) {
-                let totalInterestEarned = parseFloat(item.amount) * (parseFloat(item.rate) / 100) * (parseInt(item.months) / 12);
-                totalInterestFull += totalInterestEarned;
-            }
-        });
-
-        document.getElementById('totalDeposit').innerText = `$${totalDeposit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-        document.getElementById('totalInterest').innerText = `$${totalInterestFull.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
-
-        deposits.sort((a, b) => {
-            const isAExpired = new Date(a.expiryDate) < today;
-            const isBExpired = new Date(b.expiryDate) < today;
-            if (isAExpired && !isBExpired) return 1;
-            if (!isAExpired && isBExpired) return -1;
-            return new Date(a.expiryDate) - new Date(b.expiryDate);
-        });
-
-        listContainer.innerHTML = '';
-
-        const oneYearAgo = new Date();
-        oneYearAgo.setDate(oneYearAgo.getDate() - 365);
-
-        deposits.forEach(item => {
-            const startDateObj = new Date(item.startDate);
-            if (startDateObj < oneYearAgo) return; 
-
-            const expiry = new Date(item.expiryDate);
-            const isExpired = expiry < today;
-            const timeDiff = expiry.getTime() - today.getTime();
-            const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-            let countdownText = isExpired ? "Matured" : (daysLeft === 0 ? "Matures Today!" : `${daysLeft} days left`);
-            const actualItemInterest = item.amount * (item.rate / 100) * (item.months / 12);
-
-            const card = document.createElement('div');
-            card.className = `deposit-card ${isExpired ? 'expired' : ''}`;
-            
-            card.innerHTML = `
-                <div class="card-main">
-                    <span class="bank-tag">${item.bank}</span>
-                    <div class="card-details">$${parseFloat(item.amount).toLocaleString()} @ ${item.rate}% (${item.months}M)</div>
-                    <div class="card-sub-line"><strong>Start Date:</strong> ${item.startDate}</div>
-                    <div class="card-sub-line"><strong>Maturity:</strong> ${item.expiryDate}</div>
-                    <div class="card-sub-line"><strong>Net Interest:</strong> $${actualItemInterest.toFixed(2)}</div>
-                </div>
-                <div class="card-right">
-                    <span class="countdown">${countdownText}</span>
-                    <div class="action-group">
-                        <button class="action-btn edit-btn-text" onclick="startEdit(${item.id})">Edit</button>
-                        <button class="action-btn" onclick="deleteDeposit(${item.id})">Delete</button>
-                    </div>
-                </div>
-            `;
-            listContainer.appendChild(card);
-        });
-    }
-
-    function handleFormSubmit() {
-        const bank = document.getElementById('bank').value;
-        const amount = document.getElementById('amount').value;
-        const months = document.getElementById('months').value;
-        const rate = document.getElementById('rate').value;
-        const expiryDate = document.getElementById('expiryDate').value;
-        const errorMsg = document.getElementById('errorMsg');
-
-        if (!amount || !rate || !expiryDate || parseFloat(amount) <= 0 || parseFloat(rate) <= 0) {
-            errorMsg.style.display = 'block';
-            return;
-        }
-        errorMsg.style.display = 'none';
-
-        let finalStartDate = currentCalculatedStartDate;
-
-        if (!finalStartDate) {
-            finalStartDate = calculateShiftedDate(expiryDate, parseInt(months), false);
+            XLSX.writeFile(wb, `Budget_Report_${selectedYear}_${new Date().toISOString().slice(0,10)}.xlsx`);
         }
 
-        if (editingId !== null) {
-            const index = deposits.findIndex(d => d.id === editingId);
-            if (index !== -1) {
-                deposits[index] = {
-                    id: editingId,
-                    bank,
-                    amount: parseFloat(amount),
-                    rate: parseFloat(rate),
-                    months: parseInt(months),
-                    startDate: finalStartDate,
-                    expiryDate
-                };
-            }
-            exitEditMode();
-        } else {
-            const newDeposit = {
-                id: Date.now(),
-                bank,
-                amount: parseFloat(amount),
-                rate: parseFloat(rate),
-                months: parseInt(months),
-                startDate: finalStartDate, 
-                expiryDate
-            };
-            deposits.push(newDeposit);
-        }
-
-        saveToLocalStorage();
-        renderStatus();
-
-        document.getElementById('amount').value = '';
-        document.getElementById('rate').value = '';
-        resetFormDates();
-    }
-
-    function startEdit(id) {
-        const item = deposits.find(d => d.id === id);
-        if (!item) return;
-
-        editingId = id;
-        currentCalculatedStartDate = item.startDate; 
-
-        document.getElementById('bank').value = item.bank;
-        document.getElementById('amount').value = item.amount;
-        document.getElementById('months').value = item.months;
-        document.getElementById('rate').value = item.rate;
-        document.getElementById('expiryDate').value = item.expiryDate;
-
-        const formCard = document.getElementById('formCard');
-        const submitBtn = document.getElementById('submitBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-
-        formCard.classList.add('editing-mode');
-        submitBtn.innerText = "Update Record";
-        submitBtn.classList.add('update-style');
-        cancelBtn.style.display = "block";
-
-        formCard.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function exitEditMode() {
-        document.getElementById('amount').value = '';
-        document.getElementById('rate').value = '';
-
-        const formCard = document.getElementById('formCard');
-        const submitBtn = document.getElementById('submitBtn');
-        const cancelBtn = document.getElementById('cancelBtn');
-
-        formCard.classList.remove('editing-mode');
-        submitBtn.innerText = "Add Deposit Record";
-        submitBtn.classList.remove('update-style');
-        cancelBtn.style.display = "none";
-        
-        resetFormDates();
-    }
-
-    function deleteDeposit(id) {
-        if (editingId === id) {
-            exitEditMode();
-        }
-
-        if(confirm('Are you sure you want to delete this record?')) {
-            deposits = deposits.filter(item => item.id !== id);
-            saveToLocalStorage();
-            renderStatus();
-        }
-    }
-
-    function exportToExcelXLSX() {
-        if (deposits.length === 0) return alert("There is no data to export yet!");
-        if (typeof XLSX === 'undefined') return alert("SheetJS library not loaded.");
-
-        let availableYears = new Set();
-        deposits.forEach(d => {
-            if (d.expiryDate) {
-                let year = d.expiryDate.split('-')[0];
-                availableYears.add(year);
-            }
-        });
-        let sortedYears = Array.from(availableYears).sort((a, b) => b - a); 
-
-        const sysDate = new Date();
-        const currentSystemYear = String(sysDate.getFullYear());
-        let selectedYear = currentSystemYear;
-
-        if (sortedYears.length > 1) {
-            let yearPrompt = prompt(
-                `Detected data across multiple years.\nAvailable years: ${sortedYears.join(', ')}\n\nPlease enter the year you want to export:`, 
-                currentSystemYear
-            );
-            if (yearPrompt === null) return; 
-            yearPrompt = yearPrompt.trim();
-            if (!sortedYears.includes(yearPrompt)) {
-                return alert(`Invalid year choice!`);
-            }
-            selectedYear = yearPrompt;
-        } else if (sortedYears.length === 1) {
-            selectedYear = sortedYears[0];
-        }
-
-        renderStatus(parseInt(selectedYear));
-
-        let filteredDeposits = deposits.filter(d => d.expiryDate && d.expiryDate.startsWith(selectedYear));
-
-        if (filteredDeposits.length === 0) {
-            return alert(`No data found maturing in the year ${selectedYear}.`);
-        }
-
-        filteredDeposits.sort((a, b) => a.expiryDate.localeCompare(b.expiryDate));
-
-        let sheetRows = [
-            ["Start Date", "Maturity Date", "Bank Name", "Principal Amount", "Interest Rate", "Term", "Net Interest"]
-        ];
-
-        let totalMaturedInterestForYear = 0;
-
-        filteredDeposits.forEach(d => {
-            let totalInterest = d.amount * (d.rate / 100) * (d.months / 12);
-            const expiry = new Date(d.expiryDate);
-            
-            if (expiry < sysDate) {
-                totalMaturedInterestForYear += totalInterest;
-            }
-
-            sheetRows.push([
-                d.startDate,
-                d.expiryDate,
-                d.bank,
-                `$${d.amount.toLocaleString()}`,
-                `${d.rate}%`,
-                `${d.months} M`,
-                `$${totalInterest.toFixed(2)}`
-            ]);
-        });
-
-        sheetRows.push(["", "", "", "", "", "", ""]); 
-        sheetRows.push([
-            `${selectedYear} Report Summary`, 
-            "", 
-            "", 
-            "", 
-            "", 
-            "", 
-            `Total Matured Annual Interest: $${totalMaturedInterestForYear.toFixed(2)}`
-        ]);
-
-        let wb = XLSX.utils.book_new();
-        let ws = XLSX.utils.aoa_to_sheet(sheetRows);
-        ws['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 18 }, { wch: 22 }, { wch: 12 }, { wch: 12 }, { wch: 22 }]; 
-        
-        XLSX.utils.book_append_sheet(wb, ws, `Deposit_Report_${selectedYear}`);
-        XLSX.writeFile(wb, `Deposit_Report_${selectedYear}_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-</script>
-
+        init();
+    </script>
 </body>
 </html>

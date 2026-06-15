@@ -37,96 +37,92 @@
         .dashboard {
             background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%);
             color: #1e3a8a;
-            padding: 22px 24px; 
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(224, 231, 255, 0.5);
-            margin-bottom: 25px; 
-            position: relative;
+            padding: 14px 20px; 
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(224, 231, 255, 0.4);
+            margin-bottom: 18px; 
             border: 1px solid rgba(255, 255, 255, 0.6);
             
             display: flex;
             flex-direction: column;
-            gap: 16px; 
+            gap: 8px; 
         }
 
         .dash-row {
-            padding-bottom: 4px;
+            padding-bottom: 2px;
         }
 
         .dash-row:first-child {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+            padding-bottom: 8px;
         }
 
         .dash-label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #475569;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            margin-bottom: 2px;
             display: flex;
             align-items: center;
             gap: 8px;
             user-select: none;
         }
 
-        /* 讓數字具備點擊手勢，並加入流暢的模糊轉場特效 */
+        /* 金額數字樣式：加上 pointer 手勢與禁止選取文字 */
         .dash-value {
-            font-size: 1.75rem; 
-            font-weight: 700;
-            letter-spacing: -0.5px;
+            font-size: 1.4rem; 
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            transition: filter 0.3s ease;
             color: #0f172a;
             cursor: pointer;
             display: inline-block;
             user-select: none;
-            filter: blur(0px);
-            transition: filter 0.3s ease, opacity 0.3s ease;
         }
 
-        /* 點擊後被加上 .blur-active 類別時的高階毛玻璃模糊狀態 */
-        .dash-value.blur-active {
-            filter: blur(10px);
-            opacity: 0.3;
+        .blur-effect {
+            filter: blur(8px);
         }
 
         /* Form Card */
         .form-card {
             background: var(--card-bg);
-            padding: 24px; 
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-            margin-bottom: 25px; 
+            padding: 16px 20px; 
+            border-radius: 14px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);
+            margin-bottom: 22px; 
             transition: all 0.3s ease;
             border: 1px solid #f1f5f9;
         }
 
         .form-card.editing-mode {
             border-color: var(--primary-color);
-            box-shadow: 0 0 20px rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.08);
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
-            gap: 16px; 
-            margin-bottom: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
+            gap: 12px; 
+            margin-bottom: 14px;
         }
 
         label {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: #64748b;
             font-weight: 500;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         input, select {
             width: 100%;
-            padding: 10px 14px; 
+            padding: 8px 12px; 
             border: 1px solid #e2e8f0;
-            border-radius: 8px;
+            border-radius: 6px;
             box-sizing: border-box;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             background-color: #f8fafc;
             color: var(--text-main);
             transition: all 0.2s;
@@ -140,7 +136,7 @@
 
         .btn-container {
             display: flex;
-            gap: 12px;
+            gap: 10px;
         }
 
         button.add-btn {
@@ -148,12 +144,11 @@
             background-color: var(--success-color);
             color: white;
             border: none;
-            padding: 12px; 
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 600;
+            padding: 9px; 
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         button.add-btn.update-style {
@@ -165,25 +160,26 @@
             background-color: #e2e8f0;
             color: #475569;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-size: 0.95rem;
+            padding: 9px;
+            border-radius: 6px;
+            font-size: 0.9rem;
             cursor: pointer;
             display: none;
         }
 
         .error-msg {
             color: #ef4444;
-            font-size: 0.85rem;
-            margin-top: 10px;
+            font-size: 0.8rem;
+            margin-top: 8px;
             display: none;
             text-align: center;
         }
 
+        /* Deposit List */
         .list-title {
-            font-size: 1.1rem;
-            margin-bottom: 15px; 
-            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 10px; 
+            font-weight: 600;
             color: #475569;
             letter-spacing: 0.5px;
         }
@@ -191,15 +187,15 @@
         #depositList {
             display: flex;
             flex-direction: column;
-            gap: 12px; 
-            margin-bottom: 25px;
+            gap: 8px; 
+            margin-bottom: 15px; 
         }
 
         .deposit-card {
             background: var(--card-bg);
-            padding: 16px 20px; 
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);
+            padding: 12px 18px; 
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
             display: flex;
             justify-content: space-between;
             align-items: flex-start; 
@@ -208,61 +204,65 @@
             position: relative;
         }
 
+        /* 左側主要資訊區 */
         .card-main {
             display: flex;
             flex-direction: column;
-            gap: 6px; 
+            gap: 4px; 
             flex-grow: 1;
         }
 
         .bank-tag {
             background: #f0fdf4;
             color: #166534;
-            padding: 4px 10px;
+            padding: 2px 8px;
             border-radius: 12px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             width: fit-content;
-            margin-bottom: 2px;
+            margin-bottom: 1px;
         }
 
         .card-details {
-            font-size: 1.15rem; 
-            font-weight: 700;
+            font-size: 1.05rem; 
+            font-weight: 600;
             color: #1e293b;
         }
 
+        /* 分行顯示的副資訊樣式 */
         .card-sub-line {
-            font-size: 0.85rem; 
+            font-size: 0.8rem; 
             color: #64748b;
-            line-height: 1.4;
+            line-height: 1.3;
         }
         
         .card-sub-line strong {
             color: #475569;
         }
 
+        /* 右側資訊群組 */
         .card-right {
             display: flex;
             flex-direction: column;
             align-items: flex-end; 
-            gap: 16px; 
+            gap: 12px; 
             flex-shrink: 0;
-            margin-left: 20px;
-            min-width: 110px; 
+            margin-left: 15px;
+            min-width: 100px; 
         }
 
         .countdown {
-            font-weight: 700;
+            font-weight: 600;
             color: #b91c1c;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-align: right;
             white-space: nowrap; 
         }
 
+        /* 按鈕群組 */
         .action-group {
             display: flex;
-            gap: 12px;
+            gap: 10px;
             align-items: center;
         }
 
@@ -271,9 +271,9 @@
             border: none;
             color: #94a3b8;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-decoration: none;
-            padding: 2px;
+            padding: 0px 2px;
             transition: color 0.2s;
         }
 
@@ -289,18 +289,18 @@
             color: var(--primary-color);
         }
 
+        /* 導出按鈕樣式 */
         .btn-backup { 
             width: 100%;
-            padding: 12px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 8px;
             border: none;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             font-weight: 600;
             cursor: pointer;
             background-color: #fef3c7; 
             color: #92400e; 
             transition: all 0.2s;
-            margin-top: 10px;
         }
         .btn-backup:hover { 
             background-color: #fde68a; 
@@ -310,10 +310,11 @@
             opacity: 0.9;
         }
 
+        /* Expired Item Styling */
         .deposit-card.expired {
             background-color: #f8fafc;
             color: var(--expired-color);
-            opacity: 0.6;
+            opacity: 0.55;
             box-shadow: none;
         }
         
@@ -339,12 +340,12 @@
     <div class="dashboard">
         <div class="dash-row">
             <div class="dash-label">Total Principal</div>
-            <div id="totalDeposit" class="dash-value" onclick="toggleSingleBlur(this)">$0.00</div>
+            <div id="totalDeposit" class="dash-value blur-effect" onclick="toggleVisibility(this)">$0.00</div>
         </div>
         
         <div class="dash-row">
             <div class="dash-label"><span id="interestYearLabel">Current Year</span> Matured Interest</div>
-            <div id="totalInterest" class="dash-value" onclick="toggleSingleBlur(this)">$0.00</div>
+            <div id="totalInterest" class="dash-value" onclick="toggleVisibility(this)">$0.00</div>
         </div>
     </div>
 
@@ -367,7 +368,7 @@
             </div>
             <div>
                 <label>Deposit Term</label>
-                <select id="months" onchange="onDateParameterChange('term')">
+                <select id="months" onchange="updateMaturityDate()">
                     <option value="1">1 Month</option>
                     <option value="2">2 Months</option>
                     <option value="3" selected>3 Months</option>
@@ -381,7 +382,7 @@
             </div>
             <div>
                 <label>Maturity Date</label>
-                <input type="date" id="expiryDate" onchange="onDateParameterChange('maturity')">
+                <input type="date" id="expiryDate">
             </div>
         </div>
         
@@ -396,15 +397,16 @@
     <div class="list-title">Active & Matured Records</div>
     <div id="depositList"></div>
 
-    <button class="btn-backup" onclick="exportToExcelXLSX()">Export Excel File</button>
+    <div style="padding: 0 2px;">
+        <button class="btn-backup" onclick="exportToExcelXLSX()">Export Excel File</button>
+    </div>
 
 </div>
 
 <script>
     let deposits = JSON.parse(localStorage.getItem('my_term_deposits'));
     let editingId = null;
-    let currentCalculatedStartDate = ""; 
-    let userHasManuallyChangedMaturity = false; 
+    let userHasManuallyChangedDate = false;
     
     if (!deposits || deposits.length === 0) {
         deposits = [
@@ -415,88 +417,29 @@
     }
 
     window.onload = function() {
-        resetFormDates();
+        document.getElementById('expiryDate').addEventListener('input', function() {
+            userHasManuallyChangedDate = true;
+        });
+        updateMaturityDate(); 
     };
 
-    function calculateShiftedDate(baseDateStr, monthsToShift, isForward = true) {
-        let parts = baseDateStr.split('-');
-        let year = parseInt(parts[0], 10);
-        let month = parseInt(parts[1], 10) - 1; 
-        let day = parseInt(parts[2], 10);
-
-        let tempDate = new Date(year, month, 1);
-        
-        if (isForward) {
-            tempDate.setMonth(tempDate.getMonth() + monthsToShift);
-        } else {
-            tempDate.setMonth(tempDate.getMonth() - monthsToShift);
+    function updateMaturityDate() {
+        if (editingId !== null || userHasManuallyChangedDate) {
+            renderStatus();
+            return;
         }
 
-        let targetYear = tempDate.getFullYear();
-        let targetMonth = tempDate.getMonth();
-        
-        let maxDaysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
-        let finalDay = Math.min(day, maxDaysInTargetMonth);
-        
-        let finalMonthStr = String(targetMonth + 1).padStart(2, '0');
-        let finalDayStr = String(finalDay).padStart(2, '0');
-        
-        return `${targetYear}-${finalMonthStr}-${finalDayStr}`;
-    }
-
-    // 全新控制函數：單獨切換被點擊數字的模糊狀態
-    function toggleSingleBlur(element) {
-        element.classList.toggle('blur-active');
-    }
-
-    function onDateParameterChange(triggerType) {
-        const monthsSelect = document.getElementById('months');
-        const expiryInput = document.getElementById('expiryDate');
-        const selectedMonths = parseInt(monthsSelect.value);
-
-        if (editingId !== null) {
-            if (triggerType === 'term') {
-                if (currentCalculatedStartDate) {
-                    expiryInput.value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
-                }
-            } else if (triggerType === 'maturity') {
-                if (expiryInput.value) {
-                    currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
-                }
-            }
-        } else {
-            if (triggerType === 'term') {
-                if (!userHasManuallyChangedMaturity) {
-                    const today = new Date();
-                    currentCalculatedStartDate = today.toISOString().split('T')[0];
-                    expiryInput.value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
-                } else {
-                    if (expiryInput.value) {
-                        currentCalculatedStartDate = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, false);
-                    }
-                }
-            } else if (triggerType === 'maturity') {
-                userHasManuallyChangedMaturity = true;
-                if (expiryInput.value) {
-                    currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
-                }
-            }
-        }
-        renderStatus();
-    }
-
-    function resetFormDates() {
-        editingId = null;
-        userHasManuallyChangedMaturity = false;
-        
         const today = new Date();
-        currentCalculatedStartDate = today.toISOString().split('T')[0];
+        const selectedMonths = parseInt(document.getElementById('months').value);
+        today.setMonth(today.getMonth() + selectedMonths);
         
-        const monthsSelect = document.getElementById('months');
-        const selectedMonths = parseInt(monthsSelect.value);
-        
-        document.getElementById('expiryDate').value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
+        document.getElementById('expiryDate').value = today.toISOString().split('T')[0];
         renderStatus();
+    }
+
+    // 改為傳入元素本體，切換點擊對象的模糊類別
+    function toggleVisibility(element) {
+        element.classList.toggle('blur-effect');
     }
 
     function saveToLocalStorage() {
@@ -517,7 +460,9 @@
 
         deposits.forEach(item => {
             if (!item.startDate) {
-                item.startDate = calculateShiftedDate(item.expiryDate, (item.months || 3), false);
+                let sObj = new Date(item.expiryDate);
+                sObj.setMonth(sObj.getMonth() - (item.months || 12));
+                item.startDate = sObj.toISOString().split('T')[0];
             }
 
             const expiry = new Date(item.expiryDate);
@@ -533,7 +478,7 @@
             }
         });
 
-        // 僅更新數字文字，完全保留原有的模糊類別狀態
+        // 僅更新文字內容，完全保留原來的模糊狀態 (blur-effect 類別)
         document.getElementById('totalDeposit').innerText = `$${totalDeposit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('totalInterest').innerText = `$${totalInterestFull.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 
@@ -552,7 +497,10 @@
 
         deposits.forEach(item => {
             const startDateObj = new Date(item.startDate);
-            if (startDateObj < oneYearAgo) return; 
+            
+            if (startDateObj < oneYearAgo) {
+                return; 
+            }
 
             const expiry = new Date(item.expiryDate);
             const isExpired = expiry < today;
@@ -599,22 +547,21 @@
         }
         errorMsg.style.display = 'none';
 
-        let finalStartDate = currentCalculatedStartDate;
-
-        if (!finalStartDate) {
-            finalStartDate = calculateShiftedDate(expiryDate, parseInt(months), false);
-        }
+        const expDateObj = new Date(expiryDate);
+        expDateObj.setMonth(expDateObj.getMonth() - parseInt(months));
+        const calculatedStartDate = expDateObj.toISOString().split('T')[0];
 
         if (editingId !== null) {
             const index = deposits.findIndex(d => d.id === editingId);
             if (index !== -1) {
+                const oldStartDate = deposits[index].startDate || calculatedStartDate;
                 deposits[index] = {
                     id: editingId,
                     bank,
                     amount: parseFloat(amount),
                     rate: parseFloat(rate),
                     months: parseInt(months),
-                    startDate: finalStartDate,
+                    startDate: oldStartDate,
                     expiryDate
                 };
             }
@@ -626,18 +573,19 @@
                 amount: parseFloat(amount),
                 rate: parseFloat(rate),
                 months: parseInt(months),
-                startDate: finalStartDate, 
+                startDate: new Date().toISOString().split('T')[0], 
                 expiryDate
             };
             deposits.push(newDeposit);
         }
 
         saveToLocalStorage();
+        userHasManuallyChangedDate = false; 
         renderStatus();
 
         document.getElementById('amount').value = '';
         document.getElementById('rate').value = '';
-        resetFormDates();
+        updateMaturityDate();
     }
 
     function startEdit(id) {
@@ -645,7 +593,6 @@
         if (!item) return;
 
         editingId = id;
-        currentCalculatedStartDate = item.startDate; 
 
         document.getElementById('bank').value = item.bank;
         document.getElementById('amount').value = item.amount;
@@ -661,11 +608,13 @@
         submitBtn.innerText = "Update Record";
         submitBtn.classList.add('update-style');
         cancelBtn.style.display = "block";
+
+        formCard.scrollIntoView({ behavior: 'smooth' });
     }
 
     function exitEditMode() {
-        document.getElementById('amount').value = '';
-        document.getElementById('rate').value = '';
+        editingId = null;
+        userHasManuallyChangedDate = false;
 
         const formCard = document.getElementById('formCard');
         const submitBtn = document.getElementById('submitBtn');
@@ -675,8 +624,11 @@
         submitBtn.innerText = "Add Deposit Record";
         submitBtn.classList.remove('update-style');
         cancelBtn.style.display = "none";
+
+        document.getElementById('amount').value = '';
+        document.getElementById('rate').value = '';
         
-        resetFormDates();
+        updateMaturityDate();
     }
 
     function deleteDeposit(id) {

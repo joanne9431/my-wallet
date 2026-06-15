@@ -19,52 +19,34 @@
             --expired-color: #cbd5e1;       
         }
 
-        /* 網頁全域設定：防止整個網頁隨便亂滾動 */
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            overflow: hidden; 
-        }
-
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
+            margin: 0;
+            padding: 20px 15px; 
             -webkit-font-smoothing: antialiased;
-            display: flex;
-            justify-content: center;
         }
 
-        /* 主容器佈局：flex 垂直填滿螢幕 */
         .container {
-            width: 100%;
             max-width: 800px; 
-            height: 100vh;
-            padding: 15px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* 固定不動的頂部區域（Dashboard + 表單） */
-        .fixed-top-section {
-            flex-shrink: 0; 
+            margin: 0 auto;
         }
 
         /* Dashboard Overview */
         .dashboard {
             background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%);
             color: #1e3a8a;
-            padding: 16px 20px; 
-            border-radius: 14px;
-            box-shadow: 0 4px 15px rgba(224, 231, 255, 0.4);
-            margin-bottom: 15px; 
+            padding: 22px 24px; 
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(224, 231, 255, 0.5);
+            margin-bottom: 25px; 
+            position: relative;
             border: 1px solid rgba(255, 255, 255, 0.6);
             
             display: flex;
             flex-direction: column;
-            gap: 12px; 
+            gap: 16px; 
         }
 
         .dash-row {
@@ -72,106 +54,79 @@
         }
 
         .dash-row:first-child {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.4);
-            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            padding-bottom: 16px;
         }
 
         .dash-label {
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: #475569;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: flex;
             align-items: center;
             gap: 8px;
-            user-select: none; 
+            user-select: none;
         }
 
-        /* 可點擊的金額容器 */
-        .clickable-amount {
-            display: inline-block;
-            cursor: pointer;
-            user-select: none; 
-            position: relative;
-            border-radius: 6px;
-        }
-
-        /* 金額數字本體 */
+        /* 讓數字具備點擊手勢，並加入流暢的模糊轉場特效 */
         .dash-value {
-            font-size: 1.5rem; 
-            font-weight: 600;
-            letter-spacing: -0.3px;
+            font-size: 1.75rem; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
             color: #0f172a;
+            cursor: pointer;
+            display: inline-block;
+            user-select: none;
+            filter: blur(0px);
             transition: filter 0.3s ease, opacity 0.3s ease;
         }
 
-        /* 高階毛玻璃底色遮罩層 */
-        .blur-overlay {
-            position: absolute;
-            top: -2px;
-            left: -6px;
-            right: -6px;
-            bottom: -2px;
-            background: rgba(255, 255, 255, 0.25); 
-            backdrop-filter: blur(12px);            
-            -webkit-backdrop-filter: blur(12px);    
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            
-            opacity: 0;
-            pointer-events: none; 
-            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* 當點擊切換為隱藏狀態 (.blur-active) 時 */
-        .clickable-amount.blur-active .blur-overlay {
-            opacity: 1; 
-        }
-        
-        .clickable-amount.blur-active .dash-value {
-            filter: blur(2px); 
-            opacity: 0.2;
+        /* 點擊後被加上 .blur-active 類別時的高階毛玻璃模糊狀態 */
+        .dash-value.blur-active {
+            filter: blur(10px);
+            opacity: 0.3;
         }
 
         /* Form Card */
         .form-card {
             background: var(--card-bg);
-            padding: 16px 20px; 
-            border-radius: 14px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);
-            margin-bottom: 15px; 
+            padding: 24px; 
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+            margin-bottom: 25px; 
             transition: all 0.3s ease;
             border: 1px solid #f1f5f9;
         }
 
         .form-card.editing-mode {
             border-color: var(--primary-color);
-            box-shadow: 0 0 15px rgba(79, 70, 229, 0.08);
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.1);
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); 
-            gap: 12px; 
-            margin-bottom: 14px;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 16px; 
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             color: #64748b;
             font-weight: 500;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         input, select {
             width: 100%;
-            padding: 8px 12px; 
+            padding: 10px 14px; 
             border: 1px solid #e2e8f0;
-            border-radius: 6px;
+            border-radius: 8px;
             box-sizing: border-box;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             background-color: #f8fafc;
             color: var(--text-main);
             transition: all 0.2s;
@@ -185,7 +140,7 @@
 
         .btn-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
 
         button.add-btn {
@@ -193,11 +148,12 @@
             background-color: var(--success-color);
             color: white;
             border: none;
-            padding: 9px; 
-            border-radius: 6px;
-            font-size: 0.9rem;
-            font-weight: 500;
+            padding: 12px; 
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
         button.add-btn.update-style {
@@ -209,70 +165,41 @@
             background-color: #e2e8f0;
             color: #475569;
             border: none;
-            padding: 9px;
-            border-radius: 6px;
-            font-size: 0.9rem;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
             cursor: pointer;
             display: none;
         }
 
         .error-msg {
             color: #ef4444;
-            font-size: 0.8rem;
-            margin-top: 8px;
+            font-size: 0.85rem;
+            margin-top: 10px;
             display: none;
             text-align: center;
         }
 
         .list-title {
-            font-size: 1rem;
-            margin-bottom: 10px; 
-            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 15px; 
+            font-weight: 700;
             color: #475569;
             letter-spacing: 0.5px;
-            flex-shrink: 0;
-        }
-
-        /* 紀錄獨立滾動區域 */
-        .scrollable-records-area {
-            flex: 1;                
-            overflow-y: auto;       
-            padding-right: 4px;     
-            margin-bottom: 12px;
-            
-            scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 transparent;
-        }
-
-        .scrollable-records-area::-webkit-scrollbar {
-            width: 6px;
-        }
-        .scrollable-records-area::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .scrollable-records-area::-webkit-scrollbar-thumb {
-            background-color: #cbd5e1;
-            border-radius: 10px;
         }
 
         #depositList {
             display: flex;
             flex-direction: column;
-            gap: 8px; 
-            padding-bottom: 10px; 
-        }
-
-        /* 底部固定按鈕區域 */
-        .bottom-action-area {
-            flex-shrink: 0;
-            padding: 5px 2px 10px 2px;
+            gap: 12px; 
+            margin-bottom: 25px;
         }
 
         .deposit-card {
             background: var(--card-bg);
-            padding: 12px 18px; 
-            border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.01);
+            padding: 16px 20px; 
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.01);
             display: flex;
             justify-content: space-between;
             align-items: flex-start; 
@@ -284,31 +211,31 @@
         .card-main {
             display: flex;
             flex-direction: column;
-            gap: 4px; 
+            gap: 6px; 
             flex-grow: 1;
         }
 
         .bank-tag {
             background: #f0fdf4;
             color: #166534;
-            padding: 2px 8px;
+            padding: 4px 10px;
             border-radius: 12px;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             font-weight: 600;
             width: fit-content;
-            margin-bottom: 1px;
+            margin-bottom: 2px;
         }
 
         .card-details {
-            font-size: 1.05rem; 
-            font-weight: 600;
+            font-size: 1.15rem; 
+            font-weight: 700;
             color: #1e293b;
         }
 
         .card-sub-line {
-            font-size: 0.8rem; 
+            font-size: 0.85rem; 
             color: #64748b;
-            line-height: 1.3;
+            line-height: 1.4;
         }
         
         .card-sub-line strong {
@@ -319,23 +246,23 @@
             display: flex;
             flex-direction: column;
             align-items: flex-end; 
-            gap: 12px; 
+            gap: 16px; 
             flex-shrink: 0;
-            margin-left: 15px;
-            min-width: 100px; 
+            margin-left: 20px;
+            min-width: 110px; 
         }
 
         .countdown {
-            font-weight: 600;
+            font-weight: 700;
             color: #b91c1c;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             text-align: right;
             white-space: nowrap; 
         }
 
         .action-group {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
         }
 
@@ -344,9 +271,9 @@
             border: none;
             color: #94a3b8;
             cursor: pointer;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
             text-decoration: none;
-            padding: 0px 2px;
+            padding: 2px;
             transition: color 0.2s;
         }
 
@@ -364,15 +291,16 @@
 
         .btn-backup { 
             width: 100%;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             border: none;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             background-color: #fef3c7; 
             color: #92400e; 
             transition: all 0.2s;
+            margin-top: 10px;
         }
         .btn-backup:hover { 
             background-color: #fde68a; 
@@ -385,7 +313,7 @@
         .deposit-card.expired {
             background-color: #f8fafc;
             color: var(--expired-color);
-            opacity: 0.55;
+            opacity: 0.6;
             box-shadow: none;
         }
         
@@ -408,80 +336,67 @@
 
 <div class="container">
 
-    <div class="fixed-top-section">
-        <div class="dashboard">
-            <div class="dash-row">
-                <div class="dash-label">Total Principal</div>
-                <div class="clickable-amount" onclick="toggleBlur(this)">
-                    <div id="totalDeposit" class="dash-value">$0.00</div>
-                    <div class="blur-overlay"></div>
-                </div>
+    <div class="dashboard">
+        <div class="dash-row">
+            <div class="dash-label">Total Principal</div>
+            <div id="totalDeposit" class="dash-value" onclick="toggleSingleBlur(this)">$0.00</div>
+        </div>
+        
+        <div class="dash-row">
+            <div class="dash-label"><span id="interestYearLabel">Current Year</span> Matured Interest</div>
+            <div id="totalInterest" class="dash-value" onclick="toggleSingleBlur(this)">$0.00</div>
+        </div>
+    </div>
+
+    <div id="formCard" class="form-card">
+        <div class="form-grid">
+            <div>
+                <label>Bank Name</label>
+               <select id="bank">
+                    <option value="HSBC">HSBC</option>
+                    <option value="Livi">Livi</option>
+                    <option value="BOCHK">BOCHK</option>
+                    <option value="MOX">MOX</option>
+                    <option value="MOX (USD)">MOX (USD)</option>
+                    <option value="Other Bank">Other Bank</option>
+                </select>
             </div>
-            
-            <div class="dash-row">
-                <div class="dash-label"><span id="interestYearLabel">Current Year</span> Matured Interest</div>
-                <div class="clickable-amount" onclick="toggleBlur(this)">
-                    <div id="totalInterest" class="dash-value">$0.00</div>
-                    <div class="blur-overlay"></div>
-                </div>
+            <div>
+                <label>Deposit Amount ($)</label>
+                <input type="number" id="amount" placeholder="e.g., 100000">
+            </div>
+            <div>
+                <label>Deposit Term</label>
+                <select id="months" onchange="onDateParameterChange('term')">
+                    <option value="1">1 Month</option>
+                    <option value="2">2 Months</option>
+                    <option value="3" selected>3 Months</option>
+                    <option value="6">6 Months</option>
+                    <option value="12">12 Months</option>
+                </select>
+            </div>
+            <div>
+                <label>Interest Rate (% p.a.)</label>
+                <input type="number" id="rate" placeholder="e.g., 3.8" step="0.01">
+            </div>
+            <div>
+                <label>Maturity Date</label>
+                <input type="date" id="expiryDate" onchange="onDateParameterChange('maturity')">
             </div>
         </div>
-
-        <div id="formCard" class="form-card">
-            <div class="form-grid">
-                <div>
-                    <label>Bank Name</label>
-                   <select id="bank">
-                        <option value="HSBC">HSBC</option>
-                        <option value="Livi">Livi</option>
-                        <option value="BOCHK">BOCHK</option>
-                        <option value="MOX">MOX</option>
-                        <option value="MOX (USD)">MOX (USD)</option>
-                        <option value="Other Bank">Other Bank</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Deposit Amount ($)</label>
-                    <input type="number" id="amount" placeholder="e.g., 100000">
-                </div>
-                <div>
-                    <label>Deposit Term</label>
-                    <select id="months" onchange="onDateParameterChange('term')">
-                        <option value="1">1 Month</option>
-                        <option value="2">2 Months</option>
-                        <option value="3" selected>3 Months</option>
-                        <option value="6">6 Months</option>
-                        <option value="12">12 Months</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Interest Rate (% p.a.)</label>
-                    <input type="number" id="rate" placeholder="e.g., 3.8" step="0.01">
-                </div>
-                <div>
-                    <label>Maturity Date</label>
-                    <input type="date" id="expiryDate" onchange="onDateParameterChange('maturity')">
-                </div>
-            </div>
-            
-            <div class="btn-container">
-                <button id="submitBtn" class="add-btn" onclick="handleFormSubmit()">Add Deposit Record</button>
-                <button id="cancelBtn" class="cancel-btn" onclick="exitEditMode()">Cancel</button>
-            </div>
-            
-            <div id="errorMsg" class="error-msg">Please fill out all fields correctly.</div>
+        
+        <div class="btn-container">
+            <button id="submitBtn" class="add-btn" onclick="handleFormSubmit()">Add Deposit Record</button>
+            <button id="cancelBtn" class="cancel-btn" onclick="exitEditMode()">Cancel</button>
         </div>
-
-        <div class="list-title">Active & Matured Records</div>
+        
+        <div id="errorMsg" class="error-msg">Please fill out all fields correctly.</div>
     </div>
 
-    <div class="scrollable-records-area">
-        <div id="depositList"></div>
-    </div>
+    <div class="list-title">Active & Matured Records</div>
+    <div id="depositList"></div>
 
-    <div class="bottom-action-area">
-        <button class="btn-backup" onclick="exportToExcelXLSX()">Export Excel File</button>
-    </div>
+    <button class="btn-backup" onclick="exportToExcelXLSX()">Export Excel File</button>
 
 </div>
 
@@ -529,8 +444,8 @@
         return `${targetYear}-${finalMonthStr}-${finalDayStr}`;
     }
 
-    // 切換模糊狀態
-    function toggleBlur(element) {
+    // 全新控制函數：單獨切換被點擊數字的模糊狀態
+    function toggleSingleBlur(element) {
         element.classList.toggle('blur-active');
     }
 
@@ -557,7 +472,7 @@
                     expiryInput.value = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, true);
                 } else {
                     if (expiryInput.value) {
-                        currentCalculatedStartDate = calculateShiftedDate(expiryInput.value, selectedMonths, false);
+                        currentCalculatedStartDate = calculateShiftedDate(currentCalculatedStartDate, selectedMonths, false);
                     }
                 }
             } else if (triggerType === 'maturity') {
@@ -618,6 +533,7 @@
             }
         });
 
+        // 僅更新數字文字，完全保留原有的模糊類別狀態
         document.getElementById('totalDeposit').innerText = `$${totalDeposit.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
         document.getElementById('totalInterest').innerText = `$${totalInterestFull.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
 

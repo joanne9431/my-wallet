@@ -88,12 +88,13 @@
             user-select: none; 
         }
 
-        /* 數字點擊容器 */
+        /* 可點擊的金額容器 */
         .clickable-amount {
             display: inline-block;
             cursor: pointer;
             user-select: none; 
             position: relative;
+            border-radius: 6px;
         }
 
         /* 金額數字本體 */
@@ -102,21 +103,35 @@
             font-weight: 600;
             letter-spacing: -0.3px;
             color: #0f172a;
-            
-            /* 強效、平滑的動態轉場特效 */
-            filter: blur(0px);
-            opacity: 1;
-            transform: scale(1);
-            transition: filter 0.35s cubic-bezier(0.4, 0, 0.2, 1), 
-                        opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-                        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: filter 0.3s ease, opacity 0.3s ease;
         }
 
-        /* 【核心修正】點擊後被加上 .blur-active 時的強烈高級毛玻璃失焦狀態 */
+        /* 高階毛玻璃底色遮罩層 */
+        .blur-overlay {
+            position: absolute;
+            top: -2px;
+            left: -6px;
+            right: -6px;
+            bottom: -2px;
+            background: rgba(255, 255, 255, 0.25); 
+            backdrop-filter: blur(12px);            
+            -webkit-backdrop-filter: blur(12px);    
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            
+            opacity: 0;
+            pointer-events: none; 
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 當點擊切換為隱藏狀態 (.blur-active) 時 */
+        .clickable-amount.blur-active .blur-overlay {
+            opacity: 1; 
+        }
+        
         .clickable-amount.blur-active .dash-value {
-            filter: blur(12px);     /* 提高模糊像素，確保絕對看得出變化，且數字隱私安全 */
-            opacity: 0.4;          /* 降低透明度，使其與背景藍色完美融為一體 */
-            transform: scale(0.96); /* 微調尺寸縮小，製造深邃的空間感 */
+            filter: blur(2px); 
+            opacity: 0.2;
         }
 
         /* Form Card */
@@ -399,6 +414,7 @@
                 <div class="dash-label">Total Principal</div>
                 <div class="clickable-amount" onclick="toggleBlur(this)">
                     <div id="totalDeposit" class="dash-value">$0.00</div>
+                    <div class="blur-overlay"></div>
                 </div>
             </div>
             
@@ -406,6 +422,7 @@
                 <div class="dash-label"><span id="interestYearLabel">Current Year</span> Matured Interest</div>
                 <div class="clickable-amount" onclick="toggleBlur(this)">
                     <div id="totalInterest" class="dash-value">$0.00</div>
+                    <div class="blur-overlay"></div>
                 </div>
             </div>
         </div>
@@ -486,7 +503,6 @@
         resetFormDates();
     };
 
-    // 精準對日計算函數
     function calculateShiftedDate(baseDateStr, monthsToShift, isForward = true) {
         let parts = baseDateStr.split('-');
         let year = parseInt(parts[0], 10);
@@ -513,12 +529,11 @@
         return `${targetYear}-${finalMonthStr}-${finalDayStr}`;
     }
 
-    // 點擊金額容器切換模糊/清晰狀態
+    // 切換模糊狀態
     function toggleBlur(element) {
         element.classList.toggle('blur-active');
     }
 
-    // 日期連動
     function onDateParameterChange(triggerType) {
         const monthsSelect = document.getElementById('months');
         const expiryInput = document.getElementById('expiryDate');

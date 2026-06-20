@@ -44,9 +44,9 @@
         }
 
         /* 將儀表板卡片內的標題文字改成您喜歡的顏色 (例如白色) */
-.top-sticky-card h2 {
-    color: #a0aec0 !important; 
-}
+        .top-sticky-card h2 {
+            color: #a0aec0 !important; 
+        }
         
         body {
             font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -108,6 +108,16 @@
             white-space: nowrap;
             overflow: hidden;
             line-height: 1.1;
+        }
+
+        /* 新增：TOTAL 下方數值的 CSS 樣式 */
+        .budget-remaining {
+            font-size: clamp(0.75rem, 3.8vw, 1.1rem); /* 比總金額小 */
+            font-weight: 600;
+            color: #a2d2ff; /* 舒適淡藍色，與主金額區隔 */
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
         }
         
         .category-totals-box {
@@ -327,6 +337,8 @@
             <div class="total-box">
                 <h2 id="current-month-heading">Current Month Total</h2>
                 <div class="total-amount">$<span id="total">0</span></div>
+                <!-- 新增：用來顯示 金額 - 總支出 的容器 -->
+                <div class="budget-remaining">Bal: $<span id="remaining-value">0</span></div>
             </div>
             <div class="category-totals-box" id="category-totals-container"></div>
         </div>
@@ -372,6 +384,9 @@
         let editingRecordId = null; 
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+        // 新增：設定您的固定預算金額（可自行修改此數值）
+        const BUDGET_LIMIT = 12400; 
 
         async function init() {
             if(categories.length > 0) selectedCategory = categories[0];
@@ -562,6 +577,7 @@
         function renderRecords() {
             const listContainer = document.getElementById('history-list');
             const totalContainer = document.getElementById('total');
+            const remainingContainer = document.getElementById('remaining-value'); // 新增
             const catTotalsContainer = document.getElementById('category-totals-container');
             const headingContainer = document.getElementById('current-month-heading');
             const dropdown = document.getElementById('month-filter-dropdown');
@@ -587,6 +603,7 @@
             if (currentMonthRecords.length === 0) {
                 listContainer.innerHTML = `<div style="color: #a0aec0; text-align: center; padding: 20px; font-size: 0.9rem;">No transactions in this month.</div>`;
                 totalContainer.innerText = '0';
+                remainingContainer.innerText = BUDGET_LIMIT.toLocaleString(); // 當月無支出時顯示完整預算金額
                 document.querySelector('.total-amount').style.fontSize = "clamp(1.1rem, 5.5vw, 1.9rem)";
                 categories.forEach(cat => {
                     catTotalsContainer.innerHTML += `<div class="cat-total-item"><span class="cat-name">${cat.split(' ').slice(1).join(' ') || cat}</span><span class="cat-num">$0</span></div>`;
@@ -628,6 +645,10 @@
             
             const formattedTotalStr = currentMonthTotal.toLocaleString();
             totalContainer.innerText = formattedTotalStr;
+
+            // 新增：計算剩餘金額並更新到介面
+            const remainingBudget = BUDGET_LIMIT - currentMonthTotal;
+            remainingContainer.innerText = remainingBudget.toLocaleString();
             
             let mainTotalElement = document.querySelector('.total-amount');
             if (formattedTotalStr.length > 12) {
